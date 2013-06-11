@@ -26,6 +26,8 @@
 		
 		_template: null,
 		
+		_templateCompiled: null,
+		
 		_layout: null,
 		
 		_parentView: null,
@@ -53,7 +55,7 @@
 			
 			this.setup();
 			
-			this.template = this.options.template || null;			
+			this.template = this.options.template || this.template;			
 			this.layout = this.options.layout || this.layout;
 			this._layout = this.options._layout || this._layout;
 			
@@ -62,7 +64,7 @@
 			}			
 			
 			if (this._template != null && this._templator.compilable) {
-				this._template = this._templator.compileTemplate(this._template);
+				this._templateCompiled = this._templator.compileTemplate(this._template);
 			}
 			
 			if (this.options.el || null) {
@@ -199,7 +201,11 @@
 			return this._layout;
 		},
 		
-		_getTemplate: function () {
+		_getTemplate: function () {		
+			if (this._templator.compilable && this._templateCompiled !== null) {
+				return this._templateCompiled;
+			} 
+		
 			var _template = this._template || null;											
 			if (_template == null) {
 				var templateName = this._getTemplateName();
@@ -215,7 +221,7 @@
 					}
 					var noCache = this.noCache;					
 				}
-				//console.log(layoutOptions);
+				
 				_template = this._templator.getTemplate(templateName, layoutOptions, noCache);
 			}	
 			return _template;
