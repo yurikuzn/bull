@@ -17,6 +17,7 @@ var Bull = Bull || {};
 	 *  <li>useCache: {bool}</li>
 	 *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
 	 *  <li>viewLoader: {Function} Function that returns view class ({Function} in javascript) by the given view name as only parameter. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
+	 *  <li>helper: {Function} View Helper that will be injected into all views.</li>
 	 *  <li>loading: {Object} Resources loading options: paths, exts, loaders. Example: <br>
 	 *    <i>{
 	 *      paths: { // Custom paths for resource files.
@@ -64,6 +65,8 @@ var Bull = Bull || {};
 			layouter: this._layouter,
 		}));
 		
+		this._helper = options.helper || null;
+		
 		this._viewClassHash = {};		
 		this._getViewClassFunction = options.viewLoader || this._getViewClassFunction;	
 	};
@@ -83,6 +86,8 @@ var Bull = Bull || {};
 		_renderer: null,
 		
 		_loader: null,
+		
+		_helper: null,
 		
 		_viewClassHash: null,		
 		
@@ -119,7 +124,8 @@ var Bull = Bull || {};
 				factory: this,
 				layouter: this._layouter,
 				templator: this._templator,
-				renderer: this._renderer
+				renderer: this._renderer,
+				helper: this._helper
 			}));						
 			return view;					
 		},

@@ -140,9 +140,11 @@
 				if ('options' in nestedViewDefs[i]) {
 					options = _.extend(options, nestedViewDefs[i].options);
 				}
-				if (this.model) {
-					// TODO collections, model?
+				if (this.model) {					
 					options.model = this.model;
+				}
+				if (this.collection) {
+					options.collection = this.collection;
 				}
 							 
 				var view = this._factory.create(viewName, options);
