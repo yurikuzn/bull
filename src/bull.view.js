@@ -148,7 +148,7 @@
 				if (this.collection) {					
 					options.collection = this.collection;
 				}
-							 
+				
 				var view = this._factory.create(viewName, options);
 				
 				if ('notToRender' in nestedViewDefs[i]) {

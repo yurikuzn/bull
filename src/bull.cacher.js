@@ -18,7 +18,7 @@
 		
 		_checkType: function (type) {
 			if (typeof type === 'undefined' && toString.call(type) != '[object String]') {
-				throw new TypeError("Bad type \"" + type + "\" passed to Jet.Cacher().");
+				throw new TypeError("Bad type \"" + type + "\" passed to Bull.Cacher().");
 			}
 		},
 					
@@ -66,7 +66,6 @@
 				}
 			}
 		},
-
 	});
 	
 }).call(this, Bull, _);
