@@ -26,40 +26,42 @@
 		
 		_layouter: null,
 		
-		addTemplate: function (templateName, template) {
-			this._templates[templateName] = template;			
+		addTemplate: function (name, template) {
+			this._templates[name] = template;			
 		},		
 	
-		getTemplate: function (templateName, layoutOptions, noCache) {		
-			if (!templateName) {
-				throw new Error("templateName argument can not be empty.");	
-			}
-					
-			var layoutOptions = layoutOptions || {};		
+		getTemplate: function (name, layoutOptions, noCache) {
+			var layoutOptions = layoutOptions || {};
 			var template = null;
 			
-			if (!noCache) {
-				template = this._getCachedTemplate(templateName);
+			if (!layoutOptions.name && !layoutOptions.layout && !name) {
+				throw new Error("Can not get template. Not enough data passed.");
+			}
+			
+			if (!noCache && name) {
+				template = this._getCachedTemplate(name);
 			}
 			
 			if (!template) {			
 				if (!layoutOptions.name && !layoutOptions.layout) {					
-					template = this._loader.load('template', templateName);					
+					template = this._loader.load('template', name);					
 				} else {								
 					var layout = layoutOptions.layout || this._layouter.getLayout(layoutOptions.name);										
 					if (layout == null) {
-						throw new Error("Could not get layout for '" + templateName + "'.");
+						throw new Error("Could not get layout '" + layoutOptions.name + "'.");
 					}										
 					template = this._buildTemplate(layout, layoutOptions.data);
-				}				
+				}
+								
 				if (this.compilable) {
 					template = this.compileTemplate(template);
 				}
-			}	
-			
-			if (!noCache) {
-				this._cacheTemplate(templateName, template);
+				
+				if (!noCache && name) {
+					this._cacheTemplate(name, template);
+				}				
 			}
+
 			return template;		
 		},
 		

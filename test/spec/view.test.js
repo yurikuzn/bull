@@ -139,7 +139,7 @@ describe("View", function () {
 			layout: 'header',
 			some: 'test',
 		});
-		expect(layouter.findNestedViews).toHaveBeenCalledWith('SomeLayout', undefined);
+		expect(layouter.findNestedViews).toHaveBeenCalledWith('SomeLayout', null, false);
 		expect(factory.create.calls.length).toEqual(2);		
 		expect(view.header).toBeDefined();
 		expect(view.footer).toBeDefined();

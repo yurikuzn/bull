@@ -60,10 +60,16 @@
 			}
 		},
 		
-		findNestedViews: function (layoutName, layoutDefs) {
-			var cached = this._getCachedNestedViews(layoutName);
-			if (cached) {
-				return cached;
+		findNestedViews: function (layoutName, layoutDefs, noCache) {
+			if (!layoutName && !layoutDefs) {
+				throw new Error("Can not find nested views. No layout data and name.");
+			}
+		
+			if (layoutName && !noCache) {
+				var cached = this._getCachedNestedViews(layoutName);
+				if (cached) {
+					return cached;
+				}
 			}	
 			var layoutDefs = layoutDefs || this.getLayout(layoutName);
 			if (typeof layoutDefs == 'undefined' || !('layout' in layoutDefs)) {
@@ -117,7 +123,9 @@
 				}	
 			}			
 			seekForViews(layout);
-			this._cacheNestedViews(layoutName, viewPathList);
+			if (layoutName && !noCache) {
+				this._cacheNestedViews(layoutName, viewPathList);
+			}
 			return viewPathList;
 		}	
 	});

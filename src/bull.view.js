@@ -2,11 +2,45 @@
 
 	Bull.View = Backbone.View.extend({
 	
+		/**
+		 * @property {string} Template name.
+		 */
 		template: null,
 		
-		layout: null,		
+		/**
+		 * @property {string} Layout name. Used if template is not specified to build template.
+		 */
+		layout: null,
+		
+		/**
+		 * @property {string} Name of View. If template name is not defined it will be used to cache built template and layout. Otherwise they won't be cached. Name it unique.
+		 */
+		name: null,		
 	
+		/**
+		 * @property {Object} or {function} Data that will be passed into template.
+		 */
 		data: null,
+		
+		/**
+		 * @property {bool} Not to use cache for layouts. Use it if layouts are dynamic.
+		 */
+		noCache: false,
+		
+		/**
+		 * @property {bool} Not to rended view automatical when build view tree. Afterwards it can be rendered manually.
+		 */
+		notToRender: false,
+		
+		/**
+		 * @property {string} Template itself.
+		 */
+		_template: null,
+		
+		/**
+		 * @property {Object} Layout itself.
+		 */
+		_layout: null,
 		
 		layoutData: null,
 		
@@ -18,27 +52,17 @@
 		
 		_templator: null,
 		
-		renderer: null,
+		_renderer: null,
 		
 		_layouter: null,
 	
 		_helper: null,
-		
-		_template: null,
-		
+				
 		_templateCompiled: null,
-		
-		_layout: null,
-		
+
 		_parentView: null,
 		
-		_path: 'root',
-		
-		notToRender: false,
-		
-		noCache: false,
-		
-		_elResrved: null,
+		_path: 'root',		
 	
 		initialize: function () {				
 			this._factory = this.options.factory || null;			
@@ -49,6 +73,8 @@
 			this._helper = this.options.helper || null;
 			
 			this.noCache = this.options.noCache || this.noCache;
+			
+			this.name = this.options.name || this.name;
 			
 			this.nestedViews = {};
 			this._nestedViewDefs = {};
@@ -72,8 +98,15 @@
 			}			
 		},
 		
+		/**
+		 * Setup view. Empty function by default.
+		 */
 		setup: function () {},
 		
+		
+		/**
+		 * Set view container element if doesn't exist yet. It will call setElement after render.
+		 */
 		setElementInAdvance: function (el) {
 			this.on("after:render", function () {
 				if (!this.el) {
@@ -82,10 +115,16 @@
 			}.bind(this));
 		},
 		
+		/**
+		 * Get HTML of view but don't render it.
+		 */
 		getHtml: function () {
 			return this._getHtml();
 		},
 		
+		/**
+		 * Render view.
+		 */
 		render: function () {		
 			this.trigger("before:render", this);
 			var html = this._getHtml();
@@ -109,7 +148,7 @@
 			if (this._layouter == null) {
 				return;
 			}
-			var nestedViewDefs = this._layouter.findNestedViews(this._getLayoutName(), this._getLayout() || undefined);
+			var nestedViewDefs = this._layouter.findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
 
 			if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
 				throw new Error("Bad layout. It should be an Array.");
@@ -194,11 +233,7 @@
 		},
 		
 		_getLayoutName: function () {
-			if (this.layout == null && this._getLayout() != null) {
-				// TODO find a better way to generate name
-				return JSON.stringify(this._getLayout());
-			}
-			return this.layout;
+			return this.layout || this.name || null;
 		},
 		
 		_getLayoutData: function () {
@@ -218,23 +253,34 @@
 			} 
 		
 			var _template = this._template || null;											
-			if (_template == null) {
-				var templateName = this._getTemplateName();
+			
+			if (_template !== null) {
+				return _template;
+			}			
+			
+			var templateName = this._getTemplateName();
+			var noCache = false;
+			var layoutOptions = {};
 				
-				var noCache = false;
-				var layoutOptions = {};
-				if (!templateName) {
-					var layoutName = templateName = this._getLayoutName();
-					layoutOptions = {
-						name: layoutName,
-						data: this._getLayoutData(),
-						layout: this._getLayout(),
-					}
-					var noCache = this.noCache;					
-				}
+			if (!templateName) {
+				noCache = this.noCache;
+			
+				var layoutName = this._getLayoutName();
+								
+				if (!layoutName) {
+					noCache = true;				
+				} else {
+					templateName = 'built-' + layoutName;
+				}				
+				layoutOptions = {
+					name: layoutName,
+					data: this._getLayoutData(),
+					layout: this._getLayout(),
+				}				
+			}
 				
-				_template = this._templator.getTemplate(templateName, layoutOptions, noCache);
-			}	
+			_template = this._templator.getTemplate(templateName, layoutOptions, noCache);
+				
 			return _template;
 		},
 		
@@ -259,12 +305,23 @@
 			return el;
 		},
 		
+		/**
+		 * Get nested view.
+		 * @param {string} key
+		 * @return {Jet.View}
+		 */
 		getView: function (key) {
 			if (key in this.nestedViews) {
 				return this.nestedViews[key];
 			}
 		},		
 		
+		/**
+		 * Set nested view.
+		 * @param {string} key
+		 * @param {Jet.View} view
+		 * @param {string} el Selector for view container.
+		 */
 		setView: function (key, view, el) {
 			var el = el || this._getSelectorForNestedView(key) || false;
 			if (el) {
@@ -284,6 +341,10 @@
 			}			
 		},
 		
+		/**
+		 * Clear nested view.
+		 * @param {string} key
+		 */
 		clearView: function (key) {
 			if (key in this.nestedViews) {
 				this.nestedViews[key].remove();
@@ -291,10 +352,17 @@
 			}			
 		},
 		
+		/**
+		 * Get parent view.
+		 * @return {Jet.View}
+		 */
 		getParentView: function () {
 			return this._parentView;
 		},
 		
+		/**
+		 * Remove view and all nested tree. Triggers 'remove' event.
+		 */
 		remove: function () {
 			for (var key in this.nestedView) {
 				this.clearView(key);
