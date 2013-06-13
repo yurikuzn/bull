@@ -120,8 +120,10 @@
 
 				this._nestedViewDefs[key] = nestedViewDefs[i];				
 				
-				if ('view' in nestedViewDefs[i] && nestedViewDefs[i].view === true && !('layout' in nestedViewDefs[i])) {
-					continue;
+				if ('view' in nestedViewDefs[i] && nestedViewDefs[i].view === true) {
+					if (!('layout' in nestedViewDefs[i] || 'template' in nestedViewDefs[i])) {
+						continue;
+					}
 				}
 				
 				var viewName = this._factory.defaultViewName;
@@ -143,7 +145,7 @@
 				if (this.model) {					
 					options.model = this.model;
 				}
-				if (this.collection) {
+				if (this.collection) {					
 					options.collection = this.collection;
 				}
 							 
@@ -157,7 +159,7 @@
 			}					
 		},
 		
-		_getData: function () {
+		_getData: function () {			
 			if (typeof this.data === 'function') {
 				return this.data();
 			}
@@ -176,7 +178,14 @@
 		},
 		
 		_getHtml: function () {	
-			var html = this._renderer.render(this._getTemplate(), _.extend(this._getData() || {}, this._getNestedViewsHtmlList()));
+			var data = _.extend(this._getData() || {}, this._getNestedViewsHtmlList());			
+			if (this.collection || null) {
+				data.collection = this.collection;
+			}
+			if (this.model || null) {
+				data.model = this.model;
+			}
+			var html = this._renderer.render(this._getTemplate(), data);
 			return html;
 		},
 		

@@ -105,7 +105,7 @@
 			var seekForViews = function (tree) {
 				for (var key in tree) {
 					if (tree[key] != null && typeof tree[key] === 'object') {
-						if ('view' in tree[key] || 'layout' in tree[key]) {
+						if ('view' in tree[key] || 'layout' in tree[key] || 'template' in tree[key]) {
 							var def = getDefsForNestedView(tree[key]);							
 							if ('name' in def) {
 								viewPathList.push(def);
