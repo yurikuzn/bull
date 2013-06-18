@@ -7,7 +7,7 @@ describe("Cacher", function () {
 	
 	beforeEach(function () {
 		cacher = new Bull.Cacher();
-		var reTxt = '^jet-';
+		var reTxt = '^bull-';
 		var re = new RegExp(reTxt);		
 		for (var key in localStorage) {						
 			if (re.test(key)) {					
@@ -40,5 +40,12 @@ describe("Cacher", function () {
 		cacher.set('testType', 'testName', 'test');
 		cacher.clear();
 		expect(cacher.get('testType', 'testName')).toBe(null);
+	});
+	
+	
+	it ('should set attribute with proper key', function () {
+		cacher.set('testType', 'some', 'test');
+		expect(localStorage.getItem('bull-testType-some')).toBe('test');
+		cacher.clear('testType');		
 	});
 });

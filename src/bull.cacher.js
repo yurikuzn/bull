@@ -9,11 +9,11 @@
 		_prefix: 'bull',
 		
 		_composeFullPrefix: function (type) {
-			this._prefix + '-' + type;
+			return this._prefix + '-' + type;
 		},
 		
 		_composeKey: function (type, name) {
-			return  this._composeFullPrefix() + '-' + name;
+			return this._composeFullPrefix(type) + '-' + name;
 		},
 		
 		_checkType: function (type) {
@@ -44,8 +44,8 @@
 		
 		set: function (type, name, value) {
 			this._checkType(type);
-		
-			var key = this._composeKey(type, name);
+
+			var key = this._composeKey(type, name);	
 			if (value instanceof Object) {
 				value = JSON.stringify(value);
 			}
