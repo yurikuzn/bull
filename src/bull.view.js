@@ -84,6 +84,7 @@
 			this.template = this.options.template || this.template;			
 			this.layout = this.options.layout || this.layout;
 			this._layout = this.options._layout || this._layout;
+			this.layoutData = this.options.layoutData || this.layoutData;
 			
 			if (this.layout != null || this._getLayout() != null) {				
 				this._loadNestedViews();
