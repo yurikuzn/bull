@@ -57,7 +57,7 @@
 			if (typeof type !== 'undefined') {
 				reText = '^' + this._composeFullPrefix(type);
 			} else {
-				reText = '^' + this.prefix + '-';
+				reText = '^' + this._prefix + '-';
 			}
 			var re = new RegExp(reText);			
 			for (var i in localStorage) {						
