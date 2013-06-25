@@ -111,7 +111,7 @@ var Bull = Bull || {};
 		 * Create view.
 		 * @param viewName
 		 * @param {Object} options
-		 * @param {Function} callback
+		 * @param {Function} callback Will be called as view gets ready and view will be passed as an argument.
 		 * @return {Bull.View}
 		 */
 		create: function (viewName, options, callback) {				

@@ -70,7 +70,9 @@
 		
 		expectedViews: null,
 		
-		_nestedViewsFromLayoutLoaded: false,	
+		_nestedViewsFromLayoutLoaded: false,
+		
+		_readyConditions: null,	
 	
 		initialize: function () {				
 			this._factory = this.factory = this.options.factory || null;			
@@ -89,7 +91,11 @@
 			
 			if (this.expectedViews == null) {
 				this.expectedViews = [];
-			}			
+			}
+			
+			if (this._readyConditions == null) {
+				this._readyConditions = [];
+			}
 			
 			this.setup();
 			
@@ -195,6 +201,10 @@
 			for (var i in this._readyConditions) {
 				if (typeof this._readyConditions[i] === 'function') {
 					if (!this._readyConditions[i]()) {
+						return;
+					}
+				} else {
+					if (!this._readyConditions) {
 						return;
 					}
 				}
@@ -425,8 +435,7 @@
 				}
 			}
 			return el;
-		},
-		
+		},		
 		
 		hasView: function (key) {
 			if (key in this.nestedViews) {
@@ -500,6 +509,14 @@
 		 */
 		getParentView: function () {
 			return this._parentView;
+		},
+		
+		/**
+		 * Add condition for view getting ready.
+		 * @param {Function} or {Bool}
+		 */
+		addReadyCondition: function (condition) {
+			this._readyConditions.push(condition);
 		},
 		
 		waitForView: function (viewName) {
