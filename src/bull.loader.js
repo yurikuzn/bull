@@ -64,47 +64,56 @@
 			return pathPart + '/' + namePart + '.' + this._exts[type];
 		},
 		
-		_callExternalLoader: function (type, name) {
+		_callExternalLoader: function (type, name, callback) {
 			if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
-				if (typeof this._externalLoaders[type] === 'function') {
-					return this._externalLoaders[type](name);
-				}
-				throw new Error("Loader for \"" + type + "\" in not a Function.");			
+				if (typeof this._externalLoaders[type] === 'function') {					
+					this._externalLoaders[type](name, callback);
+					return true;					
+				} else {
+					throw new Error("Loader for \"" + type + "\" in not a Function.");
+				}			
 			}
 			return null;
 		},
 		
-		load: function (type, name) {		
-			var response = this._callExternalLoader(type, name);			
-			if (response !== null && response !== false) {
-				return response;
+		load: function (type, name, callback) {			
+			var customCalled = this._callExternalLoader(type, name, callback);			
+			if (customCalled) {
+				return;
 			}
+			
+			var response;
 			
 			var filePath = this._getFilePath(type, name);
 		
-			var xhr = new XMLHttpRequest();	
-			xhr.open('GET', filePath, false);
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', filePath, true);
 			xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-			xhr.send(null);
 			
-			response = xhr.responseText;
-			
-			if (type in this._isJson) {
-				if (this._isJson[type]) {				
-					var obj;
-					if (xhr.status == 404 || xhr.status == 403) {
-						throw new Error("Could not load " + type + " \"" + name + "\".");
-					}
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === 4) {
+					response = xhr.responseText;
+					if (type in this._isJson) {						
+						if (this._isJson[type]) {				
+							var obj;
+							if (xhr.status == 404 || xhr.status == 403) {
+								throw new Error("Could not load " + type + " \"" + name + "\".");
+							}
 					
-					try {
-						obj = JSON.parse(String(response));
-					} catch (e) {						
-						throw new SyntaxError("Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
-					}
-					return obj;			
+							try {
+								obj = JSON.parse(String(response));
+							} catch (e) {						
+								throw new SyntaxError("Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
+							}
+							callback(obj);
+							return;			
+						}
+					}		
+					callback(response);    		
 				}
-			}			
-			return response;
+			}.bind(this);
+			
+			xhr.send(null);
 		},
 	});
 	

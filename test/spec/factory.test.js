@@ -40,7 +40,7 @@ describe("Factory", function () {
 			}		
 		});
 		
-		var view = factory.create('viewTest');		
+		var view = factory.create('viewTest', {});		
 		expect(typeof view === 'object').toBe(true);		
 	});
 });

@@ -2,8 +2,6 @@
 
 var Bull = Bull || {};
 
-BullTest.include('../src/bull.layouter.js');
-
 describe("Layouter", function () {
 	var layouter;
 	var cacher;
@@ -24,11 +22,11 @@ describe("Layouter", function () {
 		spyOn(cacher, 'set');
 		
 		loader = {
-			load: function () {
-				return {};
-			},
+			load: {},
 		};		
-		spyOn(loader, 'load').andReturn(defaultLayout);
+		spyOn(loader, 'load').andCallFake(function (type, name, callback) {			
+			callback(defaultLayout);
+		});
 	
 		layouter = new Bull.Layouter({
 			cacher: cacher,
@@ -178,28 +176,15 @@ describe("Layouter", function () {
 		var nestedViewList = layouter.findNestedViews('test');	
 		expect(cacher.get).toHaveBeenCalledWith('nestedView', 'test');
 		expect(cacher.set).toHaveBeenCalledWith('nestedView', 'test', nestedViewList);
-	});
-	
-	it ('shoud load layout if is not loaded', function () {
-		layouter.findNestedViews('test');
-		expect(loader.load).toHaveBeenCalledWith('layout', 'test');	
-	});
-	
-	it ('shoud not load layout if loaded', function () {
-		layouter.addLayout('test', {
-			layout: {},
-		});
-		layouter.findNestedViews('test');
-		expect(loader.load.calls.length).toBe(0);	
-	});
+	});	
 	
 	it ('shoud get layout from cache', function () {
-		layouter.getLayout('test');
+		layouter.getLayout('test', function (layout) {});
 		expect(cacher.get).toHaveBeenCalledWith('layout', 'test');
 	});
 	
 	it ('shoud store layout to cache', function () {	
-		layouter.getLayout('test');
+		layouter.getLayout('test', function (layout) {});
 		expect(cacher.set).toHaveBeenCalledWith('layout', 'test', defaultLayout);
 	});
 	

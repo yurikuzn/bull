@@ -2,27 +2,32 @@
 
 var Bull = Bull || {};
 
-BullTest.include('../src/bull.view.js');
-
 describe("View", function () {
 	var view, templator, renderer;
+
 	
 	beforeEach(function () {	
 		renderer = {
 			render: function (template) {}
 		};			
+
 		templator = {
-			getTemplate: function (templateName, layoutOptions) {}
-		};		
-		layouter = {
-			findNestedViews: function (layoutName) {
-				return [];
+			getTemplate: function (templateName, layoutOptions, noCache, callback) {
+				callback('test');
 			}
 		};
+				
+		layouter = {
+			findNestedViews: function (layoutName, layout) {
+				return [];
+			},
+			getLayout: function (name, callback) {
+				callback(null);
+			},
+		};
 		factory = {
-			create: function (viewName, options) {
-				return {
-				};
+			create: function (viewName, options, callback) {
+				callback({});
 			},
 		};
 	
@@ -45,7 +50,7 @@ describe("View", function () {
 		spyOn(renderer, 'render');
 		
 		view.render();
-		view.getHtml();
+		view.getHtml(function () {});
 		
 		expect(renderer.render).toHaveBeenCalled();		
 		expect(renderer.render.calls.length).toEqual(2);
@@ -69,7 +74,8 @@ describe("View", function () {
 			layout: 'SomeLayout',
 		});		
 		view.render();		
-		expect(templator.getTemplate).toHaveBeenCalledWith('SomeTemplate', {} , false);
+		expect(templator.getTemplate.mostRecentCall.args[0]).toBe('SomeTemplate');
+		expect(templator.getTemplate.mostRecentCall.args[2]).toBe(false);
 	});
 	
 	it ('should set element for view that name is not defined for', function () {
@@ -119,12 +125,12 @@ describe("View", function () {
 			];
 		});
 		
-		spyOn(factory, 'create').andCallFake(function() {
-			return {
+		spyOn(factory, 'create').andCallFake(function (name, options, callback) {
+			callback({
 				notToRender: false,
 				_updatePath: function () {},
 				_afterRender: function () {},
-			};
+			});
 		});
 		
 		var view = new Bull.View({
@@ -162,17 +168,15 @@ describe("View", function () {
 			];
 		});
 		
-		spyOn(factory, 'create').andCallFake(function() {
-			return {
-				getHtml: function () {
-					return 'viewTest';
+		spyOn(factory, 'create').andCallFake(function(name, options, callback) {
+			callback({
+				getHtml: function (callback) {
+					callback('viewTest');
 				},
 				_updatePath: function () {},
 				_afterRender: function () {},
-			};
-		});
-		
-		spyOn(templator, 'getTemplate').andReturn('testTemplate');
+			});
+		});		
 		
 		var view = new Bull.View({
 			renderer: renderer,
@@ -185,16 +189,19 @@ describe("View", function () {
 		spyOn(renderer, 'render');		
 		view.render();		
 				
-		expect(renderer.render).toHaveBeenCalledWith('testTemplate', {header: 'viewTest'});		
+		expect(renderer.render.mostRecentCall.args[0]).toBe('test');
+		expect(renderer.render.mostRecentCall.args[1].header).toBe('viewTest');
+
 	});
 	
-	it ('should set and get nested view', function () {
+	it ('should set get and check nested view', function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
 		view.setView('main', subView);
 		
 		expect(subView).toBe(view.getView('main'));
-		expect(subView).toBe(view.main);
+		expect(subView).toBe(view.main);		
+		expect(view.hasView('main')).toBe(true);
 	});
 	
 	it ('should set parent view when set view', function () {

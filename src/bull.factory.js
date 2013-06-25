@@ -111,9 +111,10 @@ var Bull = Bull || {};
 		 * Create view.
 		 * @param viewName
 		 * @param {Object} options
+		 * @param {Function} callback
 		 * @return {Bull.View}
 		 */
-		create: function (viewName, options) {				
+		create: function (viewName, options, callback) {				
 			var viewClass = this._getViewClass(viewName);
 			
 			if (typeof viewClass === 'undefined') {
@@ -125,8 +126,9 @@ var Bull = Bull || {};
 				layouter: this._layouter,
 				templator: this._templator,
 				renderer: this._renderer,
-				helper: this._helper
-			}));						
+				helper: this._helper,
+				onReady: callback
+			}));
 			return view;					
 		},
 	});	

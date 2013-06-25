@@ -44,11 +44,15 @@
 		
 		layoutData: null,
 		
+		isReady: false,
+		
 		nestedViews: null,
 		
 		_nestedViewDefs: null,
 		
 		_factory: null,
+		
+		factory: null,
 		
 		_templator: null,
 		
@@ -62,10 +66,14 @@
 
 		_parentView: null,
 		
-		_path: 'root',		
+		_path: 'root',
+		
+		expectedViews: null,
+		
+		_nestedViewsFromLayoutLoaded: false,	
 	
 		initialize: function () {				
-			this._factory = this.options.factory || null;			
+			this._factory = this.factory = this.options.factory || null;			
 			this._renderer = this.options.renderer || null;
 			this._templator = this.options.templator || null;
 			this._layouter = this.options.layouter || null;			
@@ -79,16 +87,16 @@
 			this.nestedViews = {};
 			this._nestedViewDefs = {};
 			
+			if (this.expectedViews == null) {
+				this.expectedViews = [];
+			}			
+			
 			this.setup();
 			
 			this.template = this.options.template || this.template;			
 			this.layout = this.options.layout || this.layout;
 			this._layout = this.options._layout || this._layout;
-			this.layoutData = this.options.layoutData || this.layoutData;
-			
-			if (this.layout != null || this._getLayout() != null) {				
-				this._loadNestedViews();
-			}			
+			this.layoutData = this.options.layoutData || this.layoutData;		
 			
 			if (this._template != null && this._templator.compilable) {
 				this._templateCompiled = this._templator.compileTemplate(this._template);
@@ -96,20 +104,42 @@
 			
 			if (this.options.el || null) {
 				this.setElementInAdvance(this.options.el);
-			}			
+			}
+			
+			var _layout = this._getLayout();			
+			
+			var loadNestedViews = function () {				
+				this._loadNestedViews(function () {
+					this._nestedViewsFromLayoutLoaded = true;
+					this._tryReady();
+				}.bind(this));				
+			}.bind(this);
+			
+			if (this.layout != null || _layout !== null) {					
+				if (_layout === null) {					
+					this._layouter.getLayout(this.layout, function (_layout) {			
+						this._layout = _layout;						
+						loadNestedViews();
+					}.bind(this));
+					return;
+				}
+				loadNestedViews();
+				return;				
+			}
+			this._nestedViewsFromLayoutLoaded = true;			
+			this._tryReady();
 		},
 		
 		/**
 		 * Setup view. Empty function by default.
 		 */
-		setup: function () {},
-		
+		setup: function () {},				
 		
 		/**
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
 		 */
 		setElementInAdvance: function (el) {
-			this.on("after:render", function () {
+			this.on("after:render", function () {				
 				if (!this.el) {
 					this.setElement(el);
 				}
@@ -119,23 +149,28 @@
 		/**
 		 * Get HTML of view but don't render it.
 		 */
-		getHtml: function () {
-			return this._getHtml();
+		getHtml: function (callback) {
+			this._getHtml(callback);
 		},
 		
 		/**
 		 * Render view.
 		 */
-		render: function () {		
+		render: function (callback) {		
 			this.trigger("before:render", this);
-			var html = this._getHtml();
-			this.trigger("render", this);
-			if (this.$el) {			
-				this.$el.html(html);
-			} else {
-				this.el.innerHTML = html;
-			}
-			this._afterRender();			
+			this._getHtml(function (html) {
+				this.trigger("render", this);
+				if (this.$el) {			
+					this.$el.html(html);
+				} else {
+					this.el.innerHTML = html;
+				}
+				this._afterRender();
+				if (typeof callback === 'function') {
+					callback();
+				}
+			}.bind(this));
+			
 		},
 		
 		_afterRender: function () {
@@ -145,16 +180,58 @@
 			}						
 		},
 		
-		_loadNestedViews: function () {
-			if (this._layouter == null) {
+		_tryReady: function () {
+			if (this.isReady) {
 				return;
 			}
+			if (!this._nestedViewsFromLayoutLoaded) {
+				return;
+			}	
+			for (var i in this.expectedViews) {
+				if (!this.hasView(this.expectedViews[i])) {					
+					return; 
+				}
+			}			
+			for (var i in this._readyConditions) {
+				if (typeof this._readyConditions[i] === 'function') {
+					if (!this._readyConditions[i]()) {
+						return;
+					}
+				}
+			}			
+			this._makeReady();
+		},
+		
+		_makeReady: function () {
+			this.isReady = true;
+			this.trigger('ready');
+			if (typeof this.options.onReady === 'function') {		
+				this.options.onReady(this);
+			}
+		},
+		
+		asyncLoop: function (o) {
+			var i = -1;
+			var loop = function () {
+				i++;
+				if (i == o.length){
+					o.callback();
+					return;
+				}
+				o.functionToLoop(loop, i);
+			} 
+			loop();
+		},
+		
+		_loadNestedViews: function (callback) {			
+
 			var nestedViewDefs = this._layouter.findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
 
 			if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
 				throw new Error("Bad layout. It should be an Array.");
 			}
 			
+			var nestedViewDefsFiltered = [];
 			for (var i in nestedViewDefs) {	
 				var key = nestedViewDefs[i].name;	
 
@@ -165,38 +242,50 @@
 						continue;
 					}
 				}
+				nestedViewDefsFiltered.push(nestedViewDefs[i]);
+			}
+			
+			nestedViewDefs = nestedViewDefsFiltered;
+			
+			this.asyncLoop({
+				length : nestedViewDefs.length,
+				functionToLoop : function (loop, i) {
+					var key = nestedViewDefs[i].name;
+					var viewName = this._factory.defaultViewName;
 				
-				var viewName = this._factory.defaultViewName;
+					if ('view' in nestedViewDefs[i]) {
+						viewName = nestedViewDefs[i].view;
+					}
+					var options = {};
+					if ('layout' in nestedViewDefs[i]) {
+						options.layout = nestedViewDefs[i].layout;
+					} 
+					if ('template' in nestedViewDefs[i]) {
+						options.template = nestedViewDefs[i].template;
+					}
 				
-				if ('view' in nestedViewDefs[i]) {
-					viewName = nestedViewDefs[i].view;
-				}
-				var options = {};
-				if ('layout' in nestedViewDefs[i]) {
-					options.layout = nestedViewDefs[i].layout;
-				} 
-				if ('template' in nestedViewDefs[i]) {
-					options.template = nestedViewDefs[i].template;
-				}
+					if ('options' in nestedViewDefs[i]) {
+						options = _.extend(options, nestedViewDefs[i].options);
+					}
+					if (this.model) {					
+						options.model = this.model;
+					}
+					if (this.collection) {					
+						options.collection = this.collection;
+					}
 				
-				if ('options' in nestedViewDefs[i]) {
-					options = _.extend(options, nestedViewDefs[i].options);
-				}
-				if (this.model) {					
-					options.model = this.model;
-				}
-				if (this.collection) {					
-					options.collection = this.collection;
-				}
-				
-				var view = this._factory.create(viewName, options);
-				
-				if ('notToRender' in nestedViewDefs[i]) {
-					view.notToRender = nestedViewDefs[i].notToRender;
-				}
-				
-				this.setView(key, view);
-			}					
+					this._factory.create(viewName, options, function (view) {
+						if ('notToRender' in nestedViewDefs[i]) {
+							view.notToRender = nestedViewDefs[i].notToRender;
+						}			
+						this.setView(key, view);
+						loop();
+					}.bind(this));
+				}.bind(this),
+				callback : function() {
+					callback();
+				}    
+			});				
 		},
 		
 		_getData: function () {			
@@ -206,27 +295,58 @@
 			return this.data;
 		},
 		
-		_getNestedViewsHtmlList: function () {
-			var data = {};
-			for (var key in this.nestedViews) {
-				var view = this.nestedViews[key];
-				if (!view.notToRender) {
-					data[key] = view.getHtml();
-				}
+		_getNestedViewsAsArray: function (nestedViews) {
+			var nestedViewsArray = [];			
+			var i = 0;
+			for (var key in this.nestedViews) {				
+				nestedViewsArray.push({
+					key: key,
+					view: this.nestedViews[key]
+				});
+				i++;
 			}
-			return data;			
+			return nestedViewsArray;
+			
 		},
 		
-		_getHtml: function () {	
-			var data = _.extend(this._getData() || {}, this._getNestedViewsHtmlList());			
-			if (this.collection || null) {
-				data.collection = this.collection;
-			}
-			if (this.model || null) {
-				data.model = this.model;
-			}
-			var html = this._renderer.render(this._getTemplate(), data);
-			return html;
+		_getNestedViewsHtmlList: function (callback) {
+			var data = {};			
+			var nestedViewsArray = this._getNestedViewsAsArray();
+			
+			this.asyncLoop({
+				length : nestedViewsArray.length,
+				functionToLoop : function (loop, i) {				
+					var key = nestedViewsArray[i].key; 
+					var view = nestedViewsArray[i].view;
+					if (!view.notToRender) {					
+						view.getHtml(function (html) {
+							data[key] = html;
+							loop();
+						});	
+					} else {
+						loop();
+					}
+				},
+				callback: function () {
+					callback(data);
+				}
+			});						
+		},
+		
+		_getHtml: function (callback) {		
+			this._getNestedViewsHtmlList(function (nestedViewsHtmlList) {
+				var data = _.extend(this._getData() || {}, nestedViewsHtmlList);			
+				if (this.collection || null) {
+					data.collection = this.collection;
+				}
+				if (this.model || null) {
+					data.model = this.model;
+				}				
+				this._getTemplate(function (template) {
+					var html = this._renderer.render(template, data);
+					callback(html);
+				}.bind(this));				
+			}.bind(this));
 		},
 		
 		_getTemplateName: function () {
@@ -248,20 +368,23 @@
 			return this._layout;
 		},
 		
-		_getTemplate: function () {		
-			if (this._templator.compilable && this._templateCompiled !== null) {
-				return this._templateCompiled;
+		_getTemplate: function (callback) {		
+			if (this._templator.compilable && this._templateCompiled !== null) {				
+				callback(this._templateCompiled);
+				return;
 			} 
 		
 			var _template = this._template || null;											
 			
-			if (_template !== null) {
-				return _template;
+			if (_template !== null) {				
+				callback(_template);
+				return;
 			}			
 			
 			var templateName = this._getTemplateName();
 			var noCache = false;
 			var layoutOptions = {};
+			
 				
 			if (!templateName) {
 				noCache = this.noCache;
@@ -277,12 +400,10 @@
 					name: layoutName,
 					data: this._getLayoutData(),
 					layout: this._getLayout(),
-				}				
+				}		
 			}
-				
-			_template = this._templator.getTemplate(templateName, layoutOptions, noCache);
-				
-			return _template;
+			
+			this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
 		},
 		
 		_updatePath: function (parentPath, viewKey) {
@@ -306,6 +427,14 @@
 			return el;
 		},
 		
+		
+		hasView: function (key) {
+			if (key in this.nestedViews) {
+				return true;
+			}
+			return false;
+		},
+		
 		/**
 		 * Get nested view.
 		 * @param {string} key
@@ -315,7 +444,17 @@
 			if (key in this.nestedViews) {
 				return this.nestedViews[key];
 			}
-		},		
+		},
+		
+		createView: function (key, viewName, options, callback) {
+			this.waitForView(key);
+			this._factory.create(viewName, options, function (view) {
+				this.setView(key, view);
+				if (typeof callback === 'function') {
+					callback(view);
+				}
+			}.bind(this));		
+		},	
 		
 		/**
 		 * Set nested view.
@@ -339,7 +478,9 @@
 			
 			if (!(key in this)) {
 				this[key] = view;
-			}			
+			}
+			
+			this._tryReady();		
 		},
 		
 		/**
@@ -361,6 +502,10 @@
 			return this._parentView;
 		},
 		
+		waitForView: function (viewName) {
+			this.expectedViews.push(viewName);
+		},
+		
 		/**
 		 * Remove view and all nested tree. Triggers 'remove' event.
 		 */
@@ -370,7 +515,9 @@
 			}
 			this.trigger('remove');
 			this.off();	
-			Backbone.View.prototype.remove.apply(this, arguments);		
+			this.$el.empty();
+      		this.stopListening();
+     		return this;		
 		},
 	});	
 	

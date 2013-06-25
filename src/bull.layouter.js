@@ -19,19 +19,24 @@
 			this._layouts[layoutName] = layout;			
 		},	
 	
-		getLayout: function (layoutName) {
+		getLayout: function (layoutName, callback) {
 			if (layoutName in this._layouts) {
-				return this._layouts[layoutName];
+				callback(this._layouts[layoutName]);
+				return;
 			}
+			
+			var proceed = function (layout) {
+				this._cacheLayout(layoutName, layout);
+				this.addLayout(layoutName, layout);
+				callback(layout);
+			}.bind(this); 
 			
 			var layout = this._getCachedLayout(layoutName);
 			if (!layout) {
-				layout = this._loader.load('layout', layoutName);
-				this._cacheLayout(layoutName, layout);
+				this._loader.load('layout', layoutName, proceed);
+				return;			
 			}
-						
-			this.addLayout(layoutName, layout);
-			return layout;		
+			proceed(layout);
 		},
 		
 		_getCachedLayout: function (layoutName) {
@@ -70,10 +75,15 @@
 				if (cached) {
 					return cached;
 				}
-			}	
-			var layoutDefs = layoutDefs || this.getLayout(layoutName);
-			if (typeof layoutDefs == 'undefined' || !('layout' in layoutDefs)) {
-				throw new Error("Layout \"" + layoutName + "\"" + " is bad.");
+			}
+
+			if (typeof layoutDefs == 'undefined') {
+				if (layoutName in this._layouts) {
+					layoutDefs = this._layouts[layoutName];
+				}
+				if (!('layout' in layoutDefs)) {
+					throw new Error("Layout \"" + layoutName + "\"" + " is bad.");
+				}
 			}			
 			var layout = layoutDefs.layout;
 			var viewPathList = [];	

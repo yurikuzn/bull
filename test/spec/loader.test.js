@@ -33,7 +33,7 @@ describe("Loader", function () {
 				layout: layoutManager.load
 			}
 		});		
-		loader.load('layout', 'account/detail');
-		expect(layoutManager.load).toHaveBeenCalledWith('account/detail');	
+		loader.load('layout', 'account.detail', function () {});
+		expect(layoutManager.load.calls[0].args[0]).toBe('account.detail');	
 	});
 });
