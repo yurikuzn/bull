@@ -117,7 +117,7 @@
 			var loadNestedViews = function () {				
 				this._loadNestedViews(function () {
 					this._nestedViewsFromLayoutLoaded = true;
-					this._tryReady();
+					this._tryReady();					
 				}.bind(this));				
 			}.bind(this);
 			
@@ -132,7 +132,8 @@
 				loadNestedViews();
 				return;				
 			}
-			this._nestedViewsFromLayoutLoaded = true;			
+			this._nestedViewsFromLayoutLoaded = true;
+								
 			this._tryReady();
 		},
 		
@@ -145,10 +146,8 @@
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
 		 */
 		setElementInAdvance: function (el) {
-			this.on("after:render", function () {				
-				if (!this.el) {
-					this.setElement(el);
-				}
+			this.on("after:render", function () {
+				this.setElement(el);
 			}.bind(this));
 		},
 		
@@ -191,6 +190,7 @@
 				return;
 			}
 			if (!this._nestedViewsFromLayoutLoaded) {
+				
 				return;
 			}	
 			for (var i in this.expectedViews) {
@@ -208,7 +208,8 @@
 						return;
 					}
 				}
-			}			
+			}
+
 			this._makeReady();
 		},
 		
@@ -287,8 +288,8 @@
 					this._factory.create(viewName, options, function (view) {
 						if ('notToRender' in nestedViewDefs[i]) {
 							view.notToRender = nestedViewDefs[i].notToRender;
-						}			
-						this.setView(key, view);
+						}		
+						this.setView(key, view);						
 						loop();
 					}.bind(this));
 				}.bind(this),
@@ -389,17 +390,17 @@
 			if (_template !== null) {				
 				callback(_template);
 				return;
-			}			
+			}
 			
-			var templateName = this._getTemplateName();
+			var templateName = this._getTemplateName();			
+
 			var noCache = false;
-			var layoutOptions = {};
-			
+			var layoutOptions = {};			
 				
 			if (!templateName) {
 				noCache = this.noCache;
 			
-				var layoutName = this._getLayoutName();
+				var layoutName = this._getLayoutName();				
 								
 				if (!layoutName) {
 					noCache = true;				

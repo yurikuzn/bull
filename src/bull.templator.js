@@ -63,13 +63,13 @@
 				if (layout == null) {
 					throw new Error("Could not get layout '" + layoutOptions.name + "'.");
 				}
-				this._buildTemplate(layout, layoutOptions.data, then);				
+				this._buildTemplate(layout, layoutOptions.data, then);			
 			}.bind(this);
 			
 			if (!template) {						
 				if (!layoutOptions.name && !layoutOptions.layout) {					
 					this._loader.load('template', name, then);					
-				} else {					
+				} else {							
 					if (!layout) {												
 						this._layouter.getLayout(layoutOptions.name, proceedWithLayout);
 					} else {
