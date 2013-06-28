@@ -16,7 +16,7 @@ var Bull = Bull || {};
 	 * <ul>
 	 *  <li>useCache: {bool}</li>
 	 *  <li>defaultView: {String} Default name for views when it is not defined.</li>
-	 *  <li>viewLoader: {Function} Function that returns view class ({Function} in javascript) by the given view name as only parameter. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
+	 *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript) by the given view name and callback function as parameters. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
 	 *  <li>helper: {Function} View Helper that will be injected into all views.</li>
 	 *  <li>loading: {Object} Resources loading options: paths, exts, loaders. Example: <br>
 	 *    <i>{
@@ -91,45 +91,46 @@ var Bull = Bull || {};
 		
 		_viewClassHash: null,		
 		
-		_getViewClassFunction: function (viewName) {		
+		_getViewClassFunction: function (viewName, callback) {		
 			var viewClass = root[viewName];
 			if (typeof viewClass !== "function") {
 				throw new Error("function \"" + viewClass + "\" not found.");
 			}
-			return viewClass;			
+			callback(viewClass);			
 		},		
 		
-		_getViewClass: function (viewName) {			
+		_getViewClass: function (viewName, callback) {			
 			if (viewName in this._viewClassHash) {
-				return this._viewClassHash[viewName];
+				callback(this._viewClassHash[viewName]);
+				return;
 			}			
-			this._viewClassHash[viewName] = this._getViewClassFunction(viewName);			
-			return this._viewClassHash[viewName];
+			this._getViewClassFunction(viewName, function (viewClass) {
+				this._viewClassHash[viewName] = viewClass;
+				callback(viewClass);
+			}.bind(this));			
 		},		
 		
 		/**
 		 * Create view.
 		 * @param viewName
 		 * @param {Object} options
-		 * @param {Function} callback Will be called as view gets ready and view will be passed as an argument.
+		 * @param {Function} callback Will be invoked once view gets ready and view will be passed as an argument.
 		 * @return {Bull.View}
 		 */
-		create: function (viewName, options, callback) {				
-			var viewClass = this._getViewClass(viewName);
-			
-			if (typeof viewClass === 'undefined') {
-				throw new Error("Class for view \"" + viewName + "\" not found.");
-			}	
-					
-			var view = new viewClass(_.extend(options || {}, {
-				factory: this,
-				layouter: this._layouter,
-				templator: this._templator,
-				renderer: this._renderer,
-				helper: this._helper,
-				onReady: callback
-			}));
-			return view;					
+		create: function (viewName, options, callback) {					
+			this._getViewClass(viewName, function (viewClass) {	
+				if (typeof viewClass === 'undefined') {
+					throw new Error("Class for view \"" + viewName + "\" not found.");
+				}				
+				var view = new viewClass(_.extend(options || {}, {
+					factory: this,
+					layouter: this._layouter,
+					templator: this._templator,
+					renderer: this._renderer,
+					helper: this._helper,
+					onReady: callback
+				}));				
+			}.bind(this));
 		},
 	});	
 	

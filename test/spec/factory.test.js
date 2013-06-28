@@ -26,21 +26,22 @@ describe("Factory", function () {
 		var loader = {
 			load: {}
 		};
+		var viewLoader = {load: {}};
 		var viewClass = function (viewName, options) {	
 		};
 		spyOn(loader, 'load').andReturn(viewClass);
+		
+		spyOn(viewLoader, 'load').andReturn(viewClass);
 	
 		factory = new Bull.Factory({
 			customLoader: loader,
 			customLayouter: layouter,
 			customTemplator: templator,
 			customRenderer: renderer,
-			viewLoader: function (viewName) {
-				return viewHash[viewName];
-			}		
+			viewLoader: viewLoader.load		
 		});
 		
-		var view = factory.create('viewTest', {});		
-		expect(typeof view === 'object').toBe(true);		
+		factory.create('viewTest', {}, function () {});		
+		expect(viewLoader.load).toHaveBeenCalled();		
 	});
 });
