@@ -456,8 +456,11 @@
 			}
 		},
 		
-		createView: function (key, viewName, options, callback) {
-			this.waitForView(key);
+		createView: function (key, viewName, options, callback, wait) {
+			wait = (typeof wait === 'undefined') ? true : wait;
+			if (wait) {
+				this.waitForView(key);
+			}
 			this._factory.create(viewName, options, function (view) {
 				this.setView(key, view);
 				if (typeof callback === 'function') {
