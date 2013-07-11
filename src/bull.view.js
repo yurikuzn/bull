@@ -539,6 +539,12 @@
 			this.$el.empty();
       		this.stopListening();
       		this.undelegateEvents();
+      		if (this.model) {
+      			this.model.off(null, null, this);
+      		}
+      		if (this.collection) {
+      			this.collection.off(null, null, this);
+      		}
      		return this;		
 		},
 	});	
