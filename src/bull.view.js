@@ -68,6 +68,8 @@
 		
 		_path: 'root',
 		
+		_wait: false,
+		
 		expectedViews: null,
 		
 		_nestedViewsFromLayoutLoaded: false,
@@ -189,8 +191,10 @@
 			if (this.isReady) {
 				return;
 			}
-			if (!this._nestedViewsFromLayoutLoaded) {
-				
+			if (this._wait) {				
+				return;
+			}
+			if (!this._nestedViewsFromLayoutLoaded) {				
 				return;
 			}	
 			for (var i in this.expectedViews) {
@@ -529,6 +533,19 @@
 		
 		waitForView: function (viewName) {
 			this.expectedViews.push(viewName);
+		},
+		
+		/**
+		 * Add wait condition is true is passed. Remove wait condition if false.
+		 * @param {Bool}
+		 */
+		wait: function (wait) {
+			if (wait) {
+				this._wait = true;
+			} else {
+				this._wait = false;
+				this._tryReady();
+			}	
 		},
 		
 		/**
