@@ -213,6 +213,10 @@
 			this._makeReady();
 		},
 		
+		tryReady: function () {
+			this._tryReady();
+		},
+		
 		_makeReady: function () {
 			this.isReady = true;
 			this.trigger('ready');
