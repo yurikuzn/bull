@@ -538,6 +538,7 @@
 			this.off();	
 			this.$el.empty();
       		this.stopListening();
+      		this.undelegateEvents();
      		return this;		
 		},
 	});	
