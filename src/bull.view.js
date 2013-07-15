@@ -178,14 +178,17 @@
 				}
 			}.bind(this));
 			
-		},
+		},				
 		
 		_afterRender: function () {
-			this.trigger("after:render", this);		
+			this.trigger("after:render", this);
+			this.afterRender();	
 			for (var key in this.nestedViews) {				
 				this.nestedViews[key]._afterRender();
 			}						
 		},
+		
+		afterRender: function () {},
 		
 		_tryReady: function () {
 			if (this.isReady) {
