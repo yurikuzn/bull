@@ -52,10 +52,14 @@
 			localStorage.setItem(key, value);
 		},
 		
-		clear: function (type) {			
+		clear: function (type, name) {			
 			var reText;
 			if (typeof type !== 'undefined') {
-				reText = '^' + this._composeFullPrefix(type);
+				if (typeof type === 'undefined') {
+					reText = '^' + this._composeFullPrefix(type);
+				} else {
+					reText = '^' + this._composeKey(type, name);
+				}
 			} else {
 				reText = '^' + this._prefix + '-';
 			}
