@@ -84,7 +84,7 @@
 			
 			var response;
 			
-			var filePath = this._getFilePath(type, name);
+			var filePath = this._getFilePath(type, name) + '?_=' + Math.floor((Math.random() * 100000) + 1);
 		
 			var xhr = new XMLHttpRequest();
 			xhr.open('GET', filePath, true);
