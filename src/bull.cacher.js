@@ -55,7 +55,7 @@
 		clear: function (type, name) {			
 			var reText;
 			if (typeof type !== 'undefined') {
-				if (typeof type === 'undefined') {
+				if (typeof name === 'undefined') {
 					reText = '^' + this._composeFullPrefix(type);
 				} else {
 					reText = '^' + this._composeKey(type, name);
