@@ -105,7 +105,7 @@
 			
 			var getDefsForNestedView = function (defsInLayout) {
 				var defs = {};
-				var params = ['view', 'layout', 'notToRender', 'options', 'template', 'id', 'selector'];
+				var params = ['view', 'layout', 'notToRender', 'options', 'template', 'id', 'selector', 'el'];
 				for (var i in params) {
 					var param = params[i];
 					if (param in defsInLayout) {

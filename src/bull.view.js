@@ -42,10 +42,15 @@
 		 */
 		_layout: null,
 		
-		layoutData: null,
+		layoutData: null,		
 		
 		isReady: false,
 		
+		/**
+		 * @property {Object} Definitions for nested views that should be automaticaly created. Example: {body: {view: 'Body', selector: '> .body'}}.
+		 */
+		views: null,		
+
 		nestedViews: null,
 		
 		_nestedViewDefs: null,
@@ -99,6 +104,23 @@
 				this._readyConditions = [];
 			}
 			
+			var merge = function (target, source) {
+				for (var prop in source) {
+					if (typeof target == 'object') { 
+						if (prop in target) {
+							merge(target[prop], source[prop]);
+						} else {
+							target[prop] = source[prop];
+						}
+					}
+				}
+				return target;
+			}
+			
+			if (this.views || this.options.views) {		
+				this.views = merge(this.views || {}, this.options.views || {});			
+			}	
+		
 			this.setup();
 			
 			this.template = this.options.template || this.template;			
@@ -132,7 +154,12 @@
 					return;
 				}
 				loadNestedViews();
-				return;				
+				return;
+			} else {
+				if (this.views != null) {
+					loadNestedViews();
+					return;
+				}
 			}
 			this._nestedViewsFromLayoutLoaded = true;
 								
@@ -245,9 +272,32 @@
 			loop();
 		},
 		
-		_loadNestedViews: function (callback) {			
-
-			var nestedViewDefs = this._layouter.findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
+		_createViews: function () {
+			var views = this.options.views || [];
+			views.forEach(function (o, name) {			
+				var options = _.clone(o);
+				delete options['view'];
+				options.model = this.model;
+				options.collection = this.collection;
+				if (!options.el && this.el && o.selector) {
+					options.el =  this.el + ' ' + o.selector;
+				}				
+				this.createView(name, o.view || null, options);								
+			}.bind(this));
+		},
+		
+		_addDefinedNestedViewDefs: function (list) {
+			for (var name in this.views) {
+				var o = _.clone(this.views[name]);
+				o.name = name;
+				list.push(o);
+				this._nestedViewDefs[name] = o;
+			}
+			return list
+		},		
+		
+		_getNestedViewsFromLayout: function () {
+			var nestedViewDefs = this._layouter.findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);			
 
 			if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
 				throw new Error("Bad layout. It should be an Array.");
@@ -267,7 +317,19 @@
 				nestedViewDefsFiltered.push(nestedViewDefs[i]);
 			}
 			
-			nestedViewDefs = nestedViewDefsFiltered;
+			return nestedViewDefsFiltered;
+		},
+		
+		
+		_loadNestedViews: function (callback) {			
+
+			var nestedViewDefs = [];
+			
+			if (this._layout != null ) {
+				nestedViewDefs = this._getNestedViewsFromLayout();
+			}
+			
+			this._addDefinedNestedViewDefs(nestedViewDefs);
 			
 			this.asyncLoop({
 				length : nestedViewDefs.length,
@@ -436,13 +498,26 @@
 		},
 		
 		_getSelectorForNestedView: function (key) {
-			var el = false;
+			var el = false;			
+			
 			if (key in this._nestedViewDefs) {								
 				if ('id' in this._nestedViewDefs[key]) {
 					el = '#' + this._nestedViewDefs[key].id;
 				} else {
-					if ('selector' in this._nestedViewDefs[key]) {
-						el = this._nestedViewDefs[key].selector;
+					if ('el' in this._nestedViewDefs[key]) {
+						el = this._nestedViewDefs[key].el;
+					} else {
+						if ('selector' in this._nestedViewDefs[key]) {							
+							var currentEl = null;
+							if (typeof this.el == 'object') {
+								currentEl = this.$el.selector;
+							} else {								
+								currentEl = this.options.el || this.el;	
+							}		
+							if (currentEl) {
+								el = currentEl + ' ' + this._nestedViewDefs[key].selector;
+							}					
+						}
 					}
 				}
 			}
@@ -478,7 +553,7 @@
 					callback(view);
 				}
 			}.bind(this));		
-		},	
+		},
 		
 		/**
 		 * Set nested view.
@@ -486,7 +561,7 @@
 		 * @param {Jet.View} view
 		 * @param {string} el Selector for view container.
 		 */
-		setView: function (key, view, el) {
+		setView: function (key, view, el) {	
 			var el = el || this._getSelectorForNestedView(key) || false;
 			if (el) {
 				view.setElementInAdvance(el);

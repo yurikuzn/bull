@@ -22,7 +22,7 @@ describe("View", function () {
 				return [];
 			},
 			getLayout: function (name, callback) {
-				callback(null);
+				callback([]);
 			},
 		};
 		factory = {
@@ -91,6 +91,7 @@ describe("View", function () {
 			layouter: layouter,
 			factory: factory,
 			layout: 'SomeLayout',
+			_layout: [],
 		});
 		
 		var main = {
@@ -139,13 +140,14 @@ describe("View", function () {
 			layouter: layouter,
 			factory: factory,
 			layout: 'SomeLayout',
+			_layout: [],
 		});
 		
 		expect(factory.create.calls[0].args[1]).toEqual({
 			layout: 'header',
 			some: 'test',
 		});
-		expect(layouter.findNestedViews).toHaveBeenCalledWith('SomeLayout', null, false);
+		expect(layouter.findNestedViews).toHaveBeenCalledWith('SomeLayout', [], false);
 		expect(factory.create.calls.length).toEqual(2);		
 		expect(view.header).toBeDefined();
 		expect(view.footer).toBeDefined();
@@ -167,6 +169,7 @@ describe("View", function () {
 				},
 			];
 		});
+		
 		
 		spyOn(factory, 'create').andCallFake(function(name, options, callback) {
 			callback({
