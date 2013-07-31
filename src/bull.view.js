@@ -118,7 +118,7 @@
 			}
 			
 			if (this.views || this.options.views) {		
-				this.views = merge(this.views || {}, this.options.views || {});			
+				this.views = merge(this.options.views || {}, this.views || {});			
 			}	
 		
 			this.setup();
