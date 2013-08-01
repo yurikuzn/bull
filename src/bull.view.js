@@ -630,7 +630,7 @@
 		 * Remove view and all nested tree. Triggers 'remove' event.
 		 */
 		remove: function () {
-			for (var key in this.nestedView) {
+			for (var key in this.nestedViews) {				
 				this.clearView(key);
 			}
 			this.trigger('remove');
