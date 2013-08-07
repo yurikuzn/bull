@@ -80,6 +80,8 @@
 		_nestedViewsFromLayoutLoaded: false,
 		
 		_readyConditions: null,	
+		
+		_rendered: false,
 	
 		initialize: function () {				
 			this._factory = this.factory = this.options.factory || null;			
@@ -103,6 +105,10 @@
 			if (this._readyConditions == null) {
 				this._readyConditions = [];
 			}
+			
+			this.once('after:render', function () {
+				this._rendered = true;
+			}, this);
 			
 			var merge = function (target, source) {
 				for (var prop in source) {
@@ -178,6 +184,14 @@
 			this.on("after:render", function () {
 				this.setElement(el);
 			}.bind(this));
+		},
+		
+		/**
+		 * Check whether view has been already rendered.
+		 * @return {Bool}
+		 */
+		isRendered: function () {
+			return this._rendered;
 		},
 		
 		/**
