@@ -33,7 +33,8 @@ var Bull = Bull || {};
 	 *        layout: function (layoutName) {
 	 *          return layoutManager.getLayout(layoutName);
 	 *        }    
-	 *      }
+	 *      },
+	 *      pathFunction: function (type, name) {} // Custom path function. Should return path to the needed resource.
 	 *    }</i>
 	 *  </li>
 	 *  <li>rendering: {Object} Rendering options: method (Method is the custom function for a rendering. Define it if you want to use another templating engine. <i>Function (template, data)</i>).</li>

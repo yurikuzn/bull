@@ -8,6 +8,9 @@
 		this._isJson = _.extend(this._isJson, options.isJson || {});
 		
 		this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
+		
+		this._externalPathFunction = options.pathFunction || null;
+		
 	};
 	
 	_.extend(Bull.Loader.prototype, {	
@@ -34,6 +37,8 @@
 			layoutTemplate: null,	
 		},
 		
+		_externalPathFunction: null,
+		
 		_namingFunctions: {
 			layouts: function (name) {
 				return name;
@@ -46,7 +51,7 @@
 			},
 		},
 		
-		_getFilePath: function (type, name) {
+		_getFilePath: function (type, name) {		
 			if (!(type in this._paths) || !(type in this._exts)) {
 				throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
 			}
@@ -82,9 +87,15 @@
 				return;
 			}
 			
-			var response;
+			var response, filePath ;
 			
-			var filePath = this._getFilePath(type, name) + '?_=' + Math.floor((Math.random() * 100000) + 1);
+			if (this._externalPathFunction != null) {
+				filePath = this._externalPathFunction.call(this, type, name);
+			} else {
+				filePath = this._getFilePath(type, name);
+			}
+			
+			filePath += '?_=' + Math.floor((Math.random() * 100000) + 1);
 		
 			var xhr = new XMLHttpRequest();
 			xhr.open('GET', filePath, true);
