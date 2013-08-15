@@ -77,6 +77,8 @@
 		
 		expectedViews: null,
 		
+		optionsToPass: null,
+		
 		_nestedViewsFromLayoutLoaded: false,
 		
 		_readyConditions: null,	
@@ -105,6 +107,8 @@
 			if (this._readyConditions == null) {
 				this._readyConditions = [];
 			}
+			
+			this.optionsToPass = this.options.optionsToPass || this.optionsToPass || [];
 			
 			this.once('after:render', function () {
 				this._rendered = true;
@@ -293,6 +297,12 @@
 				delete options['view'];
 				options.model = this.model;
 				options.collection = this.collection;
+				
+				for (var i in this.optionsToPass) {
+					var name = this.optionsToPass[i];
+					options[name] = this.options[name];
+				}
+				
 				if (!options.el && this.el && o.selector) {
 					options.el =  this.el + ' ' + o.selector;
 				}				
@@ -370,6 +380,11 @@
 					}
 					if (this.collection) {					
 						options.collection = this.collection;
+					}
+					
+					for (var i in this.optionsToPass) {
+						var name = this.optionsToPass[i];
+						options[name] = this.options[name];
 					}
 				
 					this._factory.create(viewName, options, function (view) {
