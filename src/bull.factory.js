@@ -70,6 +70,7 @@ var Bull = Bull || {};
 		
 		this._viewClassHash = {};		
 		this._getViewClassFunction = options.viewLoader || this._getViewClassFunction;	
+		this._viewLoader = this._getViewClassFunction;
 	};
 	
 	_.extend(Bull.Factory.prototype, {
@@ -90,7 +91,9 @@ var Bull = Bull || {};
 		
 		_helper: null,
 		
-		_viewClassHash: null,		
+		_viewClassHash: null,
+		
+		_viewLoader: null,		
 		
 		_getViewClassFunction: function (viewName, callback) {		
 			var viewClass = root[viewName];
