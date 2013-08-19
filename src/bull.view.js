@@ -305,7 +305,7 @@
 				
 				if (!options.el && this.el && o.selector) {
 					options.el =  this.el + ' ' + o.selector;
-				}				
+				}			
 				this.createView(name, o.view || null, options);								
 			}.bind(this));
 		},
@@ -364,6 +364,12 @@
 					if ('view' in nestedViewDefs[i]) {
 						viewName = nestedViewDefs[i].view;
 					}
+					
+					if (viewName === false) {
+						loop();
+						return;
+					}
+					
 					var options = {};
 					if ('layout' in nestedViewDefs[i]) {
 						options.layout = nestedViewDefs[i].layout;
@@ -385,12 +391,11 @@
 					for (var i in this.optionsToPass) {
 						var name = this.optionsToPass[i];
 						options[name] = this.options[name];
-					}
-				
+					}					
 					this._factory.create(viewName, options, function (view) {
 						if ('notToRender' in nestedViewDefs[i]) {
 							view.notToRender = nestedViewDefs[i].notToRender;
-						}		
+						}							
 						this.setView(key, view);						
 						loop();
 					}.bind(this));
@@ -527,7 +532,7 @@
 		},
 		
 		_getSelectorForNestedView: function (key) {
-			var el = false;			
+			var el = false;
 			
 			if (key in this._nestedViewDefs) {								
 				if ('id' in this._nestedViewDefs[key]) {
@@ -575,7 +580,7 @@
 			wait = (typeof wait === 'undefined') ? true : wait;
 			if (wait) {
 				this.waitForView(key);
-			}
+			}			
 			this._factory.create(viewName, options, function (view) {
 				this.setView(key, view);
 				if (typeof callback === 'function') {
