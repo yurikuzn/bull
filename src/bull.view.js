@@ -71,7 +71,7 @@
 
 		_parentView: null,
 		
-		_path: 'root',
+		_path: '',
 		
 		_wait: false,
 		
@@ -305,7 +305,7 @@
 				
 				if (!options.el && this.el && o.selector) {
 					options.el =  this.el + ' ' + o.selector;
-				}			
+				}		
 				this.createView(name, o.view || null, options);								
 			}.bind(this));
 		},
@@ -391,11 +391,11 @@
 					for (var i in this.optionsToPass) {
 						var name = this.optionsToPass[i];
 						options[name] = this.options[name];
-					}					
+					}		
 					this._factory.create(viewName, options, function (view) {
 						if ('notToRender' in nestedViewDefs[i]) {
 							view.notToRender = nestedViewDefs[i].notToRender;
-						}							
+						}						
 						this.setView(key, view);						
 						loop();
 					}.bind(this));
