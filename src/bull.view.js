@@ -131,6 +131,7 @@
 				this.views = merge(this.options.views || {}, this.views || {});			
 			}	
 		
+			this.init();
 			this.setup();
 			
 			this.template = this.options.template || this.template;			
@@ -150,8 +151,8 @@
 			
 			var loadNestedViews = function () {				
 				this._loadNestedViews(function () {
-					this._nestedViewsFromLayoutLoaded = true;
-					this._tryReady();					
+					this._nestedViewsFromLayoutLoaded = true;					
+					this._tryReady();				
 				}.bind(this));				
 			}.bind(this);
 			
@@ -177,6 +178,11 @@
 		},
 		
 		/**
+		 * Init view. Empty function by default.
+		 */
+		init: function () {},
+		
+		/**
 		 * Setup view. Empty function by default.
 		 */
 		setup: function () {},				
@@ -185,7 +191,7 @@
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
 		 */
 		setElementInAdvance: function (el) {
-			this.on("after:render", function () {
+			this.on("after:render-internal", function () {
 				this.setElement(el);
 			}.bind(this));
 		},
@@ -226,6 +232,7 @@
 		},				
 		
 		_afterRender: function () {
+			this.trigger("after:render-internal", this);
 			this.trigger("after:render", this);
 			this.afterRender();	
 			for (var key in this.nestedViews) {				
@@ -583,6 +590,9 @@
 			}			
 			this._factory.create(viewName, options, function (view) {
 				this.setView(key, view);
+				/*if (key === 'record') {					
+					console.log(this.record.nestedViews.name._rendered);
+				}*/
 				if (typeof callback === 'function') {
 					callback(view);
 				}
@@ -607,13 +617,14 @@
 			}
 			this.nestedViews[key] = view;			
 			view._parentView = this;
-			view._updatePath(this._path, key);	
+			view._updatePath(this._path, key);
+			
 			
 			if (!(key in this)) {
 				this[key] = view;
-			}
-			
-			this._tryReady();		
+			}			
+
+			this._tryReady();	
 		},
 		
 		/**
