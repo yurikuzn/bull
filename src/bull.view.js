@@ -231,10 +231,10 @@
 			
 		},				
 		
-		_afterRender: function () {
+		_afterRender: function () {			
 			this.trigger("after:render-internal", this);
-			this.trigger("after:render", this);
-			this.afterRender();	
+			this.afterRender();
+			this.trigger("after:render", this);				
 			for (var key in this.nestedViews) {				
 				this.nestedViews[key]._afterRender();
 			}						
