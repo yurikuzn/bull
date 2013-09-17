@@ -681,8 +681,8 @@
 			this.trigger('remove');
 			this.off();
 			this.$el.empty();
-      		this.stopListening();
-      		this.undelegateEvents();
+			this.stopListening();
+			this.undelegateEvents();
 			if (this.model) {
 				this.model.off(null, null, this);
 			}
