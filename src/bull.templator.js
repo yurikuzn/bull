@@ -31,7 +31,6 @@
 		},
 
 		getTemplate: function (name, layoutOptions, noCache, callback) {
-
 			var layoutOptions = layoutOptions || {};
 			var template = null;
 
@@ -50,12 +49,13 @@
 			var layout = layoutOptions.layout || null;
 
 			var then = function (template) {
-				if (this.compilable) {
-					template = this.compileTemplate(template);
-				}
 				if (!noCache && name) {
 					this._cacheTemplate(name, template);
 				}
+				if (this.compilable) {
+					template = this.compileTemplate(template);
+				}
+				this._templates[name] = template;
 				callback(template);
 			}.bind(this);
 
@@ -91,13 +91,17 @@
 				return this._templates[templateName];
 			}
 			if (this._cacher != null) {
-				return this._cacher.get('template', templateName);
+				var template = this._cacher.get('template', templateName);
+				if (template && this.compilable) {
+					template = this.compileTemplate(template);
+				}
+				this._templates[templateName] = template;
+				return template;
 			}
 			return false;
 		},
 
-		_cacheTemplate: function (templateName, template) {
-			this._templates[templateName] = template;
+		_cacheTemplate: function (templateName, template) {			
 			if (this._cacher != null) {
 				this._cacher.set('template', templateName, template);
 			}

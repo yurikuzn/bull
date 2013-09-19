@@ -5,6 +5,7 @@
 		this._layouts = {};
 		this._cacher = data.cacher || null;
 		this._loader = data.loader || null;
+		this._cachedNestedViews = {};
 	};
 
 	_.extend(Bull.Layouter.prototype, {
@@ -14,6 +15,8 @@
 		_cacher: null,
 
 		_loader: null,
+		
+		_cachedNestedViews: null,
 
 		addLayout: function (layoutName, layout) {
 			this._layouts[layoutName] = layout;
@@ -53,15 +56,25 @@
 		},
 
 		_getCachedNestedViews: function (layoutName) {
+			if (layoutName in this._cachedNestedViews) {				
+				return this._cachedNestedViews[layoutName];
+			}			
 			if (this._cacher != null) {
-				return this._cacher.get('nestedView', layoutName);
+				var cached = this._cacher.get('nestedView', layoutName);
+				if (cached) {
+					this._cachedNestedViews[layoutName] = cached;
+					return cached;
+				}				
 			}
 			return false;
 		},
 
 		_cacheNestedViews: function (layoutName, nestedViews) {
-			if (this._cacher != null) {
-				this._cacher.set('nestedView', layoutName, nestedViews);
+			if (!(layoutName in this._cachedNestedViews)) {	
+				this._cachedNestedViews[layoutName] = nestedViews;
+				if (this._cacher != null) {
+					this._cacher.set('nestedView', layoutName, nestedViews);
+				}
 			}
 		},
 
@@ -132,8 +145,8 @@
 					}
 				}
 			}
-			seekForViews(layout);
-			if (layoutName && !noCache) {
+			seekForViews(layout);					
+			if (layoutName && !noCache) {				
 				this._cacheNestedViews(layoutName, viewPathList);
 			}
 			return viewPathList;
