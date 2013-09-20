@@ -384,6 +384,10 @@
 					if ('template' in nestedViewDefs[i]) {
 						options.template = nestedViewDefs[i].template;
 					}
+					
+					if ('el' in nestedViewDefs[i]) {
+						options.el = nestedViewDefs[i].el;
+					}
 
 					if ('options' in nestedViewDefs[i]) {
 						options = _.extend(options, nestedViewDefs[i].options);
@@ -544,7 +548,7 @@
 			if (key in this._nestedViewDefs) {
 				if ('id' in this._nestedViewDefs[key]) {
 					el = '#' + this._nestedViewDefs[key].id;
-				} else {
+				} else {					
 					if ('el' in this._nestedViewDefs[key]) {
 						el = this._nestedViewDefs[key].el;
 					} else {
