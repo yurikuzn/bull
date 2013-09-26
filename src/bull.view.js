@@ -593,12 +593,14 @@
 				this.waitForView(key);
 			}
 			this._factory.create(viewName, options, function (view) {
-				this.setView(key, view);
-				/*if (key === 'record') {
-					console.log(this.record.nestedViews.name._rendered);
-				}*/
+				if (this._rendered) {
+					this.setView(key, view);
+				}
 				if (typeof callback === 'function') {
 					callback(view);
+				}
+				if (!this._rendered) {
+					this.setView(key, view);
 				}
 			}.bind(this));
 		},
