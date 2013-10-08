@@ -625,11 +625,6 @@
 			view._parentView = this;
 			view._updatePath(this._path, key);
 
-
-			if (!(key in this)) {
-				this[key] = view;
-			}
-
 			this._tryReady();
 		},
 
