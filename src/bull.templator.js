@@ -36,7 +36,7 @@
 
 			if (!layoutOptions.name && !layoutOptions.layout && !name) {
 				throw new Error("Can not get template. Not enough data passed.");
-			}
+			}			
 
 			if (!noCache && name) {
 				template = this._getCachedTemplate(name);
@@ -129,7 +129,6 @@
 
 			var proceed = function (layoutTemplate) {
 				var injection = _.extend(layoutDefs, data || {});
-				delete injection['type'];
 				callback(_.template(layoutTemplate, injection));
 			}.bind(this);
 

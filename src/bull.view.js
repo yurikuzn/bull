@@ -93,7 +93,9 @@
 
 			this._helper = this.options.helper || null;
 
-			this.noCache = this.options.noCache || this.noCache;
+			if ('noCache' in this.options) {
+				this.noCache = this.options.noCache; 
+			}
 
 			this.name = this.options.name || this.name;
 
@@ -147,10 +149,10 @@
 				this.setElementInAdvance(this.options.el);
 			}
 
-			var _layout = this._getLayout();
+			var _layout = this._getLayout();			
 
 			var loadNestedViews = function () {
-				this._loadNestedViews(function () {
+				this._loadNestedViews(function () {				
 					this._nestedViewsFromLayoutLoaded = true;
 					this._tryReady();
 				}.bind(this));
@@ -207,7 +209,7 @@
 		/**
 		 * Get HTML of view but don't render it.
 		 */
-		getHtml: function (callback) {
+		getHtml: function (callback) {		
 			this._getHtml(callback);
 		},
 
@@ -353,10 +355,8 @@
 
 
 		_loadNestedViews: function (callback) {
-
 			var nestedViewDefs = [];
-
-			if (this._layout != null ) {
+			if (this._layout != null) {
 				nestedViewDefs = this._getNestedViewsFromLayout();
 			}
 
@@ -502,6 +502,10 @@
 				callback(this._templateCompiled);
 				return;
 			}
+			
+			if (this._layout && typeof this._layout.type == 'undefined') {
+				console.log(this._layout);
+			}
 
 			var _template = this._template || null;
 
@@ -523,7 +527,11 @@
 				if (!layoutName) {
 					noCache = true;
 				} else {
-					templateName = 'built-' + layoutName;
+					if (layoutName) {
+						templateName = 'built-' + layoutName;
+					} else {
+						templateName = null;
+					}
 				}
 				layoutOptions = {
 					name: layoutName,
