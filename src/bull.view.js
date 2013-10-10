@@ -502,10 +502,6 @@
 				callback(this._templateCompiled);
 				return;
 			}
-			
-			if (this._layout && typeof this._layout.type == 'undefined') {
-				console.log(this._layout);
-			}
 
 			var _template = this._template || null;
 
