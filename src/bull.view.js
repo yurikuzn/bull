@@ -612,7 +612,7 @@
 		 * @param {string} el Selector for view container.
 		 */
 		setView: function (key, view, el) {
-			var el = el || this._getSelectorForNestedView(key) || false;
+			var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
 			if (el) {
 				view.setElementInAdvance(el);
 				view.setElement(el);
