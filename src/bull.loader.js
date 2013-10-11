@@ -95,7 +95,7 @@
 				filePath = this._getFilePath(type, name);
 			}
 
-			filePath += '?_=' + Math.floor((Math.random() * 100000) + 1);
+			filePath += '?_=' + new Date().getTime();
 
 			var xhr = new XMLHttpRequest();
 			xhr.open('GET', filePath, true);
