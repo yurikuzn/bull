@@ -3,17 +3,17 @@
 	Bull.View = Backbone.View.extend({
 
 		/**
-		 * @property {string} Template name.
+		 * @property {String} Template name.
 		 */
 		template: null,
 
 		/**
-		 * @property {string} Layout name. Used if template is not specified to build template.
+		 * @property {String} Layout name. Used if template is not specified to build template.
 		 */
 		layout: null,
 
 		/**
-		 * @property {string} Name of View. If template name is not defined it will be used to cache built template and layout. Otherwise they won't be cached. Name it unique.
+		 * @property {String} Name of View. If template name is not defined it will be used to cache built template and layout. Otherwise they won't be cached. Name it unique.
 		 */
 		name: null,
 
@@ -33,7 +33,7 @@
 		notToRender: false,
 
 		/**
-		 * @property {string} Template itself.
+		 * @property {String} Template itself.
 		 */
 		_template: null,
 
@@ -182,12 +182,12 @@
 		},
 
 		/**
-		 * Init view. Empty function by default.
+		 * Init view. Empty method by default. Is run before #setup.
 		 */
 		init: function () {},
 
 		/**
-		 * Setup view. Empty function by default.
+		 * Setup view. Empty method by default. Is run after #init.
 		 */
 		setup: function () {},
 
@@ -244,6 +244,9 @@
 			this.trigger("after:render", this);
 		},
 
+		/**
+		 * Executed after render. Empty method by default.
+		 */
 		afterRender: function () {},
 
 		_tryReady: function () {
@@ -276,6 +279,9 @@
 			this._makeReady();
 		},
 
+		/**
+		 * Run checking for view is ready.
+		 */
 		tryReady: function () {
 			this._tryReady();
 		},
@@ -575,6 +581,11 @@
 			return el;
 		},
 
+		/**
+		 * Whether this view has nested view.
+		 * @param {String} key
+		 * @return {Bool}
+		 */
 		hasView: function (key) {
 			if (key in this.nestedViews) {
 				return true;
@@ -584,7 +595,7 @@
 
 		/**
 		 * Get nested view.
-		 * @param {string} key
+		 * @param {String} key
 		 * @return {Jet.View}
 		 */
 		getView: function (key) {
@@ -593,6 +604,14 @@
 			}
 		},
 
+		/**
+		 * Create nested view. The important method.
+		 * @param {String} key Key.
+		 * @param {String} viewName View name.
+		 * @param {Object} options View options.
+		 * @param {Function} callback Callback function. Will be invoiked once nested view is ready (loaded).
+		 * @param {Bool} wait True be default. Set false if no need parent view wait for nested view loaded.
+		 */
 		createView: function (key, viewName, options, callback, wait) {
 			wait = (typeof wait === 'undefined') ? true : wait;
 			if (wait) {
@@ -613,9 +632,9 @@
 
 		/**
 		 * Set nested view.
-		 * @param {string} key
+		 * @param {String} key
 		 * @param {Jet.View} view
-		 * @param {string} el Selector for view container.
+		 * @param {String} el Selector for view container.
 		 */
 		setView: function (key, view, el) {
 			var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
@@ -636,7 +655,7 @@
 
 		/**
 		 * Clear nested view.
-		 * @param {string} key
+		 * @param {String} key
 		 */
 		clearView: function (key) {
 			if (key in this.nestedViews) {
@@ -661,8 +680,12 @@
 			this._readyConditions.push(condition);
 		},
 
-		waitForView: function (viewName) {
-			this.expectedViews.push(viewName);
+		/**
+		 * Wait for nested view.
+		 * @param {String} key
+		 */
+		waitForView: function (key) {
+			this.expectedViews.push(key);
 		},
 
 		/**
@@ -679,7 +702,7 @@
 		},
 
 		/**
-		 * Remove view and all nested tree. Triggers 'remove' event.
+		 * Remove view and all nested tree. Removes contents of el. Triggers 'remove' event.
 		 */
 		remove: function () {
 			for (var key in this.nestedViews) {
