@@ -131,6 +131,7 @@ describe("View", function () {
 				notToRender: false,
 				_updatePath: function () {},
 				_afterRender: function () {},
+				options: {},
 			});
 		});
 		
@@ -149,10 +150,10 @@ describe("View", function () {
 		});
 		expect(layouter.findNestedViews).toHaveBeenCalledWith('SomeLayout', [], false);
 		expect(factory.create.calls.length).toEqual(2);		
-		expect(view.header).toBeDefined();
-		expect(view.footer).toBeDefined();
-		expect(view.header.notToRender).toBe(false);
-		expect(view.footer.notToRender).toBe(true);
+		expect(view.getView('header')).toBeDefined();
+		expect(view.getView('footer')).toBeDefined();
+		expect(view.getView('header').notToRender).toBe(false);
+		expect(view.getView('footer').notToRender).toBe(true);
 	});
 	
 	it ('should pass rendered nested views into Renderer.render()', function () {
@@ -178,6 +179,7 @@ describe("View", function () {
 				},
 				_updatePath: function () {},
 				_afterRender: function () {},
+				options: {},
 			});
 		});		
 		
@@ -203,7 +205,6 @@ describe("View", function () {
 		view.setView('main', subView);
 		
 		expect(subView).toBe(view.getView('main'));
-		expect(subView).toBe(view.main);		
 		expect(view.hasView('main')).toBe(true);
 	});
 	

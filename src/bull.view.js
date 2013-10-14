@@ -86,7 +86,7 @@
 		_rendered: false,
 
 		initialize: function (options) {
-			this.options = options;
+			this.options = options || {};
 			
 			this._factory = this.factory = this.options.factory || null;
 			this._renderer = this.options.renderer || null;
