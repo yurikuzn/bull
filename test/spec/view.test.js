@@ -239,9 +239,9 @@ describe("View", function () {
 		subView.setView('some1', subSubView1);
 		subView.setView('some2', subSubView2);
 		
-		expect(subView._path).toBe('root/main');
-		expect(subSubView1._path).toBe('root/main/some1');
-		expect(subSubView2._path).toBe('root/main/some2');
+		expect(subView._path).toBe('/main');
+		expect(subSubView1._path).toBe('/main/some1');
+		expect(subSubView2._path).toBe('/main/some2');
 		
 		var view = new Bull.View();
 		view._path = 'master';
