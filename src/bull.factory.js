@@ -15,7 +15,7 @@ var Bull = Bull || {};
 	 * @param {Object} options Configuration options.
 	 * <ul>
 	 *  <li>useCache: {bool}</li>
-	 *  <li>defaultView: {String} Default name for views when it is not defined.</li>
+	 *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
 	 *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript) by the given view name and callback function as parameters. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
 	 *  <li>helper: {Function} View Helper that will be injected into all views.</li>
 	 *  <li>loading: {Object} Resources loading options: paths, exts, loaders. Example: <br>
@@ -44,7 +44,7 @@ var Bull = Bull || {};
 	Bull.Factory = function (options) {
 		var options = options || {};
 
-		this.defaultViewName = options.defaultView || this.defaultViewName;
+		this.defaultViewName = options.defaultViewName || this.defaultViewName;
 
 		if ('useCache' in options) {
 			this.useCache = options.useCache;
