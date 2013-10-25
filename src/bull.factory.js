@@ -17,7 +17,7 @@ var Bull = Bull || {};
 	 *  <li>useCache: {bool}</li>
 	 *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
 	 *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript) by the given view name and callback function as parameters. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
-	 *  <li>helper: {Function} View Helper that will be injected into all views.</li>
+	 *  <li>helper: {Object} View Helper that will be injected into all views.</li>
 	 *  <li>loading: {Object} Resources loading options: paths, exts, loaders. Example: <br>
 	 *    <i>{
 	 *      paths: { // Custom paths for resource files.
