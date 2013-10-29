@@ -18,7 +18,7 @@ var Bull = Bull || {};
 	 *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
 	 *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript) by the given view name and callback function as parameters. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
 	 *  <li>helper: {Object} View Helper that will be injected into all views.</li>
-	 *  <li>loading: {Object} Resources loading options: paths, exts, loaders. Example: <br>
+	 *  <li>resources: {Object} Resources loading options: paths, exts, loaders. Example: <br>
 	 *    <i>{
 	 *      paths: { // Custom paths for resource files.
 	 *        layout: 'resources/layouts',
@@ -34,7 +34,7 @@ var Bull = Bull || {};
 	 *          return layoutManager.getLayout(layoutName);
 	 *        }
 	 *      },
-	 *      pathFunction: function (type, name) {} // Custom path function. Should return path to the needed resource.
+	 *      path: function (type, name) {} // Custom path function. Should return path to the needed resource.
 	 *    }</i>
 	 *  </li>
 	 *  <li>rendering: {Object} Rendering options: method (Method is the custom function for a rendering. Define it if you want to use another templating engine. <i>Function (template, data)</i>).</li>
@@ -54,7 +54,7 @@ var Bull = Bull || {};
 			this._cacher = options.customCacher || new Bull.Cacher();
 		}
 
-		this._loader = options.customLoader || new Bull.Loader(options.loading || {});
+		this._loader = options.customLoader || new Bull.Loader(options.resources || {});
 		this._renderer = options.customRenderer || new Bull.Renderer(options.rendering || {});
 		this._layouter = options.customLayouter || new Bull.Layouter(_.extend(options.layouting || {}, {
 			loader: this._loader,

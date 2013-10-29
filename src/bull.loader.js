@@ -4,12 +4,12 @@
 		var options = options || {};
 		this._paths = _.extend(this._paths, options.paths || {});
 		this._exts = _.extend(this._exts, options.exts || {});
-		this._namingFunctions = _.extend(this._namingFunctions, options.namingFunctions || {});
+		this._normalize = _.extend(this._normalize, options.normalize || {});
 		this._isJson = _.extend(this._isJson, options.isJson || {});
 
 		this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
 
-		this._externalPathFunction = options.pathFunction || null;
+		this._externalPathFunction = options.path || null;
 
 	};
 
@@ -39,7 +39,7 @@
 
 		_externalPathFunction: null,
 
-		_namingFunctions: {
+		_normalize: {
 			layouts: function (name) {
 				return name;
 			},
@@ -51,14 +51,14 @@
 			},
 		},
 
-		_getFilePath: function (type, name) {
+		getFilePath: function (type, name) {
 			if (!(type in this._paths) || !(type in this._exts)) {
 				throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
 			}
 
 			var namePart = name;
-			if (type in this._namingFunctions) {
-				namePart = this._namingFunctions[type](name);
+			if (type in this._normalize) {
+				namePart = this._normalize[type](name);
 			}
 
 			var pathPart = this._paths[type];
@@ -92,7 +92,7 @@
 			if (this._externalPathFunction != null) {
 				filePath = this._externalPathFunction.call(this, type, name);
 			} else {
-				filePath = this._getFilePath(type, name);
+				filePath = this.getFilePath(type, name);
 			}
 
 			filePath += '?_=' + new Date().getTime();
