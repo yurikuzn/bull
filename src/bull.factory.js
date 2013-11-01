@@ -6,7 +6,7 @@ var Bull = Bull || {};
 
 	/**
 	 * Bull.Factory is a factory for views.
-	 * It has hard dependency from Backbone.js and uses Handlebard.js templating system by default.
+	 * It has hard dependency from Backbone.js and uses Handlebars.js templating system by default.
 	 *
 	 */
 
