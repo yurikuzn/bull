@@ -294,19 +294,6 @@
 			}
 		},
 
-		asyncLoop: function (o) {
-			var i = -1;
-			var loop = function () {
-				i++;
-				if (i == o.length){
-					o.callback();
-					return;
-				}
-				o.functionToLoop(loop, i);
-			}
-			loop();
-		},
-
 		_createViews: function () {
 			var views = this.options.views || [];
 			views.forEach(function (o, name) {
@@ -369,22 +356,29 @@
 			}
 
 			this._addDefinedNestedViewDefs(nestedViewDefs);
+			
+			var count = nestedViewDefs.length;
+			var loaded = 0;
+			
+			var tryReady = function () {
+				if (loaded == count) {
+					callback();
+					return true
+				}
+			};
+			
+			tryReady();
+			nestedViewDefs.forEach(function (def, i) {
+				var key = nestedViewDefs[i].name;
+				var viewName = this._factory.defaultViewName;
+				if ('view' in nestedViewDefs[i]) {
+					viewName = nestedViewDefs[i].view;
+				}
 
-			this.asyncLoop({
-				length : nestedViewDefs.length,
-				functionToLoop : function (loop, i) {
-					var key = nestedViewDefs[i].name;
-					var viewName = this._factory.defaultViewName;
-
-					if ('view' in nestedViewDefs[i]) {
-						viewName = nestedViewDefs[i].view;
-					}
-
-					if (viewName === false) {
-						loop();
-						return;
-					}
-
+				if (viewName === false) {
+					loaded++;
+					tryReady();
+				} else {
 					var options = {};
 					if ('layout' in nestedViewDefs[i]) {
 						options.layout = nestedViewDefs[i].layout;
@@ -416,13 +410,11 @@
 							view.notToRender = nestedViewDefs[i].notToRender;
 						}
 						this.setView(key, view);
-						loop();
+						loaded++;
+						tryReady();
 					}.bind(this));
-				}.bind(this),
-				callback : function() {
-					callback();
 				}
-			});
+			}, this);
 		},
 
 		_getData: function () {
@@ -449,25 +441,36 @@
 		_getNestedViewsHtmlList: function (callback) {
 			var data = {};
 			var nestedViewsArray = this._getNestedViewsAsArray();
-
-			this.asyncLoop({
-				length : nestedViewsArray.length,
-				functionToLoop : function (loop, i) {
-					var key = nestedViewsArray[i].key;
-					var view = nestedViewsArray[i].view;
-					if (!view.notToRender) {
-						view.getHtml(function (html) {
-							data[key] = html;
-							loop();
-						});
-					} else {
-						loop();
-					}
-				},
-				callback: function () {
+			
+			
+			var loaded = 0;
+			var count = nestedViewsArray.length;
+			
+			var tryReady = function () {
+				if (loaded == count) {
 					callback(data);
+					return true
 				}
-			});
+			};
+
+			tryReady();
+			nestedViewsArray.forEach(function (d, i) {
+				
+				var key = nestedViewsArray[i].key;
+				var view = nestedViewsArray[i].view;
+				
+				
+				if (!view.notToRender) {
+					view.getHtml(function (html) {
+						data[key] = html;
+						loaded++;
+						tryReady();
+					});
+				} else {
+					loaded++;
+					tryReady();
+				}
+			}, this);			
 		},
 
 		_getHtml: function (callback) {
