@@ -38,7 +38,7 @@ var Bull = Bull || {};
 	 *    }</i>
 	 *  </li>
 	 *  <li>rendering: {Object} Rendering options: method (Method is the custom function for a rendering. Define it if you want to use another templating engine. <i>Function (template, data)</i>).</li>
-	 *  <li>templating: {Object} Templating options: {bool} compilable (If templates are compilable (like Handlebard). True by default.)</li>
+	 *  <li>templating: {Object} Templating options: {bool} compilable (If templates are compilable (like Handlebars). True by default.)</li>
 	 * </ul>
 	 */
 	Bull.Factory = function (options) {
