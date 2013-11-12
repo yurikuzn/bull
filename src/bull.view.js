@@ -196,9 +196,11 @@
 		/**
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
 		 */
-		setElementInAdvance: function (el) {
+		setElementInAdvance: function (el) {	
 			this.on("after:render-internal", function () {
-				this.setElement(el);
+				if (!this.el) {
+					this.setElement(el);
+				}
 			}.bind(this));
 		},
 
@@ -224,10 +226,13 @@
 			this.trigger("before:render", this);
 			this._getHtml(function (html) {
 				this.trigger("render", this);
-				if (this.$el) {
+				
+				if (this.$el.size()) {
 					this.$el.html(html);
 				} else {
-					this.el.innerHTML = html;
+					if (this.options.el)
+					this.setElement(this.options.el);
+					this.$el.html(html);
 				}
 				this._afterRender();
 				if (typeof callback === 'function') {
@@ -240,7 +245,10 @@
 		_afterRender: function () {
 			this.trigger("after:render-internal", this);
 			for (var key in this.nestedViews) {
-				this.nestedViews[key]._afterRender();
+				var nestedView = this.nestedViews[key];
+				if (!nestedView.notToRender) {
+					nestedView._afterRender();
+				}
 			}
 			this.afterRender();
 			this.trigger("after:render", this);
