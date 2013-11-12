@@ -100,6 +100,8 @@
 			}
 
 			this.name = this.options.name || this.name;
+			
+			this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;			
 
 			this.nestedViews = {};
 			this._nestedViewDefs = {};
@@ -454,11 +456,9 @@
 			};
 
 			tryReady();
-			nestedViewsArray.forEach(function (d, i) {
-				
+			nestedViewsArray.forEach(function (d, i) {				
 				var key = nestedViewsArray[i].key;
 				var view = nestedViewsArray[i].view;
-				
 				
 				if (!view.notToRender) {
 					view.getHtml(function (html) {
