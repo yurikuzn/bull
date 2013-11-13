@@ -198,9 +198,7 @@
 		 */
 		setElementInAdvance: function (el) {	
 			this.on("after:render-internal", function () {
-				if (!this.el) {
-					this.setElement(el);
-				}
+				this.setElement(el);
 			}.bind(this));
 		},
 
@@ -650,8 +648,12 @@
 		setView: function (key, view, el) {
 			var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
 			if (el) {
-				view.setElementInAdvance(el);
-				view.setElement(el);
+				if (this.isRendered()) {
+					view.setElement(el);
+				} else {
+					view.setElementInAdvance(el);
+				}
+				
 			}
 
 			if (key in this.nestedViews) {
