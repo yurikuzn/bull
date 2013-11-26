@@ -221,10 +221,7 @@
 		 * Render view.
 		 */
 		render: function (callback) {
-			this.trigger("before:render", this);
 			this._getHtml(function (html) {
-				this.trigger("render", this);
-				
 				if (this.$el.size()) {
 					this.$el.html(html);
 				} else {
@@ -480,6 +477,7 @@
 		},
 
 		_getHtml: function (callback) {
+			this.trigger("render", this);
 			this._getNestedViewsHtmlList(function (nestedViewsHtmlList) {
 				var data = _.extend(this._getData() || {}, nestedViewsHtmlList);
 				if (this.collection || null) {
