@@ -30,8 +30,8 @@ var Bull = Bull || {};
 	 *        templates: 'tpl',
 	 *      },
 	 *      loaders: { // Custom resources loading functions. Define it if some type of resources needs to be loaded via REST rather than from file.
-	 *        layout: function (layoutName) {
-	 *          return layoutManager.getLayout(layoutName);
+	 *        layout: function (layoutName, callback) {
+	 *          callback(layoutManager.getLayout(layoutName));
 	 *        }
 	 *      },
 	 *      path: function (type, name) {} // Custom path function. Should return path to the needed resource.
