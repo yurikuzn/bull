@@ -8,7 +8,6 @@
   <li><b>Layout Engine</b>. It takes some json formatted layout and generates the template from it. 
   Nested views can be defined right in the layout. 
   For example, the layout can define how fields are placed on the form or columns of the list view.</li>
-  <li><b>Caching</b>. It stores cached templates and layouts in Local Storage.</li>
   <li><b>Resource Loading</b>. By default resources are loaded via XHR.</li>
 </ol>
 
