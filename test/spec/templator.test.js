@@ -2,7 +2,6 @@ var Bull = Bull || {};
 
 describe("Templator", function () {
 	var templator;
-	var cacher;
 	var layouter;
 	
 	var defaultTemplate	= 'test';
@@ -12,14 +11,6 @@ describe("Templator", function () {
 	}
 	
 	beforeEach(function () {
-		cacher = {
-			get: function () {
-				return false;
-			},
-			set: function () {},
-		};		
-		spyOn(cacher, 'get').andReturn(null);
-		spyOn(cacher, 'set');
 		
 		loader = {
 			load: {},
@@ -41,22 +32,10 @@ describe("Templator", function () {
 		});		
 	
 		templator = new Bull.Templator({
-			cacher: cacher,
 			loader: loader,
 			layouter: layouter,
 		});
 		
-	});
-	
-	it ('shoud get template from cache', function () {
-		templator.getTemplate('test', null, false, function () {});		
-		expect(cacher.get).toHaveBeenCalledWith('template', 'test');
-	});
-	
-	it ('shoud store template to cache', function () {
-		templator.compilable = false;
-		templator.getTemplate('test', null, false, function () {});		
-		expect(cacher.set).toHaveBeenCalledWith('template', 'test', defaultTemplate);
 	});
 	
 	it ('shoud load template if is not loaded', function () {
@@ -103,9 +82,4 @@ describe("Templator", function () {
 		expect(templator._buildTemplate.calls[0].args[1].some).toBe('test');	
 		expect(template).toBe('test');
 	});	
-	
-	it ('shoud try to load "layout template" from cache when building template', function () {
-		templator.getTemplate('test', {name: 'someLayout'}, false, function () {});
-		expect(cacher.get).toHaveBeenCalledWith('layoutTemplate', 'default');
-	});
 });

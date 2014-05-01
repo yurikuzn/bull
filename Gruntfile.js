@@ -10,7 +10,6 @@ module.exports = function (grunt) {
 				'src/bull.factory.js',
 				'src/bull.view.js',
 				'src/bull.loader.js',
-				'src/bull.cacher.js',
 				'src/bull.templator.js',
 				'src/bull.layouter.js',
 				'src/bull.renderer.js',

@@ -14,7 +14,6 @@ var Bull = Bull || {};
 	 * @constructor
 	 * @param {Object} options Configuration options.
 	 * <ul>
-	 *  <li>useCache: {bool}</li>
 	 *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
 	 *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript) by the given view name and callback function as parameters. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
 	 *  <li>helper: {Object} View Helper that will be injected into all views.</li>
@@ -46,23 +45,13 @@ var Bull = Bull || {};
 
 		this.defaultViewName = options.defaultViewName || this.defaultViewName;
 
-		if ('useCache' in options) {
-			this.useCache = options.useCache;
-		}
-
-		if (this.useCache) {
-			this._cacher = options.customCacher || new Bull.Cacher();
-		}
-
 		this._loader = options.customLoader || new Bull.Loader(options.resources || {});
 		this._renderer = options.customRenderer || new Bull.Renderer(options.rendering || {});
 		this._layouter = options.customLayouter || new Bull.Layouter(_.extend(options.layouting || {}, {
 			loader: this._loader,
-			cacher: this._cacher,
 		}));
 		this._templator = options.customTemplator || new Bull.Templator(_.extend(options.templating || {}, {
 			loader: this._loader,
-			cacher: this._cacher,
 			layouter: this._layouter,
 		}));
 
@@ -77,13 +66,9 @@ var Bull = Bull || {};
 
 		defaultViewName: 'View',
 
-		useCache: true,
-
 		_layouter: null,
 
 		_templator: null,
-
-		_cacher: null,
 
 		_renderer: null,
 

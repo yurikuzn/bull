@@ -4,7 +4,6 @@
 		var data = data || {};
 		this._templates = {};
 		this._layoutTemplates = {};
-		this._cacher = data.cacher || null;
 		this._loader = data.loader || null;
 		this._layouter = data.layouter || null;
 		if ('compilable' in data) {
@@ -19,8 +18,6 @@
 		_templates: null,
 
 		_layoutTemplates: null,
-
-		_cacher: null,
 
 		_loader: null,
 
@@ -49,9 +46,6 @@
 			var layout = layoutOptions.layout || null;
 
 			var then = function (template) {
-				if (!noCache && name) {
-					this._cacheTemplate(name, template);
-				}
 				if (this.compilable) {
 					template = this.compileTemplate(template);
 				}
@@ -90,38 +84,19 @@
 			if (templateName in this._templates) {
 				return this._templates[templateName];
 			}
-			if (this._cacher != null) {
-				var template = this._cacher.get('template', templateName);
-				if (template && this.compilable) {
-					template = this.compileTemplate(template);
-				}
-				this._templates[templateName] = template;
-				return template;
-			}
 			return false;
 		},
 
-		_cacheTemplate: function (templateName, template) {			
-			if (this._cacher != null) {
-				this._cacher.set('template', templateName, template);
-			}
-		},
 
 		_getCachedLayoutTemplate: function (layoutType) {
 			if (layoutType in this._layoutTemplates) {
 				return this._layoutTemplates[layoutType];
-			}
-			if (this._cacher != null) {
-				return this._cacher.get('layoutTemplate', layoutType);
 			}
 			return false;
 		},
 
 		_cacheLayoutTemplate: function (layoutType, layoutTemplate) {
 			this._layoutTemplates[layoutType] = layoutTemplate;
-			if (this._cacher != null) {
-				this._cacher.set('layoutTemplate', layoutType, layoutTemplate);
-			}
 		},
 
 		_buildTemplate: function (layoutDefs, data, callback) {

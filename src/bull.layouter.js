@@ -3,7 +3,6 @@
 	Bull.Layouter = function (data) {
 		var data = data || {};
 		this._layouts = {};
-		this._cacher = data.cacher || null;
 		this._loader = data.loader || null;
 		this._cachedNestedViews = {};
 	};
@@ -11,8 +10,6 @@
 	_.extend(Bull.Layouter.prototype, {
 
 		_layouts: null,
-
-		_cacher: null,
 
 		_loader: null,
 		
@@ -28,30 +25,12 @@
 				return;
 			}
 
-			var proceed = function (layout) {
-				this._cacheLayout(layoutName, layout);
-				this.addLayout(layoutName, layout);
-				callback(layout);
-			}.bind(this);
-
-			var layout = this._getCachedLayout(layoutName);
 			if (!layout) {
-				this._loader.load('layout', layoutName, proceed);
+				this._loader.load('layout', layoutName, function (layout) {
+					this.addLayout(layoutName, layout);
+					callback(layout);
+				}.bind(this));
 				return;
-			}
-			proceed(layout);
-		},
-
-		_getCachedLayout: function (layoutName) {
-			if (this._cacher != null) {
-				return this._cacher.get('layout', layoutName);
-			}
-			return false;
-		},
-
-		_cacheLayout: function (layoutName, layout) {
-			if (this._cacher != null) {
-				this._cacher.set('layout', layoutName, layout);
 			}
 		},
 
@@ -59,22 +38,12 @@
 			if (layoutName in this._cachedNestedViews) {				
 				return this._cachedNestedViews[layoutName];
 			}			
-			if (this._cacher != null) {
-				var cached = this._cacher.get('nestedView', layoutName);
-				if (cached) {
-					this._cachedNestedViews[layoutName] = cached;
-					return cached;
-				}				
-			}
 			return false;
 		},
 
 		_cacheNestedViews: function (layoutName, nestedViews) {
 			if (!(layoutName in this._cachedNestedViews)) {	
 				this._cachedNestedViews[layoutName] = nestedViews;
-				if (this._cacher != null) {
-					this._cacher.set('nestedView', layoutName, nestedViews);
-				}
 			}
 		},
 

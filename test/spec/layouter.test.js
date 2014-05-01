@@ -4,7 +4,6 @@ var Bull = Bull || {};
 
 describe("Layouter", function () {
 	var layouter;
-	var cacher;
 	
 	var defaultLayout = {
 		type: 'default',
@@ -12,14 +11,7 @@ describe("Layouter", function () {
 	}
 	
 	beforeEach(function () {
-		cacher = {
-			get: function () {
-				return false;
-			},
-			set: function () {},
-		};		
-		spyOn(cacher, 'get').andReturn(null);
-		spyOn(cacher, 'set');
+	
 		
 		loader = {
 			load: {},
@@ -29,7 +21,6 @@ describe("Layouter", function () {
 		});
 	
 		layouter = new Bull.Layouter({
-			cacher: cacher,
 			loader: loader,
 		});
 	});
@@ -160,32 +151,6 @@ describe("Layouter", function () {
 			},
 		]);
 		
-	});	
-	
-	it ('shoud request view defs from cache', function () {
-		layouter.addLayout('test', {
-			layout: [
-				{
-					name: 'test',
-					tag: 'test',
-					id: 'test',
-					layout: 'test',
-				},
-			]
-		});
-		var nestedViewList = layouter.findNestedViews('test');	
-		expect(cacher.get).toHaveBeenCalledWith('nestedView', 'test');
-		expect(cacher.set).toHaveBeenCalledWith('nestedView', 'test', nestedViewList);
-	});	
-	
-	it ('shoud get layout from cache', function () {
-		layouter.getLayout('test', function (layout) {});
-		expect(cacher.get).toHaveBeenCalledWith('layout', 'test');
-	});
-	
-	it ('shoud store layout to cache', function () {	
-		layouter.getLayout('test', function (layout) {});
-		expect(cacher.set).toHaveBeenCalledWith('layout', 'test', defaultLayout);
 	});
 	
 });
