@@ -12,7 +12,7 @@
 		_layouts: null,
 
 		_loader: null,
-		
+
 		_cachedNestedViews: null,
 
 		addLayout: function (layoutName, layout) {
@@ -35,14 +35,14 @@
 		},
 
 		_getCachedNestedViews: function (layoutName) {
-			if (layoutName in this._cachedNestedViews) {				
+			if (layoutName in this._cachedNestedViews) {
 				return this._cachedNestedViews[layoutName];
-			}			
+			}
 			return false;
 		},
 
 		_cacheNestedViews: function (layoutName, nestedViews) {
-			if (!(layoutName in this._cachedNestedViews)) {	
+			if (!(layoutName in this._cachedNestedViews)) {
 				this._cachedNestedViews[layoutName] = nestedViews;
 			}
 		},
@@ -114,8 +114,8 @@
 					}
 				}
 			}
-			seekForViews(layout);					
-			if (layoutName && !noCache) {				
+			seekForViews(layout);
+			if (layoutName && !noCache) {
 				this._cacheNestedViews(layoutName, viewPathList);
 			}
 			return viewPathList;

@@ -33,7 +33,7 @@
 
 			if (!layoutOptions.name && !layoutOptions.layout && !name) {
 				throw new Error("Can not get template. Not enough data passed.");
-			}			
+			}
 
 			if (!noCache && name) {
 				template = this._getCachedTemplate(name);
