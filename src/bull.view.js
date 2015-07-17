@@ -361,17 +361,17 @@
 			}
 
 			this._addDefinedNestedViewDefs(nestedViewDefs);
-			
+
 			var count = nestedViewDefs.length;
 			var loaded = 0;
-			
+
 			var tryReady = function () {
 				if (loaded == count) {
 					callback();
 					return true
 				}
 			};
-			
+
 			tryReady();
 			nestedViewDefs.forEach(function (def, i) {
 				var key = nestedViewDefs[i].name;
@@ -391,7 +391,7 @@
 					if ('template' in nestedViewDefs[i]) {
 						options.template = nestedViewDefs[i].template;
 					}
-					
+
 					if ('el' in nestedViewDefs[i]) {
 						options.el = nestedViewDefs[i].el;
 					}
@@ -446,11 +446,11 @@
 		_getNestedViewsHtmlList: function (callback) {
 			var data = {};
 			var nestedViewsArray = this._getNestedViewsAsArray();
-			
-			
+
+
 			var loaded = 0;
 			var count = nestedViewsArray.length;
-			
+
 			var tryReady = function () {
 				if (loaded == count) {
 					callback(data);
@@ -459,10 +459,10 @@
 			};
 
 			tryReady();
-			nestedViewsArray.forEach(function (d, i) {				
+			nestedViewsArray.forEach(function (d, i) {
 				var key = nestedViewsArray[i].key;
 				var view = nestedViewsArray[i].view;
-				
+
 				if (!view.notToRender) {
 					view.getHtml(function (html) {
 						data[key] = html;
@@ -473,7 +473,7 @@
 					loaded++;
 					tryReady();
 				}
-			}, this);			
+			}, this);
 		},
 
 		_getHtml: function (callback) {
@@ -567,7 +567,7 @@
 			if (key in this._nestedViewDefs) {
 				if ('id' in this._nestedViewDefs[key]) {
 					el = '#' + this._nestedViewDefs[key].id;
-				} else {					
+				} else {
 					if ('el' in this._nestedViewDefs[key]) {
 						el = this._nestedViewDefs[key].el;
 					} else {
@@ -617,10 +617,12 @@
 		 * @param {String} viewName View name.
 		 * @param {Object} options View options.
 		 * @param {Function} callback Callback function. Will be invoiked once nested view is ready (loaded).
+		 * @param {Object} or null context Context.
 		 * @param {Bool} wait True be default. Set false if no need parent view wait for nested view loaded.
 		 */
-		createView: function (key, viewName, options, callback, wait) {
+		createView: function (key, viewName, options, callback, context, wait) {
 			wait = (typeof wait === 'undefined') ? true : wait;
+			context = context || null;
 			if (wait) {
 				this.waitForView(key);
 			}
@@ -629,7 +631,11 @@
 					this.setView(key, view);
 				}
 				if (typeof callback === 'function') {
-					callback(view);
+					if (context) {
+						callback.call(this, view);
+					} else {
+						callback(view);
+					}
 				}
 				if (!this._rendered) {
 					this.setView(key, view);
@@ -651,7 +657,6 @@
 				} else {
 					view.setElementInAdvance(el);
 				}
-				
 			}
 
 			if (key in this.nestedViews) {
