@@ -85,9 +85,11 @@
 
 		_rendered: false,
 
+		_isBeingRendered: false,
+
 		initialize: function (options) {
 			this.options = options || {};
-			
+
 			this._factory = this.factory = this.options.factory || null;
 			this._renderer = this.options.renderer || null;
 			this._templator = this.options.templator || null;
@@ -100,7 +102,7 @@
 			}
 
 			this.name = this.options.name || this.name;
-			
+
 			this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;			
 
 			this.nestedViews = {};
@@ -210,10 +212,14 @@
 			return this._rendered;
 		},
 
+		isBeingRendered: function () {
+			return this._isBeingRendered;
+		},
+
 		/**
 		 * Get HTML of view but don't render it.
 		 */
-		getHtml: function (callback) {		
+		getHtml: function (callback) {
 			this._getHtml(callback);
 		},
 
@@ -247,6 +253,7 @@
 			}
 			this.afterRender();
 			this.trigger("after:render", this);
+			this._isBeingRendered = false;
 		},
 
 		/**
@@ -477,6 +484,7 @@
 		},
 
 		_getHtml: function (callback) {
+			this._isBeingRendered = true;
 			this.trigger("render", this);
 			this._getNestedViewsHtmlList(function (nestedViewsHtmlList) {
 				var data = _.extend(this._getData() || {}, nestedViewsHtmlList);
