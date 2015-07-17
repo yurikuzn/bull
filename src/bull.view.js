@@ -617,12 +617,11 @@
 		 * @param {String} viewName View name.
 		 * @param {Object} options View options.
 		 * @param {Function} callback Callback function. Will be invoiked once nested view is ready (loaded).
-		 * @param {Object} or null context Context.
 		 * @param {Bool} wait True be default. Set false if no need parent view wait for nested view loaded.
 		 */
-		createView: function (key, viewName, options, callback, context, wait) {
+		createView: function (key, viewName, options, callback, wait) {
 			wait = (typeof wait === 'undefined') ? true : wait;
-			context = context || null;
+			var context = this;
 			if (wait) {
 				this.waitForView(key);
 			}
@@ -631,11 +630,7 @@
 					this.setView(key, view);
 				}
 				if (typeof callback === 'function') {
-					if (context) {
-						callback.call(context, view);
-					} else {
-						callback(view);
-					}
+					callback.call(context, view);
 				}
 				if (!this._rendered) {
 					this.setView(key, view);
