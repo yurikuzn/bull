@@ -632,7 +632,7 @@
 				}
 				if (typeof callback === 'function') {
 					if (context) {
-						callback.call(this, view);
+						callback.call(context, view);
 					} else {
 						callback(view);
 					}
