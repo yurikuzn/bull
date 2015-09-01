@@ -413,8 +413,8 @@
 						options.collection = this.collection;
 					}
 
-					for (var i in this.optionsToPass) {
-						var name = this.optionsToPass[i];
+					for (var k in this.optionsToPass) {
+						var name = this.optionsToPass[k];
 						options[name] = this.options[name];
 					}
 					this._factory.create(viewName, options, function (view) {
