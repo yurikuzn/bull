@@ -738,6 +738,7 @@
 			if (this.collection) {
 				this.collection.off(null, null, this);
 			}
+			this._rendered = false;
 			return this;
 		},
 	});
