@@ -723,13 +723,15 @@
 		/**
 		 * Remove view and all nested tree. Removes contents of el. Triggers 'remove' event.
 		 */
-		remove: function () {
+		remove: function (dontEmpty) {
 			for (var key in this.nestedViews) {
 				this.clearView(key);
 			}
 			this.trigger('remove');
 			this.off();
-			this.$el.empty();
+			if (!dontEmpty) {
+				this.$el.empty();
+			}
 			this.stopListening();
 			this.undelegateEvents();
 			if (this.model) {
