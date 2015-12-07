@@ -83,7 +83,7 @@
 
 		_readyConditions: null,
 
-		_rendered: false,
+		_isRendered: false,
 
 		_isBeingRendered: false,
 
@@ -207,7 +207,7 @@
 		 * @return {Bool}
 		 */
 		isRendered: function () {
-			return this._rendered;
+			return this._isRendered;
 		},
 
 		isBeingRendered: function () {
@@ -242,7 +242,8 @@
 		},
 
 		_afterRender: function () {
-			this._rendered = true;
+			this._isBeingRendered = false;
+			this._isRendered = true;
 			this.trigger("after:render-internal", this);
 			for (var key in this.nestedViews) {
 				var nestedView = this.nestedViews[key];
@@ -252,7 +253,6 @@
 			}
 			this.afterRender();
 			this.trigger("after:render", this);
-			this._isBeingRendered = false;
 		},
 
 		/**
@@ -633,13 +633,13 @@
 				this.waitForView(key);
 			}
 			this._factory.create(viewName, options, function (view) {
-				if (this._rendered) {
+				if (this._isRendered) {
 					this.setView(key, view);
 				}
 				if (typeof callback === 'function') {
 					callback.call(context, view);
 				}
-				if (!this._rendered) {
+				if (!this._isRendered) {
 					this.setView(key, view);
 				}
 			}.bind(this));
@@ -739,7 +739,8 @@
 			if (this.collection) {
 				this.collection.off(null, null, this);
 			}
-			this._rendered = false;
+			this._isRendered = false;
+			this._isBeingRendered = false;
 			return this;
 		},
 	});
