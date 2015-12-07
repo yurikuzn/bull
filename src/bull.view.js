@@ -98,12 +98,14 @@
 			this._helper = this.options.helper || null;
 
 			if ('noCache' in this.options) {
-				this.noCache = this.options.noCache; 
+				this.noCache = this.options.noCache;
 			}
 
 			this.name = this.options.name || this.name;
 
-			this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;			
+			this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;
+
+			this.data = this.options.data || this.data;
 
 			this.nestedViews = {};
 			this._nestedViewDefs = {};
@@ -198,7 +200,7 @@
 		/**
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
 		 */
-		setElementInAdvance: function (el) {	
+		setElementInAdvance: function (el) {
 			this.on("after:render-internal", function () {
 				this.setElement(el);
 			}.bind(this));
