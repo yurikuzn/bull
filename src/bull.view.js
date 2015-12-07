@@ -120,10 +120,6 @@
 
 			this.optionsToPass = this.options.optionsToPass || this.optionsToPass || [];
 
-			this.once('after:render', function () {
-				this._rendered = true;
-			}, this);
-
 			var merge = function (target, source) {
 				for (var prop in source) {
 					if (typeof target == 'object') {
@@ -246,6 +242,7 @@
 		},
 
 		_afterRender: function () {
+			this._rendered = true;
 			this.trigger("after:render-internal", this);
 			for (var key in this.nestedViews) {
 				var nestedView = this.nestedViews[key];
