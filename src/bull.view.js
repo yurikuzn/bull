@@ -616,7 +616,7 @@
 		/**
 		 * Get nested view.
 		 * @param {String} key
-		 * @return {Jet.View}
+		 * @return {Bull.View}
 		 */
 		getView: function (key) {
 			if (key in this.nestedViews) {
@@ -654,7 +654,7 @@
 		/**
 		 * Set nested view.
 		 * @param {String} key
-		 * @param {Jet.View} view
+		 * @param {Bull.View} view
 		 * @param {String} el Selector for view container.
 		 */
 		setView: function (key, view, el) {
@@ -689,11 +689,31 @@
 		},
 
 		/**
+		 * Removes nested view but supposed that this view can be re-used in future.
+		 * @param {String} key
+		 */
+        unchainView: function (key) {
+            if (key in this.nestedViews) {
+                this.nestedViews[key]._parentView = null;
+                this.nestedViews[key].undelegateEvents();
+                delete this.nestedViews[key];
+            }
+        },
+
+		/**
 		 * Get parent view.
-		 * @return {Jet.View}
+		 * @return {Bull.View}
 		 */
 		getParentView: function () {
 			return this._parentView;
+		},
+
+		/**
+		 * Has parent view.
+		 * @return {bool}
+		 */
+		hasParentView: function () {
+			return !!this._parentView;
 		},
 
 		/**
