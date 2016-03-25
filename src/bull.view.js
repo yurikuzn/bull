@@ -87,6 +87,8 @@
 
 		_isBeingRendered: false,
 
+		_isRemoved: false,
+
 		initialize: function (options) {
 			this.options = options || {};
 
@@ -212,6 +214,10 @@
 
 		isBeingRendered: function () {
 			return this._isBeingRendered;
+		},
+
+		isRemoved: function () {
+			return this._isRemoved;
 		},
 
 		/**
@@ -741,6 +747,7 @@
 			}
 			this._isRendered = false;
 			this._isBeingRendered = false;
+			this._isRemoved = true;
 			return this;
 		},
 	});
