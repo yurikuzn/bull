@@ -12,14 +12,29 @@ module.exports = function (grunt) {
 				'src/bull.loader.js',
 				'src/bull.templator.js',
 				'src/bull.layouter.js',
-				'src/bull.renderer.js',
+				'src/bull.renderer.js'
 			]
+		},
+		concat: {
+			dist: {
+				src: [
+					'src/bull.factory.js',
+					'src/bull.view.js',
+					'src/bull.loader.js',
+					'src/bull.templator.js',
+					'src/bull.layouter.js',
+					'src/bull.renderer.js'
+				],
+				dest: 'build/<%= pkg.name %>.js',
+			}
 		}
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-concat');
 
 	grunt.registerTask('default', [
-		'uglify'
+		'uglify',
+		'concat'
 	]);
 };

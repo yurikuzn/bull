@@ -151,14 +151,14 @@
 				this._templateCompiled = this._templator.compileTemplate(this._template);
 			}
 
-			if (this.options.el || null) {
+			if (this.options.el) {
 				this.setElementInAdvance(this.options.el);
 			}
 
-			var _layout = this._getLayout();			
+			var _layout = this._getLayout();
 
 			var loadNestedViews = function () {
-				this._loadNestedViews(function () {				
+				this._loadNestedViews(function () {
 					this._nestedViewsFromLayoutLoaded = true;
 					this._tryReady();
 				}.bind(this));
@@ -198,11 +198,23 @@
 		/**
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
 		 */
-		setElementInAdvance: function (el) {
-			this.on("after:render-internal", function () {
-				this.setElement(el);
-			}.bind(this));
-		},
+        setElementInAdvance: function (el) {
+            if (this._setElementInAdvancedInProcess) return;
+            this._setElementInAdvancedInProcess = true;
+
+            this.on("after:render-internal", function () {
+                this.setElement(el);
+                this._setElementInAdvancedInProcess = false;
+            }.bind(this));
+        },
+
+        getSelector: function () {
+            return this.options.el || null;
+        },
+
+        setSelector: function (selector) {
+            this.options.el = selector;
+        },
 
 		/**
 		 * Check whether view has been already rendered.
@@ -235,8 +247,9 @@
 				if (this.$el.size()) {
 					this.$el.html(html);
 				} else {
-					if (this.options.el)
-					this.setElement(this.options.el);
+					if (this.options.el) {
+					   this.setElement(this.options.el);
+                    }
 					this.$el.html(html);
 				}
 				this._afterRender();
@@ -309,26 +322,6 @@
 			if (typeof this.options.onReady === 'function') {
 				this.options.onReady(this);
 			}
-		},
-
-		_createViews: function () {
-			var views = this.options.views || [];
-			views.forEach(function (o, name) {
-				var options = _.clone(o);
-				delete options['view'];
-				options.model = this.model;
-				options.collection = this.collection;
-
-				for (var i in this.optionsToPass) {
-					var name = this.optionsToPass[i];
-					options[name] = this.options[name];
-				}
-
-				if (!options.el && this.el && o.selector) {
-					options.el =  this.el + ' ' + o.selector;
-				}
-				this.createView(name, o.view || null, options);
-			}.bind(this));
 		},
 
 		_addDefinedNestedViewDefs: function (list) {
@@ -583,19 +576,17 @@
 				} else {
 					if ('el' in this._nestedViewDefs[key]) {
 						el = this._nestedViewDefs[key].el;
-					} else {
-						if ('selector' in this._nestedViewDefs[key]) {
-							var currentEl = null;
-							if (typeof this.el == 'object') {
-								currentEl = this.$el.selector;
-							} else {
-								currentEl = this.options.el || this.el;
-							}
-							if (currentEl) {
-								el = currentEl + ' ' + this._nestedViewDefs[key].selector;
-							}
+					} else if ('selector' in this._nestedViewDefs[key]) {
+						var currentEl = this.getSelector();
+						if (currentEl) {
+							el = currentEl + ' ' + this._nestedViewDefs[key].selector;
 						}
-					}
+					} else {
+                        var currentEl = this.getSelector();
+                        if (currentEl) {
+                            el = currentEl + ' [data-view="'+key+'"]';
+                        }
+                    }
 				}
 			}
 			return el;
@@ -638,6 +629,10 @@
 			if (wait) {
 				this.waitForView(key);
 			}
+            options = options || {};
+            if (!options.el) {
+                options.el = this.getSelector() + ' [data-view="'+key+'"]';
+            }
 			this._factory.create(viewName, options, function (view) {
 				if (this._isRendered) {
 					this.setView(key, view);
@@ -659,6 +654,7 @@
 		 */
 		setView: function (key, view, el) {
 			var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
+
 			if (el) {
 				if (this.isRendered()) {
 					view.setElement(el);
@@ -770,6 +766,26 @@
 			this._isRemoved = true;
 			return this;
 		},
+
+        _setElement: function (el) {
+            if (typeof el === 'string') {
+                var parentView = this.getParentView();
+                if (parentView && parentView.isRendered()) {
+                    if (parentView.$el && parentView.$el.size() && parentView.getSelector()) {
+                        if (el.indexOf(parentView.getSelector()) === 0) {
+                            var subEl = el.substr(parentView.getSelector().length, el.length - 1);
+                            this.$el = $(subEl, parentView.$el).eq(0);
+                            this.el = this.$el[0];
+                            return;
+                        }
+                    }
+                }
+            }
+
+            this.$el = $(el).eq(0);
+            this.el = this.$el[0];
+        }
+
 	});
 
 }).call(this, Bull, Backbone, _);
