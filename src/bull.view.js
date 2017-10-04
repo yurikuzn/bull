@@ -141,6 +141,7 @@
 
 			this.init();
 			this.setup();
+			this.setupFinal();
 
 			this.template = this.options.template || this.template;
 			this.layout = this.options.layout || this.layout;
@@ -194,6 +195,8 @@
 		 * Setup view. Empty method by default. Is run after #init.
 		 */
 		setup: function () {},
+
+		setupFinal: function () {},
 
 		/**
 		 * Set view container element if doesn't exist yet. It will call setElement after render.
