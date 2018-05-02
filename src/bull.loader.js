@@ -1,131 +1,131 @@
 (function (Bull, _) {
 
-	Bull.Loader = function (options) {
-		var options = options || {};
-		this._paths = _.extend(this._paths, options.paths || {});
-		this._exts = _.extend(this._exts, options.exts || {});
-		this._normalize = _.extend(this._normalize, options.normalize || {});
-		this._isJson = _.extend(this._isJson, options.isJson || {});
+    Bull.Loader = function (options) {
+        var options = options || {};
+        this._paths = _.extend(this._paths, options.paths || {});
+        this._exts = _.extend(this._exts, options.exts || {});
+        this._normalize = _.extend(this._normalize, options.normalize || {});
+        this._isJson = _.extend(this._isJson, options.isJson || {});
 
-		this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
+        this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
 
-		this._externalPathFunction = options.path || null;
+        this._externalPathFunction = options.path || null;
 
-	};
+    };
 
-	_.extend(Bull.Loader.prototype, {
+    _.extend(Bull.Loader.prototype, {
 
-		_exts: {
-			layout: 'json',
-			template: 'tpl',
-			layoutTemplate: 'tpl',
-		},
+        _exts: {
+            layout: 'json',
+            template: 'tpl',
+            layoutTemplate: 'tpl',
+        },
 
-		_paths: {
-			layout: 'layouts',
-			template: 'templates',
-			layoutTemplate: 'templates/layouts',
-		},
+        _paths: {
+            layout: 'layouts',
+            template: 'templates',
+            layoutTemplate: 'templates/layouts',
+        },
 
-		_isJson: {
-			layout: true,
-		},
+        _isJson: {
+            layout: true,
+        },
 
-		_externalLoaders: {
-			layout: null,
-			template: null,
-			layoutTemplate: null,
-		},
+        _externalLoaders: {
+            layout: null,
+            template: null,
+            layoutTemplate: null,
+        },
 
-		_externalPathFunction: null,
+        _externalPathFunction: null,
 
-		_normalize: {
-			layouts: function (name) {
-				return name;
-			},
-			templates: function (name) {
-				return name;
-			},
-			layoutTemplates: function (name) {
-				return name;
-			},
-		},
+        _normalize: {
+            layouts: function (name) {
+                return name;
+            },
+            templates: function (name) {
+                return name;
+            },
+            layoutTemplates: function (name) {
+                return name;
+            },
+        },
 
-		getFilePath: function (type, name) {
-			if (!(type in this._paths) || !(type in this._exts)) {
-				throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
-			}
+        getFilePath: function (type, name) {
+            if (!(type in this._paths) || !(type in this._exts)) {
+                throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
+            }
 
-			var namePart = name;
-			if (type in this._normalize) {
-				namePart = this._normalize[type](name);
-			}
+            var namePart = name;
+            if (type in this._normalize) {
+                namePart = this._normalize[type](name);
+            }
 
-			var pathPart = this._paths[type];
-			if (pathPart.substr(-1) == '/') {
-				pathPart = pathPart.substr(0, pathPart.length - 1);
-			}
+            var pathPart = this._paths[type];
+            if (pathPart.substr(-1) == '/') {
+                pathPart = pathPart.substr(0, pathPart.length - 1);
+            }
 
-			return pathPart + '/' + namePart + '.' + this._exts[type];
-		},
+            return pathPart + '/' + namePart + '.' + this._exts[type];
+        },
 
-		_callExternalLoader: function (type, name, callback) {
-			if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
-				if (typeof this._externalLoaders[type] === 'function') {
-					this._externalLoaders[type](name, callback);
-					return true;
-				} else {
-					throw new Error("Loader for \"" + type + "\" in not a Function.");
-				}
-			}
-			return null;
-		},
+        _callExternalLoader: function (type, name, callback) {
+            if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
+                if (typeof this._externalLoaders[type] === 'function') {
+                    this._externalLoaders[type](name, callback);
+                    return true;
+                } else {
+                    throw new Error("Loader for \"" + type + "\" in not a Function.");
+                }
+            }
+            return null;
+        },
 
-		load: function (type, name, callback) {
-			var customCalled = this._callExternalLoader(type, name, callback);
-			if (customCalled) {
-				return;
-			}
+        load: function (type, name, callback) {
+            var customCalled = this._callExternalLoader(type, name, callback);
+            if (customCalled) {
+                return;
+            }
 
-			var response, filePath ;
+            var response, filePath ;
 
-			if (this._externalPathFunction != null) {
-				filePath = this._externalPathFunction.call(this, type, name);
-			} else {
-				filePath = this.getFilePath(type, name);
-			}
+            if (this._externalPathFunction != null) {
+                filePath = this._externalPathFunction.call(this, type, name);
+            } else {
+                filePath = this.getFilePath(type, name);
+            }
 
-			filePath += '?_=' + new Date().getTime();
+            filePath += '?_=' + new Date().getTime();
 
-			var xhr = new XMLHttpRequest();
-			xhr.open('GET', filePath, true);
-			xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', filePath, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
-			xhr.onreadystatechange = function() {
-				if (xhr.readyState === 4) {
-					response = xhr.responseText;
-					if (type in this._isJson) {
-						if (this._isJson[type]) {
-							var obj;
-							if (xhr.status == 404 || xhr.status == 403) {
-								throw new Error("Could not load " + type + " \"" + name + "\".");
-							}
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    response = xhr.responseText;
+                    if (type in this._isJson) {
+                        if (this._isJson[type]) {
+                            var obj;
+                            if (xhr.status == 404 || xhr.status == 403) {
+                                throw new Error("Could not load " + type + " \"" + name + "\".");
+                            }
 
-							try {
-								obj = JSON.parse(String(response));
-							} catch (e) {
-								throw new SyntaxError("Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
-							}
-							callback(obj);
-							return;
-						}
-					}
-					callback(response);
-				}
-			}.bind(this);
+                            try {
+                                obj = JSON.parse(String(response));
+                            } catch (e) {
+                                throw new SyntaxError("Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
+                            }
+                            callback(obj);
+                            return;
+                        }
+                    }
+                    callback(response);
+                }
+            }.bind(this);
 
-			xhr.send(null);
-		},
-	});
+            xhr.send(null);
+        },
+    });
 
 }).call(this, Bull, _);
