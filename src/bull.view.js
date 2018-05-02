@@ -89,6 +89,8 @@
 
 		_isRemoved: false,
 
+        _isRenderCanceled: false,
+
 		initialize: function (options) {
 			this.options = options || {};
 
@@ -242,11 +244,26 @@
 			this._getHtml(callback);
 		},
 
+        cancelRender: function () {
+            if (this.isBeingRendered()) {
+                this._isRenderCanceled = true;
+            }
+        },
+
+        uncancelRender: function () {
+            this._isRenderCanceled = false;
+        },
+
 		/**
 		 * Render view.
 		 */
 		render: function (callback) {
 			this._getHtml(function (html) {
+                if (this._isRenderCanceled) {
+                    this._isRenderCanceled = false;
+                    this._isBeingRendered = false;
+                    return;
+                }
 				if (this.$el.size()) {
 					this.$el.html(html);
 				} else {
