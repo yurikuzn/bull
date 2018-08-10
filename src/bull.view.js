@@ -85,6 +85,8 @@
 
         _isRendered: false,
 
+        _isFullyRendered: false,
+
         _isBeingRendered: false,
 
         _isRemoved: false,
@@ -222,11 +224,19 @@
         },
 
         /**
-         * Check whether view has been already rendered.
+         * Checks whether view has been already rendered.
          * @return {Bool}
          */
         isRendered: function () {
             return this._isRendered;
+        },
+
+        /**
+         * Checks whether view has been fully rendered (afterRender has been executed).
+         * @return {Bool}
+         */
+        isFullyRendered: function () {
+            return this._isFullyRendered
         },
 
         isBeingRendered: function () {
@@ -292,6 +302,7 @@
             }
             this.afterRender();
             this.trigger("after:render", this);
+            this._isFullyRendered = true;
         },
 
         /**
@@ -785,6 +796,7 @@
                 this.collection.off(null, null, this);
             }
             this._isRendered = false;
+            this._isFullyRendered = false;
             this._isBeingRendered = false;
             this._isRemoved = true;
             return this;
