@@ -268,6 +268,9 @@
          * Render view.
          */
         render: function (callback) {
+            this._isRendered = false;
+            this._isFullyRendered = false;
+
             this._getHtml(function (html) {
                 if (this._isRenderCanceled) {
                     this._isRenderCanceled = false;
@@ -288,6 +291,20 @@
                 }
             }.bind(this));
 
+        },
+
+        reRender: function (force) {
+            if (this.isRendered()) {
+                this.render();
+            } else if (this.isBeingRendered()) {
+                this.once('after:render', function () {
+                    this.render();
+                }, this);
+            } else {
+                if (force) {
+                    this.render();
+                }
+            }
         },
 
         _afterRender: function () {
