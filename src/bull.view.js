@@ -685,13 +685,15 @@
                 options.el = this.getSelector() + ' [data-view="'+key+'"]';
             }
             this._factory.create(viewName, options, function (view) {
+                var isSet = false;
                 if (this._isRendered || options.setViewBeforeCallback) {
                     this.setView(key, view);
+                    isSet = true;
                 }
                 if (typeof callback === 'function') {
                     callback.call(context, view);
                 }
-                if (!this._isRendered && !options.setViewBeforeCallback) {
+                if (!this._isRendered && !options.setViewBeforeCallback && !isSet) {
                     this.setView(key, view);
                 }
             }.bind(this));
