@@ -682,6 +682,7 @@
          * @param {Bool} wait True be default. Set false if no need parent view wait for nested view loaded.
          */
         createView: function (key, viewName, options, callback, wait) {
+            this.clearView(key);
             return new Promise(function (resolve) {
                 wait = (typeof wait === 'undefined') ? true : wait;
                 var context = this;
