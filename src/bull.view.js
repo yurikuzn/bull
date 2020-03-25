@@ -899,6 +899,10 @@
 
         onRemove: function () {},
 
+        _ensureElement: function () {
+            this.$el = $();
+        },
+
         _setElement: function (el) {
             if (typeof el === 'string') {
                 var parentView = this.getParentView();
