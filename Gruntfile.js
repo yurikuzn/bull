@@ -4,7 +4,7 @@ module.exports = function (grunt) {
 		pkg: grunt.file.readJSON('package.json'),
 		uglify: {
 			options: {
-				banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+				banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
 			},
 			'build/<%= pkg.name %>.min.js': [
 				'src/bull.factory.js',
@@ -26,6 +26,9 @@ module.exports = function (grunt) {
 					'src/bull.renderer.js'
 				],
 				dest: 'build/<%= pkg.name %>.js',
+				options: {
+					banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+				},
 			}
 		}
 	});

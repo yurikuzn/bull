@@ -1,6 +1,6 @@
 {
   "name": "bull",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "",
   "directories": {},
   "scripts": {
@@ -10,8 +10,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-contrib-uglify": "~0.2.4",
+    "grunt": "^1.0.4",
+    "grunt-contrib-uglify": "~4.0.0",
     "grunt-contrib-concat": "~1.0.1"
   }
 }
