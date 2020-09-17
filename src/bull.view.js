@@ -290,7 +290,7 @@
                         delete this._renderPromise;
                         return;
                     }
-                    if (this.$el.size()) {
+                    if (this.$el.length) {
                         this.$el.html(html);
                     } else {
                         if (this.options.el) {
@@ -907,7 +907,7 @@
             if (typeof el === 'string') {
                 var parentView = this.getParentView();
                 if (parentView && parentView.isRendered()) {
-                    if (parentView.$el && parentView.$el.size() && parentView.getSelector()) {
+                    if (parentView.$el && parentView.$el.length && parentView.getSelector()) {
                         if (el.indexOf(parentView.getSelector()) === 0) {
                             var subEl = el.substr(parentView.getSelector().length, el.length - 1);
                             this.$el = $(subEl, parentView.$el).eq(0);
