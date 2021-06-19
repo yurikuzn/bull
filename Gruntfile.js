@@ -1,4 +1,4 @@
-module.exports = function (grunt) {
+module.exports = (grunt) => {
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
@@ -6,7 +6,7 @@ module.exports = function (grunt) {
 			options: {
 				banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
 			},
-			'build/<%= pkg.name %>.min.js': [
+			'dist/<%= pkg.name %>.min.js': [
 				'src/bull.factory.js',
 				'src/bull.view.js',
 				'src/bull.loader.js',
@@ -25,12 +25,12 @@ module.exports = function (grunt) {
 					'src/bull.layouter.js',
 					'src/bull.renderer.js'
 				],
-				dest: 'build/<%= pkg.name %>.js',
+				dest: 'dist/<%= pkg.name %>.js',
 				options: {
 					banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
 				},
 			}
-		}
+		},
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-uglify');
@@ -38,6 +38,6 @@ module.exports = function (grunt) {
 
 	grunt.registerTask('default', [
 		'uglify',
-		'concat'
+		'concat',
 	]);
 };
