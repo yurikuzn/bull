@@ -1,4 +1,4 @@
-# Bull.js
+# Bullbone
 
 The library enhances Backbone.js view. Developed for EspoCRM.
 
