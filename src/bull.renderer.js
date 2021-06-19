@@ -8,7 +8,7 @@
     _.extend(Bull.Renderer.prototype, {
 
         _render: function (template, data) {
-            return template(data);
+            return template(data, {allowProtoPropertiesByDefault: true});
         },
 
         render: function (template, data) {
