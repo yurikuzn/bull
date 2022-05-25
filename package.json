@@ -11,7 +11,7 @@
   "author": "Yuri Kuznersov & EspoCRM team",
   "license": "MIT",
   "devDependencies": {
-    "grunt": "^1.3.0",
+    "grunt": "^1.5.3",
     "grunt-contrib-uglify": "~4.0.0",
     "grunt-contrib-concat": "~1.0.1"
   }
