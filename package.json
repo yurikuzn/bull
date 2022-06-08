@@ -12,10 +12,6 @@
   "license": "MIT",
   "devDependencies": {
     "grunt": "^1.5.3",
-    "grunt-contrib-uglify": "~4.0.0",
-    "grunt-contrib-concat": "~1.0.1",
-    "babel-core": "~6.25.0",
-    "grunt-babel": "~7.0.0",
-    "babel-preset-env": "~1.6.0"
+    "grunt-contrib-concat": "~1.0.1"
   }
 }

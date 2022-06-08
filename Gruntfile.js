@@ -2,14 +2,6 @@ module.exports = (grunt) => {
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
-		uglify: {
-			options: {
-				banner: '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
-			},
-			'dist/<%= pkg.name %>.min.js': [
-				'dist/<%= pkg.name %>.js',
-			],
-		},
 		concat: {
 			dist: {
 				src: [
@@ -26,26 +18,11 @@ module.exports = (grunt) => {
 				},
 			}
 		},
-		babel: {
-			options: {
-				sourceMap: false,
-				presets: ['env']
-			},
-			dist: {
-				files: {
-					'dist/<%= pkg.name %>.js': 'dist/<%= pkg.name %>.js',
-				}
-			},
-		},
 	});
 
-	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-concat');
-	grunt.loadNpmTasks('grunt-babel');
 
 	grunt.registerTask('default', [
 		'concat',
-		'babel',
-		'uglify',
 	]);
 };
