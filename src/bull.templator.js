@@ -6,6 +6,7 @@
         this._layoutTemplates = {};
         this._loader = data.loader || null;
         this._layouter = data.layouter || null;
+
         if ('compilable' in data) {
             this.compilable = data.compilable;
         }
@@ -45,25 +46,29 @@
 
             var layout = layoutOptions.layout || null;
 
-            var then = function (template) {
+            var then = (template) => {
                 if (this.compilable) {
                     template = this.compileTemplate(template);
                 }
-                this._templates[name] = template;
-                callback(template);
-            }.bind(this);
 
-            var proceedWithLayout = function (layout) {
+                this._templates[name] = template;
+
+                callback(template);
+            };
+
+            var proceedWithLayout = (layout) => {
                 if (layout == null) {
                     throw new Error("Could not get layout '" + layoutOptions.name + "'.");
                 }
+
                 this._buildTemplate(layout, layoutOptions.data, then);
-            }.bind(this);
+            };
 
             if (!template) {
                 if (!layoutOptions.name && !layoutOptions.layout) {
                     this._loader.load('template', name, then);
-                } else {
+                }
+                else {
                     if (!layout) {
                         this._layouter.getLayout(layoutOptions.name, proceedWithLayout);
                     } else {
@@ -77,6 +82,7 @@
             if (typeof Handlebars !== 'undefined') {
                 return Handlebars.compile(template);
             }
+
             return template;
         },
 
@@ -84,6 +90,7 @@
             if (templateName in this._templates) {
                 return this._templates[templateName];
             }
+
             return false;
         },
 
@@ -92,6 +99,7 @@
             if (layoutType in this._layoutTemplates) {
                 return this._layoutTemplates[layoutType];
             }
+
             return false;
         },
 
@@ -102,23 +110,29 @@
         _buildTemplate: function (layoutDefs, data, callback) {
             var layoutType = layoutDefs.type || 'default';
 
-            var proceed = function (layoutTemplate) {
+            var proceed = (layoutTemplate) => {
                 var injection = _.extend(layoutDefs, data || {});
                 var template = _.template(layoutTemplate, injection);
+
                 if (typeof template === 'function') {
                     template = template(injection);
                 }
+
                 callback(template);
-            }.bind(this);
+            };
 
             var layoutTemplate = this._getCachedLayoutTemplate(layoutType);
+
             if (!layoutTemplate) {
-                this._loader.load('layoutTemplate', layoutType, function (layoutTemplate) {
+                this._loader.load('layoutTemplate', layoutType, (layoutTemplate) => {
                     this._cacheLayoutTemplate(layoutType, layoutTemplate);
+
                     proceed(layoutTemplate);
-                }.bind(this));
+                });
+
                 return;
             }
+
             proceed(layoutTemplate);
         },
     });

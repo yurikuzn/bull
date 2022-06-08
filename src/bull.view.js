@@ -3,17 +3,18 @@
     Bull.View = Backbone.View.extend({
 
         /**
-         * @property {String} Template name.
+         * @property {string} Template name.
          */
         template: null,
 
         /**
-         * @property {String} Layout name. Used if template is not specified to build template.
+         * @property {string} Layout name. Used if template is not specified to build template.
          */
         layout: null,
 
         /**
-         * @property {String} Name of View. If template name is not defined it will be used to cache built template and layout. Otherwise they won't be cached. Name it unique.
+         * @property {string} Name of View. If template name is not defined it will be used to cache
+         * built template and layout. Otherwise they won't be cached. Name it unique.
          */
         name: null,
 
@@ -23,17 +24,18 @@
         data: null,
 
         /**
-         * @property {bool} Not to use cache for layouts. Use it if layouts are dynamic.
+         * @property {boolean} Not to use cache for layouts. Use it if layouts are dynamic.
          */
         noCache: false,
 
         /**
-         * @property {bool} Not to rended view automatical when build view tree. Afterwards it can be rendered manually.
+         * @property {boolean} Not to rended view automatical when build view tree.
+         * Afterwards it can be rendered manually.
          */
         notToRender: false,
 
         /**
-         * @property {String} Template itself.
+         * @property {string} Template itself.
          */
         _template: null,
 
@@ -47,7 +49,8 @@
         isReady: false,
 
         /**
-         * @property {Object} Definitions for nested views that should be automaticaly created. Example: {body: {view: 'Body', selector: '> .body'}}.
+         * @property {Object} Definitions for nested views that should be automaticaly created.
+         * Example: `{body: {view: 'Body', selector: '> .body'}}`.
          */
         views: null,
 
@@ -130,7 +133,7 @@
 
             var merge = function (target, source) {
                 for (var prop in source) {
-                    if (typeof target == 'object') {
+                    if (typeof target === 'object') {
                         if (prop in target) {
                             merge(target[prop], source[prop]);
                         } else {
@@ -138,8 +141,9 @@
                         }
                     }
                 }
+
                 return target;
-            }
+            };
 
             if (this.views || this.options.views) {
                 this.views = merge(this.options.views || {}, this.views || {});
@@ -166,29 +170,37 @@
 
             var _layout = this._getLayout();
 
-            var loadNestedViews = function () {
-                this._loadNestedViews(function () {
+            var loadNestedViews = () => {
+                this._loadNestedViews(() => {
                     this._nestedViewsFromLayoutLoaded = true;
+
                     this._tryReady();
-                }.bind(this));
-            }.bind(this);
+                });
+            };
 
             if (this.layout != null || _layout !== null) {
                 if (_layout === null) {
-                    this._layouter.getLayout(this.layout, function (_layout) {
+                    this._layouter.getLayout(this.layout, (_layout) => {
                         this._layout = _layout;
+
                         loadNestedViews();
-                    }.bind(this));
+                    });
+
                     return;
                 }
+
                 loadNestedViews();
+
                 return;
-            } else {
+            }
+            else {
                 if (this.views != null) {
                     loadNestedViews();
+
                     return;
                 }
             }
+
             this._nestedViewsFromLayoutLoaded = true;
 
             this._tryReady();
@@ -200,23 +212,30 @@
         init: function () {},
 
         /**
-         * Setup view. Empty method by default. Is run after #init.
+         * Setup the view. Empty method by default. Is run after #init.
          */
         setup: function () {},
 
+        /**
+         * Additional setup. Empty method by default. Is run after #setup.
+         */
         setupFinal: function () {},
 
         /**
          * Set view container element if doesn't exist yet. It will call setElement after render.
          */
         setElementInAdvance: function (el) {
-            if (this._setElementInAdvancedInProcess) return;
+            if (this._setElementInAdvancedInProcess) {
+                return;
+            }
+
             this._setElementInAdvancedInProcess = true;
 
-            this.on("after:render-internal", function () {
+            this.on('after:render-internal', () => {
                 this.setElement(el);
+
                 this._setElementInAdvancedInProcess = false;
-            }.bind(this));
+            });
         },
 
         getSelector: function () {
@@ -229,7 +248,7 @@
 
         /**
          * Checks whether view has been already rendered.
-         * @return {Bool}
+         * @return {boolean}
          */
         isRendered: function () {
             return this._isRendered;
@@ -237,10 +256,10 @@
 
         /**
          * Checks whether view has been fully rendered (afterRender has been executed).
-         * @return {Bool}
+         * @return {boolean}
          */
         isFullyRendered: function () {
-            return this._isFullyRendered
+            return this._isFullyRendered;
         },
 
         isBeingRendered: function () {
@@ -262,6 +281,7 @@
             if (this.isBeingRendered()) {
                 this._isRenderCanceled = true;
             }
+
             if (this._renderPromise) {
                 this._renderPromise._isToReject = true;
             }
@@ -278,31 +298,42 @@
             this._isRendered = false;
             this._isFullyRendered = false;
 
-            var self = this;
+            let self = this;
 
             this._renderPromise = new Promise(function (resolve, reject) {
                 var promise = this;
+
                 self._getHtml(function (html) {
                     if (this._isRenderCanceled || promise._isToReject) {
                         this._isRenderCanceled = false;
                         this._isBeingRendered = false;
+
                         reject();
+
                         delete this._renderPromise;
+
                         return;
                     }
+
                     if (this.$el.length) {
                         this.$el.html(html);
-                    } else {
+                    }
+                    else {
                         if (this.options.el) {
                            this.setElement(this.options.el);
                         }
+
                         this.$el.html(html);
                     }
+
                     this._afterRender();
+
                     if (typeof callback === 'function') {
                         callback();
                     }
+
                     delete this._renderPromise;
+
                     resolve(this);
                 }.bind(self));
             });
@@ -316,57 +347,84 @@
         reRender: function (force) {
             if (this.isRendered()) {
                 return this.render();
-            } else if (this.isBeingRendered()) {
-                return new Promise(function (resolve, reject) {
-                    this.once('after:render', function () {
-                        this.render().then(resolve).catch(reject);
-                    }, this);
-                }.bind(this));
-            } else {
-                if (force) {
-                    return this.render();
-                }
             }
+
+            if (this.isBeingRendered()) {
+                return new Promise((resolve, reject) => {
+                    this.once('after:render', () => {
+                        this.render()
+                            .then(resolve)
+                            .catch(reject);
+                    });
+                });
+            }
+
+            if (force) {
+                return this.render();
+            }
+
+            return Promise.reject();
         },
 
         _afterRender: function () {
             this._isBeingRendered = false;
             this._isRendered = true;
-            this.trigger("after:render-internal", this);
+
+            this.trigger('after:render-internal', this);
+
             for (var key in this.nestedViews) {
                 var nestedView = this.nestedViews[key];
+
                 if (!nestedView.notToRender) {
                     nestedView._afterRender();
                 }
             }
+
             this.afterRender();
-            this.trigger("after:render", this);
+
+            this.trigger('after:render', this);
+
             this._isFullyRendered = true;
         },
 
         /**
-         * Executed after render. Empty method by default.
+         * Executed after render. Empty by default.
          */
         afterRender: function () {},
 
         _tryReady: function () {
-            if (this.isReady) return;
-
-            if (this._wait) return;
-
-            if (!this._nestedViewsFromLayoutLoaded) return;
-
-            for (var i = 0; i < this._waitViewList.length; i++) {
-                if (!this.hasView(this._waitViewList[i])) return;
+            if (this.isReady) {
+                return;
             }
 
-            if (this._waitPromiseCount) return;
+            if (this._wait) {
+                return;
+            }
+
+            if (!this._nestedViewsFromLayoutLoaded) {
+                return;
+            }
+
+            for (var i = 0; i < this._waitViewList.length; i++) {
+                if (!this.hasView(this._waitViewList[i])) {
+                    return;
+                }
+            }
+
+            if (this._waitPromiseCount) {
+                return;
+            }
 
             for (var i = 0; i < this._readyConditionList.length; i++) {
                 if (typeof this._readyConditionList[i] === 'function') {
-                    if (!this._readyConditionList[i]()) return;
-                } else {
-                    if (!this._readyConditionList) return;
+                    if (!this._readyConditionList[i]()) {
+                        return;
+                    }
+                }
+                else {
+                    if (!this._readyConditionList) {
+                        return;
+                    }
                 }
             }
 
@@ -383,6 +441,7 @@
         _makeReady: function () {
             this.isReady = true;
             this.trigger('ready');
+
             if (typeof this.options.onReady === 'function') {
                 this.options.onReady(this);
             }
@@ -391,21 +450,27 @@
         _addDefinedNestedViewDefs: function (list) {
             for (var name in this.views) {
                 var o = _.clone(this.views[name]);
+
                 o.name = name;
+
                 list.push(o);
+
                 this._nestedViewDefs[name] = o;
             }
-            return list
+
+            return list;
         },
 
         _getNestedViewsFromLayout: function () {
-            var nestedViewDefs = this._layouter.findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
+            var nestedViewDefs = this._layouter
+                .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
 
             if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
                 throw new Error("Bad layout. It should be an Array.");
             }
 
             var nestedViewDefsFiltered = [];
+
             for (var i in nestedViewDefs) {
                 var key = nestedViewDefs[i].name;
 
@@ -416,6 +481,7 @@
                         continue;
                     }
                 }
+
                 nestedViewDefsFiltered.push(nestedViewDefs[i]);
             }
 
@@ -425,6 +491,7 @@
 
         _loadNestedViews: function (callback) {
             var nestedViewDefs = [];
+
             if (this._layout != null) {
                 nestedViewDefs = this._getNestedViewsFromLayout();
             }
@@ -435,79 +502,99 @@
             var loaded = 0;
 
             var tryReady = function () {
-                if (loaded == count) {
+                if (loaded === count) {
                     callback();
-                    return true
+
+                    return true;
                 }
             };
 
             tryReady();
-            nestedViewDefs.forEach(function (def, i) {
+
+            nestedViewDefs.forEach((def, i) => {
                 var key = nestedViewDefs[i].name;
                 var viewName = this._factory.defaultViewName;
+
                 if ('view' in nestedViewDefs[i]) {
                     viewName = nestedViewDefs[i].view;
                 }
 
                 if (viewName === false) {
                     loaded++;
+
                     tryReady();
-                } else {
-                    var options = {};
-                    if ('layout' in nestedViewDefs[i]) {
-                        options.layout = nestedViewDefs[i].layout;
-                    }
-                    if ('template' in nestedViewDefs[i]) {
-                        options.template = nestedViewDefs[i].template;
-                    }
 
-                    if ('el' in nestedViewDefs[i]) {
-                        options.el = nestedViewDefs[i].el;
-                    }
-
-                    if ('options' in nestedViewDefs[i]) {
-                        options = _.extend(options, nestedViewDefs[i].options);
-                    }
-                    if (this.model) {
-                        options.model = this.model;
-                    }
-                    if (this.collection) {
-                        options.collection = this.collection;
-                    }
-
-                    for (var k in this.optionsToPass) {
-                        var name = this.optionsToPass[k];
-                        options[name] = this.options[name];
-                    }
-                    this._factory.create(viewName, options, function (view) {
-                        if ('notToRender' in nestedViewDefs[i]) {
-                            view.notToRender = nestedViewDefs[i].notToRender;
-                        }
-                        this.setView(key, view);
-                        loaded++;
-                        tryReady();
-                    }.bind(this));
+                    return;
                 }
-            }, this);
+
+                var options = {};
+
+                if ('layout' in nestedViewDefs[i]) {
+                    options.layout = nestedViewDefs[i].layout;
+                }
+
+                if ('template' in nestedViewDefs[i]) {
+                    options.template = nestedViewDefs[i].template;
+                }
+
+                if ('el' in nestedViewDefs[i]) {
+                    options.el = nestedViewDefs[i].el;
+                }
+
+                if ('options' in nestedViewDefs[i]) {
+                    options = _.extend(options, nestedViewDefs[i].options);
+                }
+
+                if (this.model) {
+                    options.model = this.model;
+                }
+
+                if (this.collection) {
+                    options.collection = this.collection;
+                }
+
+                for (var k in this.optionsToPass) {
+                    var name = this.optionsToPass[k];
+
+                    options[name] = this.options[name];
+                }
+
+                this._factory.create(viewName, options, (view) => {
+                    if ('notToRender' in nestedViewDefs[i]) {
+                        view.notToRender = nestedViewDefs[i].notToRender;
+                    }
+
+                    this.setView(key, view);
+
+                    loaded++;
+
+                    tryReady();
+                });
+            });
         },
 
         _getData: function () {
             if (typeof this.data === 'function') {
                 return this.data();
             }
+
             return this.data;
         },
 
         _getNestedViewsAsArray: function (nestedViews) {
             var nestedViewsArray = [];
+
             var i = 0;
+
             for (var key in this.nestedViews) {
                 nestedViewsArray.push({
                     key: key,
                     view: this.nestedViews[key]
                 });
+
                 i++;
             }
+
             return nestedViewsArray;
 
         },
@@ -516,55 +603,66 @@
             var data = {};
             var nestedViewsArray = this._getNestedViewsAsArray();
 
-
             var loaded = 0;
             var count = nestedViewsArray.length;
 
-            var tryReady = function () {
-                if (loaded == count) {
+            var tryReady = () => {
+                if (loaded === count) {
                     callback(data);
-                    return true
+
+                    return true;
                 }
             };
 
             tryReady();
-            nestedViewsArray.forEach(function (d, i) {
+
+            nestedViewsArray.forEach((d, i) => {
                 var key = nestedViewsArray[i].key;
                 var view = nestedViewsArray[i].view;
 
                 if (!view.notToRender) {
-                    view.getHtml(function (html) {
+                    view.getHtml((html) => {
                         data[key] = html;
+
                         loaded++;
                         tryReady();
                     });
-                } else {
-                    loaded++;
-                    tryReady();
+
+                    return;
                 }
-            }, this);
+
+                loaded++;
+                tryReady();
+            });
         },
 
         handleDataBeforeRender: function (data) {},
 
         _getHtml: function (callback) {
             this._isBeingRendered = true;
-            this.trigger("render", this);
-            this._getNestedViewsHtmlList(function (nestedViewsHtmlList) {
+            this.trigger('render', this);
+
+            this._getNestedViewsHtmlList(nestedViewsHtmlList => {
                 var data = _.extend(this._getData() || {}, nestedViewsHtmlList);
+
                 if (this.collection || null) {
                     data.collection = this.collection;
                 }
+
                 if (this.model || null) {
                     data.model = this.model;
                 }
+
                 data.viewObject = this;
+
                 this.handleDataBeforeRender(data);
-                this._getTemplate(function (template) {
+
+                this._getTemplate(template => {
                     var html = this._renderer.render(template, data);
+
                     callback(html);
-                }.bind(this));
-            }.bind(this));
+                });
+            });
         },
 
         _getTemplateName: function () {
@@ -583,12 +681,14 @@
             if (typeof this._layout === 'function') {
                 return this._layout();
             }
+
             return this._layout;
         },
 
         _getTemplate: function (callback) {
             if (this._templator.compilable && this._templateCompiled !== null) {
                 callback(this._templateCompiled);
+
                 return;
             }
 
@@ -596,6 +696,7 @@
 
             if (_template !== null) {
                 callback(_template);
+
                 return;
             }
 
@@ -611,18 +712,21 @@
 
                 if (!layoutName) {
                     noCache = true;
-                } else {
+                }
+                else {
                     if (layoutName) {
                         templateName = 'built-' + layoutName;
-                    } else {
+                    }
+                    else {
                         templateName = null;
                     }
                 }
+
                 layoutOptions = {
                     name: layoutName,
                     data: this._getLayoutData(),
                     layout: this._getLayout(),
-                }
+                };
             }
 
             this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
@@ -630,6 +734,7 @@
 
         _updatePath: function (parentPath, viewKey) {
             this._path = parentPath + '/' + viewKey;
+
             for (var key in this.nestedViews) {
                 this.nestedViews[key]._updatePath(this._path, key);
             }
@@ -641,40 +746,47 @@
             if (key in this._nestedViewDefs) {
                 if ('id' in this._nestedViewDefs[key]) {
                     el = '#' + this._nestedViewDefs[key].id;
-                } else {
+                }
+                else {
                     if ('el' in this._nestedViewDefs[key]) {
                         el = this._nestedViewDefs[key].el;
-                    } else if ('selector' in this._nestedViewDefs[key]) {
+                    }
+                    else if ('selector' in this._nestedViewDefs[key]) {
                         var currentEl = this.getSelector();
+
                         if (currentEl) {
                             el = currentEl + ' ' + this._nestedViewDefs[key].selector;
                         }
-                    } else {
+                    }
+                    else {
                         var currentEl = this.getSelector();
+
                         if (currentEl) {
                             el = currentEl + ' [data-view="'+key+'"]';
                         }
                     }
                 }
             }
+
             return el;
         },
 
         /**
          * Whether this view has nested view.
-         * @param {String} key
-         * @return {Bool}
+         * @param {string} key
+         * @return {boolean}
          */
         hasView: function (key) {
             if (key in this.nestedViews) {
                 return true;
             }
+
             return false;
         },
 
         /**
          * Get nested view.
-         * @param {String} key
+         * @param {string} key
          * @return {Bull.View}
          */
         getView: function (key) {
@@ -685,11 +797,11 @@
 
         /**
          * Create nested view. The important method.
-         * @param {String} key Key.
-         * @param {String} viewName View name.
+         * @param {string} key Key.
+         * @param {string} viewName View name.
          * @param {Object} options View options.
          * @param {Function} callback Callback function. Will be invoiked once nested view is ready (loaded).
-         * @param {Bool} wait True be default. Set false if no need parent view wait for nested view loaded.
+         * @param {boolean} wait True be default. Set false if no need parent view wait for nested view loaded.
          */
         createView: function (key, viewName, options, callback, wait) {
             this.clearView(key);
@@ -709,12 +821,14 @@
                 }
 
                 options = options || {};
+
                 if (!options.el) {
                     options.el = self.getSelector() + ' [data-view="'+key+'"]';
                 }
 
                 self._factory.create(viewName, options, function (view) {
                     var previusView = this.getView(key);
+
                     if (previusView) {
                         previusView.cancelRender();
                     }
@@ -723,12 +837,15 @@
 
                     if (promise._isToReject) {
                         reject();
+
                         return;
                     }
 
                     var isSet = false;
+
                     if (this._isRendered || options.setViewBeforeCallback) {
                         this.setView(key, view);
+
                         isSet = true;
                     }
 
@@ -749,9 +866,9 @@
 
         /**
          * Set nested view.
-         * @param {String} key
+         * @param {string} key
          * @param {Bull.View} view
-         * @param {String} el Selector for view container.
+         * @param {string} el Selector for view container.
          */
         setView: function (key, view, el) {
             var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
@@ -767,7 +884,9 @@
             if (key in this.nestedViews) {
                 this.clearView(key);
             }
+
             this.nestedViews[key] = view;
+
             view._parentView = this;
             view._updatePath(this._path, key);
 
@@ -776,16 +895,19 @@
 
         /**
          * Clear nested view.
-         * @param {String} key
+         * @param {string} key
          */
         clearView: function (key) {
             if (key in this.nestedViews) {
                 this.nestedViews[key].remove();
+
                 delete this.nestedViews[key];
             }
 
             this._viewPromiseHash = this._viewPromiseHash || {};
+
             var previousPromise = this._viewPromiseHash[key];
+
             if (previousPromise) {
                 previousPromise._isToReject = true;
             }
@@ -793,12 +915,13 @@
 
         /**
          * Removes nested view but supposed that this view can be re-used in future.
-         * @param {String} key
+         * @param {string} key
          */
         unchainView: function (key) {
             if (key in this.nestedViews) {
                 this.nestedViews[key]._parentView = null;
                 this.nestedViews[key].undelegateEvents();
+
                 delete this.nestedViews[key];
             }
         },
@@ -813,7 +936,7 @@
 
         /**
          * Has parent view.
-         * @return {bool}
+         * @return {boolean}
          */
         hasParentView: function () {
             return !!this._parentView;
@@ -821,7 +944,7 @@
 
         /**
          * Add condition for view getting ready.
-         * @param {Function} or {Bool}
+         * @param {Function} or {boolean}
          */
         addReadyCondition: function (condition) {
             this._readyConditionList.push(condition);
@@ -829,7 +952,7 @@
 
         /**
          * Wait for nested view.
-         * @param {String} key
+         * @param {string} key
          */
         waitForView: function (key) {
             this._waitViewList.push(key);
@@ -838,31 +961,39 @@
         /**
          * Make view wait for promise if Promise is passed as a parameter.
          * Add wait condition if true is passed. Remove wait condition if false.
-         * @param wait Promise | Function | {Bool}
+         * @param wait {Promise|Function|boolean}
          */
         wait: function (wait) {
             if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
                 this._waitPromiseCount++;
-                wait.then(function () {
+
+                wait.then(() => {
                     this._waitPromiseCount--;
                     this._tryReady();
-                }.bind(this));
+                });
+
                 return;
             }
-            if (typeof wait == 'function') {
+
+            if (typeof wait === 'function') {
                 this._waitPromiseCount++;
-                var promise = new Promise(function (resolve) {
+
+                var promise = new Promise((resolve) => {
                     resolve(wait.call(this));
-                }.bind(this))
-                promise.then(function () {
+                });
+
+                promise.then(() => {
                     this._waitPromiseCount--;
                     this._tryReady();
-                }.bind(this));
+                });
+
                 return promise;
             }
+
             if (wait) {
                 this._wait = true;
-            } else {
+            }
+            else {
                 this._wait = false;
                 this._tryReady();
             }
@@ -873,27 +1004,35 @@
          */
         remove: function (dontEmpty) {
             this.cancelRender();
+
             for (var key in this.nestedViews) {
                 this.clearView(key);
             }
+
             this.trigger('remove');
             this.onRemove();
             this.off();
+
             if (!dontEmpty) {
                 this.$el.empty();
             }
+
             this.stopListening();
             this.undelegateEvents();
+
             if (this.model) {
                 this.model.off(null, null, this);
             }
+
             if (this.collection) {
                 this.collection.off(null, null, this);
             }
+
             this._isRendered = false;
             this._isFullyRendered = false;
             this._isBeingRendered = false;
             this._isRemoved = true;
+
             return this;
         },
 
@@ -906,12 +1045,15 @@
         _setElement: function (el) {
             if (typeof el === 'string') {
                 var parentView = this.getParentView();
+
                 if (parentView && parentView.isRendered()) {
                     if (parentView.$el && parentView.$el.length && parentView.getSelector()) {
                         if (el.indexOf(parentView.getSelector()) === 0) {
                             var subEl = el.substr(parentView.getSelector().length, el.length - 1);
+
                             this.$el = $(subEl, parentView.$el).eq(0);
                             this.el = this.$el[0];
+
                             return;
                         }
                     }
@@ -927,6 +1069,7 @@
 
             for (var key in this.nestedViews) {
                 var view = this.nestedViews[key];
+
                 view.propagateEvent.apply(view, arguments);
             }
         },

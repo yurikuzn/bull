@@ -15,7 +15,9 @@ var Bull = Bull || {};
      * @param {Object} options Configuration options.
      * <ul>
      *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
-     *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript) by the given view name and callback function as parameters. Here you can load js code using sync XHR request. If not defined it will lookup classes in window object.</li>
+     *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript)
+     *  by the given view name and callback function as parameters. Here you can load js code using sync XHR request.
+     *  If not defined it will lookup classes in window object.</li>
      *  <li>helper: {Object} View Helper that will be injected into all views.</li>
      *  <li>resources: {Object} Resources loading options: paths, exts, loaders. Example: <br>
      *    <i>{
@@ -28,7 +30,8 @@ var Bull = Bull || {};
      *        layout: 'json',
      *        templates: 'tpl',
      *      },
-     *      loaders: { // Custom resources loading functions. Define it if some type of resources needs to be loaded via REST rather than from file.
+     *      loaders: { // Custom resources loading functions. Define it if some type of resources needs to be loaded
+     *                 // via REST rather than from file.
      *        layout: function (layoutName, callback) {
      *          callback(layoutManager.getLayout(layoutName));
      *        }
@@ -36,8 +39,10 @@ var Bull = Bull || {};
      *      path: function (type, name) {} // Custom path function. Should return path to the needed resource.
      *    }</i>
      *  </li>
-     *  <li>rendering: {Object} Rendering options: method (Method is the custom function for a rendering. Define it if you want to use another templating engine. <i>Function (template, data)</i>).</li>
-     *  <li>templating: {Object} Templating options: {bool} compilable (If templates are compilable (like Handlebars). True by default.)</li>
+     *  <li>rendering: {Object} Rendering options: method (Method is the custom function for a rendering.
+     *  Define it if you want to use another templating engine. <i>Function (template, data)</i>).</li>
+     *  <li>templating: {Object} Templating options: {bool} compilable (If templates are compilable (like Handlebars).
+     *  True by default.)</li>
      * </ul>
      */
     Bull.Factory = function (options) {
@@ -82,21 +87,26 @@ var Bull = Bull || {};
 
         _getViewClassFunction: function (viewName, callback) {
             var viewClass = root[viewName];
+
             if (typeof viewClass !== "function") {
                 throw new Error("function \"" + viewClass + "\" not found.");
             }
+
             callback(viewClass);
         },
 
         _getViewClass: function (viewName, callback) {
             if (viewName in this._viewClassHash) {
                 callback(this._viewClassHash[viewName]);
+
                 return;
             }
-            this._getViewClassFunction(viewName, function (viewClass) {
+
+            this._getViewClassFunction(viewName, (viewClass) => {
                 this._viewClassHash[viewName] = viewClass;
+
                 callback(viewClass);
-            }.bind(this));
+            });
         },
 
         /**
@@ -107,19 +117,20 @@ var Bull = Bull || {};
          * @return {Bull.View}
          */
         create: function (viewName, options, callback) {
-            this._getViewClass(viewName, function (viewClass) {
+            this._getViewClass(viewName, viewClass => {
                 if (typeof viewClass === 'undefined') {
                     throw new Error("Class for view \"" + viewName + "\" not found.");
                 }
-                var view = new viewClass(_.extend(options || {}, {
+
+                new viewClass(_.extend(options || {}, {
                     factory: this,
                     layouter: this._layouter,
                     templator: this._templator,
                     renderer: this._renderer,
                     helper: this._helper,
-                    onReady: callback
+                    onReady: callback,
                 }));
-            }.bind(this));
+            });
         },
     });
 

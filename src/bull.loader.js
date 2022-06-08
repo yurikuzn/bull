@@ -10,7 +10,6 @@
         this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
 
         this._externalPathFunction = options.path || null;
-
     };
 
     _.extend(Bull.Loader.prototype, {
@@ -62,7 +61,8 @@
             }
 
             var pathPart = this._paths[type];
-            if (pathPart.substr(-1) == '/') {
+
+            if (pathPart.substr(-1) === '/') {
                 pathPart = pathPart.substr(0, pathPart.length - 1);
             }
 
@@ -73,21 +73,24 @@
             if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
                 if (typeof this._externalLoaders[type] === 'function') {
                     this._externalLoaders[type](name, callback);
+
                     return true;
-                } else {
-                    throw new Error("Loader for \"" + type + "\" in not a Function.");
                 }
+
+                throw new Error("Loader for \"" + type + "\" in not a Function.");
             }
+
             return null;
         },
 
         load: function (type, name, callback) {
             var customCalled = this._callExternalLoader(type, name, callback);
+
             if (customCalled) {
                 return;
             }
 
-            var response, filePath ;
+            var response, filePath;
 
             if (this._externalPathFunction != null) {
                 filePath = this._externalPathFunction.call(this, type, name);
@@ -98,31 +101,39 @@
             filePath += '?_=' + new Date().getTime();
 
             var xhr = new XMLHttpRequest();
+
             xhr.open('GET', filePath, true);
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
-            xhr.onreadystatechange = function() {
+            xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
                     response = xhr.responseText;
+
                     if (type in this._isJson) {
                         if (this._isJson[type]) {
                             var obj;
+
                             if (xhr.status == 404 || xhr.status == 403) {
                                 throw new Error("Could not load " + type + " \"" + name + "\".");
                             }
 
                             try {
                                 obj = JSON.parse(String(response));
-                            } catch (e) {
-                                throw new SyntaxError("Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
                             }
+                            catch (e) {
+                                throw new SyntaxError(
+                                    "Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
+                            }
+
                             callback(obj);
+
                             return;
                         }
                     }
+
                     callback(response);
                 }
-            }.bind(this);
+            };
 
             xhr.send(null);
         },
