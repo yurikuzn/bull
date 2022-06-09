@@ -381,6 +381,7 @@
 
         /**
          * Set an element selector.
+         * @param {string} selector A selector.
          */
         setSelector: function (selector) {
             this.options.el = selector;
