@@ -336,13 +336,11 @@
          * Cancel rendering.
          */
         cancelRender: function () {
-            if (this.isBeingRendered()) {
-                this._isRenderCanceled = true;
+            if (!this.isBeingRendered()) {
+                return;
             }
 
-            if (this._renderPromise) {
-                this._renderPromise._isToReject = true;
-            }
+            this._isRenderCanceled = true;
         },
 
         /**
@@ -354,23 +352,18 @@
 
         /**
          * Render the view.
+         *
+         * @return {Promise<this>}
          */
         render: function (callback) {
             this._isRendered = false;
             this._isFullyRendered = false;
 
-            this._renderPromise = new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 this._getHtml(html => {
-                    if (
-                        this._isRenderCanceled ||
-                        this._renderPromise && this._renderPromise._isToReject
-                    ) {
+                    if (this._isRenderCanceled) {
                         this._isRenderCanceled = false;
                         this._isBeingRendered = false;
-
-                        reject();
-
-                        delete this._renderPromise;
 
                         return;
                     }
@@ -392,17 +385,15 @@
                         callback();
                     }
 
-                    delete this._renderPromise;
-
                     resolve(this);
                 });
             });
-
-            return this._renderPromise;
         },
 
         /**
          * Re-render the view.
+         *
+         * @return {Promise<this>}
          */
         reRender: function (force) {
             if (this.isRendered()) {
@@ -413,7 +404,7 @@
                 return new Promise((resolve, reject) => {
                     this.once('after:render', () => {
                         this.render()
-                            .then(resolve)
+                            .then(() => resolve(this))
                             .catch(reject);
                     });
                 });
@@ -423,7 +414,8 @@
                 return this.render();
             }
 
-            return Promise.reject();
+            // Don't reject, preventing an exception on a non-caught promise.
+            return new Promise(() => {});
         },
 
         _afterRender: function () {
@@ -895,9 +887,7 @@
 
                     delete this._viewPromiseHash[key];
 
-                    if (promise && promise._isToReject) {
-                        reject();
-
+                    if (promise && promise._isToCancel) {
                         return;
                     }
 
@@ -969,7 +959,7 @@
             var previousPromise = this._viewPromiseHash[key];
 
             if (previousPromise) {
-                previousPromise._isToReject = true;
+                previousPromise._isToCancel = true;
             }
         },
 
