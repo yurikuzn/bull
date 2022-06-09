@@ -1,11 +1,25 @@
 (function (Bull, Backbone, _) {
 
+    /**
+     * @typedef {Object} Options
+     * @property {string} [el] A DOM element selector.
+     * @property {string[]} [optionsToPass] Options to be automatically passed to child views of the created view.
+     * @property {function|Object} [data] Data that will be passed to a template.
+     * @property {string} [template] A template name.
+     * @property {string} [templateContent] Template content.
+     */
+
     Bull.View = Backbone.View.extend({
 
         /**
-         * @property {string} Template name.
+         * @property {string} A template name.
          */
         template: null,
+
+        /**
+         * @property {string} Template content.
+         */
+        templateContent: null,
 
         /**
          * @property {string} Layout name. Used if template is not specified to build template.
@@ -19,7 +33,7 @@
         name: null,
 
         /**
-         * @property {Object} or {function} Data that will be passed into template.
+         * @property {function|Object} Data that will be passed to a template.
          */
         data: null,
 
@@ -46,6 +60,9 @@
 
         layoutData: null,
 
+        /**
+         * @property {boolean} Whether the view is ready for rendering (all necessary data is loaded).
+         */
         isReady: false,
 
         /**
@@ -53,6 +70,11 @@
          * Example: `{body: {view: 'Body', selector: '> .body'}}`.
          */
         views: null,
+
+        /**
+         * @property {Array.{string}} A list of options to be automatically passed to child views.
+         */
+        optionsToPass: null,
 
         nestedViews: null,
 
@@ -79,8 +101,6 @@
         _wait: false,
 
         _waitViewList: null,
-
-        optionsToPass: null,
 
         _nestedViewsFromLayoutLoaded: false,
 
@@ -222,7 +242,7 @@
         setupFinal: function () {},
 
         /**
-         * Set view container element if doesn't exist yet. It will call setElement after render.
+         * Set a view container element if doesn't exist yet. It will call setElement after render.
          */
         setElementInAdvance: function (el) {
             if (this._setElementInAdvancedInProcess) {
@@ -238,16 +258,22 @@
             });
         },
 
+        /**
+         * Get an element selector.
+         */
         getSelector: function () {
             return this.options.el || null;
         },
 
+        /**
+         * Set an element selector.
+         */
         setSelector: function (selector) {
             this.options.el = selector;
         },
 
         /**
-         * Checks whether view has been already rendered.
+         * Checks whether the view has been already rendered.
          * @return {boolean}
          */
         isRendered: function () {
@@ -255,17 +281,23 @@
         },
 
         /**
-         * Checks whether view has been fully rendered (afterRender has been executed).
+         * Checks whether the view has been fully rendered (afterRender has been executed).
          * @return {boolean}
          */
         isFullyRendered: function () {
             return this._isFullyRendered;
         },
 
+        /**
+         * Whether the view is being rendered in the moment.
+         */
         isBeingRendered: function () {
             return this._isBeingRendered;
         },
 
+        /**
+         * Whether the view is removed.
+         */
         isRemoved: function () {
             return this._isRemoved;
         },
@@ -277,6 +309,9 @@
             this._getHtml(callback);
         },
 
+        /**
+         * Cancel rendering.
+         */
         cancelRender: function () {
             if (this.isBeingRendered()) {
                 this._isRenderCanceled = true;
@@ -287,24 +322,26 @@
             }
         },
 
+        /**
+         * Un-cancel rendering.
+         */
         uncancelRender: function () {
             this._isRenderCanceled = false;
         },
 
         /**
-         * Render view.
+         * Render the view.
          */
         render: function (callback) {
             this._isRendered = false;
             this._isFullyRendered = false;
 
-            let self = this;
-
-            this._renderPromise = new Promise(function (resolve, reject) {
-                var promise = this;
-
-                self._getHtml(function (html) {
-                    if (this._isRenderCanceled || promise._isToReject) {
+            this._renderPromise = new Promise((resolve, reject) => {
+                this._getHtml(html => {
+                    if (
+                        this._isRenderCanceled ||
+                        this._renderPromise && this._renderPromise._isToReject
+                    ) {
                         this._isRenderCanceled = false;
                         this._isBeingRendered = false;
 
@@ -335,14 +372,14 @@
                     delete this._renderPromise;
 
                     resolve(this);
-                }.bind(self));
+                });
             });
 
             return this._renderPromise;
         },
 
         /**
-         * Re-render view.
+         * Re-render the view.
          */
         reRender: function (force) {
             if (this.isRendered()) {
@@ -388,7 +425,7 @@
         },
 
         /**
-         * Executed after render. Empty by default.
+         * Executed after render.
          */
         afterRender: function () {},
 
@@ -636,6 +673,9 @@
             });
         },
 
+        /**
+         * Provides the ability to modify template data right before render.
+         */
         handleDataBeforeRender: function (data) {},
 
         _getHtml: function (callback) {
@@ -772,7 +812,7 @@
         },
 
         /**
-         * Whether this view has nested view.
+         * Whether has a nested view.
          * @param {string} key
          * @return {boolean}
          */
@@ -785,7 +825,7 @@
         },
 
         /**
-         * Get nested view.
+         * Get a nested view.
          * @param {string} key
          * @return {Bull.View}
          */
@@ -796,38 +836,35 @@
         },
 
         /**
-         * Create nested view. The important method.
+         * Create a nested view. The important method.
          * @param {string} key Key.
          * @param {string} viewName View name.
-         * @param {Object} options View options.
-         * @param {Function} callback Callback function. Will be invoiked once nested view is ready (loaded).
-         * @param {boolean} wait True be default. Set false if no need parent view wait for nested view loaded.
+         * @param {Options} options View options. Custom options can be passed as well.
+         * @param {Function} [callback] Callback function. Will be invoked once nested view is ready (loaded).
+         * @param {boolean} [wait] True be default. Set false if no need parent view wait for nested view loaded.
          */
         createView: function (key, viewName, options, callback, wait) {
             this.clearView(key);
 
             this._viewPromiseHash = this._viewPromiseHash || {};
 
-            var self = this;
+            let promise = null;
 
-            var promise = this._viewPromiseHash[key] = new Promise(function (resolve, reject) {
-                var promise = this;
-                var context = self;
-
+            promise = this._viewPromiseHash[key] = new Promise((resolve, reject) => {
                 wait = (typeof wait === 'undefined') ? true : wait;
 
                 if (wait) {
-                    self.waitForView(key);
+                    this.waitForView(key);
                 }
 
                 options = options || {};
 
                 if (!options.el) {
-                    options.el = self.getSelector() + ' [data-view="'+key+'"]';
+                    options.el = this.getSelector() + ' [data-view="'+key+'"]';
                 }
 
-                self._factory.create(viewName, options, function (view) {
-                    var previusView = this.getView(key);
+                this._factory.create(viewName, options, (view) => {
+                    let previusView = this.getView(key);
 
                     if (previusView) {
                         previusView.cancelRender();
@@ -835,13 +872,13 @@
 
                     delete this._viewPromiseHash[key];
 
-                    if (promise._isToReject) {
+                    if (promise && promise._isToReject) {
                         reject();
 
                         return;
                     }
 
-                    var isSet = false;
+                    let isSet = false;
 
                     if (this._isRendered || options.setViewBeforeCallback) {
                         this.setView(key, view);
@@ -850,7 +887,7 @@
                     }
 
                     if (typeof callback === 'function') {
-                        callback.call(context, view);
+                        callback.call(this, view);
                     }
 
                     resolve(view);
@@ -858,17 +895,17 @@
                     if (!this._isRendered && !options.setViewBeforeCallback && !isSet) {
                         this.setView(key, view);
                     }
-                }.bind(self));
+                });
             });
 
             return promise;
         },
 
         /**
-         * Set nested view.
+         * Set a nested view.
          * @param {string} key
          * @param {Bull.View} view
-         * @param {string} el Selector for view container.
+         * @param {string} [el] Selector for a view container.
          */
         setView: function (key, view, el) {
             var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
@@ -894,7 +931,7 @@
         },
 
         /**
-         * Clear nested view.
+         * Clear a nested view. Initiates removal of the nested view.
          * @param {string} key
          */
         clearView: function (key) {
@@ -914,7 +951,7 @@
         },
 
         /**
-         * Removes nested view but supposed that this view can be re-used in future.
+         * Removes a nested view for cases when it's supposed that this view can be re-used in future.
          * @param {string} key
          */
         unchainView: function (key) {
@@ -927,7 +964,7 @@
         },
 
         /**
-         * Get parent view.
+         * Get a parent view.
          * @return {Bull.View}
          */
         getParentView: function () {
@@ -935,7 +972,7 @@
         },
 
         /**
-         * Has parent view.
+         * Has a parent view.
          * @return {boolean}
          */
         hasParentView: function () {
@@ -943,15 +980,15 @@
         },
 
         /**
-         * Add condition for view getting ready.
-         * @param {Function} or {boolean}
+         * Add a condition for the view getting ready.
+         * @param {Function|boolean} condition
          */
         addReadyCondition: function (condition) {
             this._readyConditionList.push(condition);
         },
 
         /**
-         * Wait for nested view.
+         * Wait for a nested view.
          * @param {string} key
          */
         waitForView: function (key) {
@@ -959,9 +996,9 @@
         },
 
         /**
-         * Make view wait for promise if Promise is passed as a parameter.
-         * Add wait condition if true is passed. Remove wait condition if false.
-         * @param wait {Promise|Function|boolean}
+         * Makes the view to wait for a promise (if a Promise is passed as a parameter).
+         * Adds a wait condition if true is passed. Removes the wait condition if false.
+         * @param {Promise|Function|boolean} wait
          */
         wait: function (wait) {
             if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
@@ -1000,7 +1037,7 @@
         },
 
         /**
-         * Remove view and all nested tree. Removes contents of el. Triggers 'remove' event.
+         * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
          */
         remove: function (dontEmpty) {
             this.cancelRender();
@@ -1036,6 +1073,9 @@
             return this;
         },
 
+        /**
+         * Called on view removal.
+         */
         onRemove: function () {},
 
         _ensureElement: function () {
@@ -1064,6 +1104,10 @@
             this.el = this.$el[0];
         },
 
+        /**
+         * Propagate an event to nested views.
+         * @param {...*} arguments
+         */
         propagateEvent: function () {
             this.trigger.apply(this, arguments);
 
