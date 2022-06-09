@@ -107,6 +107,7 @@
      * @property {Espo.Collection|undefined} collection - A collection.
      * @property {Object} options - Passed options.
      * @property {Object.{Function}} events DOM event listeners.
+     * @property {string} cid - An ID unique among all views.
      *
      * @mixes Backbone.Events
      */
