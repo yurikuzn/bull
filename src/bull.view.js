@@ -12,14 +12,14 @@
      */
 
     /**
-     * @mixin Backbone.Event
+     * @mixin Backbone.Events
      */
 
     /**
      * Trigger an event.
      *
      * @function trigger
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {string} event
      * @param {...*} arguments
      */
@@ -28,7 +28,7 @@
      * Subscribe to an event.
      *
      * @function on
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {string} event
      * @param {Function} callback
      */
@@ -37,7 +37,7 @@
      * Subscribe to an event. Fired once.
      *
      * @function once
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {string} event
      * @param {Function} callback
      */
@@ -46,7 +46,7 @@
      * Unsubscribe from an event or all events.
      *
      * @function off
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {string} [event] From a specific event.
      * @param {Function} [callback] From a specific callback.
      */
@@ -55,7 +55,7 @@
      * Subscribe to an event of other object. Will be automatically unsubscribed on view removal.
      *
      * @function listenTo
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {Object} other
      * @param {string} event
      * @param {Function} callback
@@ -65,7 +65,7 @@
      * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
      *
      * @function listenToOnce
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {Object} other
      * @param {string} event
      * @param {Function} callback
@@ -75,7 +75,7 @@
      * Stop listening to other object. No arguments will remove all listeners.
      *
      * @function stopListening
-     * @memberof Backbone.Event
+     * @memberof Backbone.Events
      * @param {Object} [other] To remove listeners to a specific object.
      * @param {string} [event] To remove listeners to a specific event.
      * @param {Function} [callback] To remove listeners to a specific callback.
@@ -108,7 +108,7 @@
      * @property {Object} options - Passed options.
      * @property {Object.{Function}} events DOM event listeners.
      *
-     * @mixes Backbone.Event
+     * @mixes Backbone.Events
      */
     Bull.View = Backbone.View.extend(/** @lends Bull.View */{
 
