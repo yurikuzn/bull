@@ -7,8 +7,13 @@
      * @property {function|Object} [data] Data that will be passed to a template.
      * @property {string} [template] A template name.
      * @property {string} [templateContent] Template content.
+     * @property {Backbone.Model} model A model.
+     * @property {Backbone.Collection} collection A collection.
      */
 
+    /**
+     * A view.
+     */
     Bull.View = Backbone.View.extend({
 
         /**
