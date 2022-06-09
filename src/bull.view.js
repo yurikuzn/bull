@@ -12,6 +12,92 @@
      */
 
     /**
+     * @mixin Backbone.Event
+     */
+
+    /**
+     * Trigger an event.
+     *
+     * @function trigger
+     * @memberof Backbone.Event
+     * @param {string} event
+     * @param {...*} arguments
+     */
+
+    /**
+     * Subscribe to an event.
+     *
+     * @function on
+     * @memberof Backbone.Event
+     * @param {string} event
+     * @param {Function} callback
+     */
+
+    /**
+     * Subscribe to an event. Fired once.
+     *
+     * @function once
+     * @memberof Backbone.Event
+     * @param {string} event
+     * @param {Function} callback
+     */
+
+    /**
+     * Unsubscribe from an event or all events.
+     *
+     * @function off
+     * @memberof Backbone.Event
+     * @param {string} [event] From a specific event.
+     * @param {Function} [callback] From a specific callback.
+     */
+
+    /**
+     * Subscribe to an event of other object. Will be automatically unsubscribed on view removal.
+     *
+     * @function listenTo
+     * @memberof Backbone.Event
+     * @param {Object} other
+     * @param {string} event
+     * @param {Function} callback
+     */
+
+    /**
+     * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
+     *
+     * @function listenToOnce
+     * @memberof Backbone.Event
+     * @param {Object} other
+     * @param {string} event
+     * @param {Function} callback
+     */
+
+    /**
+     * Stop listening to other object. No arguments will remove all listeners.
+     *
+     * @function stopListening
+     * @memberof Backbone.Event
+     * @param {Object} [other] To remove listeners to a specific object.
+     * @param {string} [event] To remove listeners to a specific event.
+     * @param {Function} [callback] To remove listeners to a specific callback.
+     */
+
+    /**
+     * Set a DOM element selector.
+     *
+     * @function setElement
+     * @memberof Bull.View
+     * @param {string} selector A selector.
+     */
+
+    /**
+     * Removes all of the view's delegated events. Useful if you want to disable
+     * or remove a view from the DOM temporarily.
+     *
+     * @function undelegateEvents
+     * @memberof Bull.View
+     */
+
+    /**
      * A view.
      *
      * @class Bull.View
@@ -20,6 +106,9 @@
      * @property {Espo.Model|undefined} model - A model.
      * @property {Espo.Collection|undefined} collection - A collection.
      * @property {Object} options - Passed options.
+     * @property {Object.{Function}} events DOM event listeners.
+     *
+     * @mixes Backbone.Event
      */
     Bull.View = Backbone.View.extend(/** @lends Bull.View */{
 
@@ -266,6 +355,7 @@
 
         /**
          * Set a view container element if doesn't exist yet. It will call setElement after render.
+         * @param {string} el A selector.
          */
         setElementInAdvance: function (el) {
             if (this._setElementInAdvancedInProcess) {
@@ -852,8 +942,8 @@
 
         /**
          * Create a nested view. The important method.
-         * @param {string} key Key.
-         * @param {string} viewName View name.
+         * @param {string} key A view key.
+         * @param {string} viewName View name/path.
          * @param {Bull.ViewOptions} options View options. Custom options can be passed as well.
          * @param {Function} [callback] Callback function. Will be invoked once nested view is ready (loaded).
          * @param {boolean} [wait] True be default. Set false if no need parent view wait for nested view loaded.
@@ -916,9 +1006,9 @@
 
         /**
          * Set a nested view.
-         * @param {string} key
-         * @param {Bull.View} view
-         * @param {string} [el] Selector for a view container.
+         * @param {string} key A view key.
+         * @param {Bull.View} view A view name/path.
+         * @param {string} [el] A selector for a view container.
          */
         setView: function (key, view, el) {
             var el = el || this._getSelectorForNestedView(key) || view.options.el || false;
@@ -945,7 +1035,7 @@
 
         /**
          * Clear a nested view. Initiates removal of the nested view.
-         * @param {string} key
+         * @param {string} key A view key.
          */
         clearView: function (key) {
             if (key in this.nestedViews) {
@@ -965,7 +1055,7 @@
 
         /**
          * Removes a nested view for cases when it's supposed that this view can be re-used in future.
-         * @param {string} key
+         * @param {string} key A view key.
          */
         unchainView: function (key) {
             if (key in this.nestedViews) {
@@ -1051,6 +1141,8 @@
 
         /**
          * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
+         *
+         * @param {boolean} [dontEmpty] Skips emptying an element container.
          */
         remove: function (dontEmpty) {
             this.cancelRender();
