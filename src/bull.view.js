@@ -4,7 +4,7 @@
      * @typedef {Object} Bull.ViewOptions
      * @property {string} [el] - A DOM element selector.
      * @property {string[]} [optionsToPass] - Options to be automatically passed to child views of the created view.
-     * @property {function|Object} [data] - Data that will be passed to a template.
+     * @property {(function|Object)} [data] - Data that will be passed to a template.
      * @property {string} [template] - A template name.
      * @property {string} [templateContent] - Template content.
      * @property {Backbone.Model} model - A model.
@@ -103,8 +103,8 @@
      * @class Bull.View
      * @extends Backbone.View
      *
-     * @property {Espo.Model|undefined} model - A model.
-     * @property {Espo.Collection|undefined} collection - A collection.
+     * @property {(Espo.Model|undefined)} model - A model.
+     * @property {(Espo.Collection|undefined)} collection - A collection.
      * @property {Object} options - Passed options.
      * @property {Object.{Function}} events DOM event listeners.
      * @property {string} cid - An ID unique among all views.
@@ -115,13 +115,13 @@
 
         /**
          * A template name/path.
-         * @property {string|null}
+         * @property {?string}
          */
         template: null,
 
         /**
          * Template content.
-         * @property {string|null}
+         * @property {?string}
          */
         templateContent: null,
 
@@ -134,12 +134,12 @@
         /**
          * Name of the view. If template name is not defined it will be used to cache
          * built template and layout. Otherwise they won't be cached. Name it unique.
-         * @property {string|null}
+         * @property {?string}
          */
         name: null,
 
         /**
-         * @property {function|Object} Data that will be passed to a template.
+         * @property {(function|Object)} Data that will be passed to a template.
          */
         data: null,
 
@@ -185,7 +185,7 @@
 
         /**
          * A list of options to be automatically passed to child views.
-         * @property {Array.{string}}
+         * @property {Array.<string>}
          */
         optionsToPass: null,
 
@@ -1085,7 +1085,7 @@
 
         /**
          * Add a condition for the view getting ready.
-         * @param {Function|boolean} condition
+         * @param {(Function|boolean)} condition
          */
         addReadyCondition: function (condition) {
             this._readyConditionList.push(condition);
@@ -1102,7 +1102,7 @@
         /**
          * Makes the view to wait for a promise (if a Promise is passed as a parameter).
          * Adds a wait condition if true is passed. Removes the wait condition if false.
-         * @param {Promise|Function|boolean} wait
+         * @param {(Promise|Function|boolean)} wait
          */
         wait: function (wait) {
             if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
