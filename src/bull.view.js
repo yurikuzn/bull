@@ -1,14 +1,14 @@
 (function (Bull, Backbone, _) {
 
     /**
-     * @typedef {Object} Options
-     * @property {string} [el] A DOM element selector.
-     * @property {string[]} [optionsToPass] Options to be automatically passed to child views of the created view.
-     * @property {function|Object} [data] Data that will be passed to a template.
-     * @property {string} [template] A template name.
-     * @property {string} [templateContent] Template content.
-     * @property {Backbone.Model} model A model.
-     * @property {Backbone.Collection} collection A collection.
+     * @typedef {Object} Bull.ViewOptions
+     * @property {string} [el] - A DOM element selector.
+     * @property {string[]} [optionsToPass] - Options to be automatically passed to child views of the created view.
+     * @property {function|Object} [data] - Data that will be passed to a template.
+     * @property {string} [template] - A template name.
+     * @property {string} [templateContent] - Template content.
+     * @property {Backbone.Model} model - A model.
+     * @property {Backbone.Collection} collection - A collection.
      */
 
     /**
@@ -16,27 +16,35 @@
      *
      * @class Bull.View
      * @extends Backbone.View
+     *
+     * @property {Espo.Model|undefined} model - A model.
+     * @property {Espo.Collection|undefined} collection - A collection.
+     * @property {Object} options - Passed options.
      */
-    Bull.View = Backbone.View.extend({
+    Bull.View = Backbone.View.extend(/** @lends Bull.View */{
 
         /**
-         * @property {string} A template name.
+         * A template name/path.
+         * @property {string|null}
          */
         template: null,
 
         /**
-         * @property {string} Template content.
+         * Template content.
+         * @property {string|null}
          */
         templateContent: null,
 
         /**
-         * @property {string} Layout name. Used if template is not specified to build template.
+         * A layout name/path. Used if template is not specified to build template.
+         * @property {string}
          */
         layout: null,
 
         /**
-         * @property {string} Name of View. If template name is not defined it will be used to cache
+         * Name of the view. If template name is not defined it will be used to cache
          * built template and layout. Otherwise they won't be cached. Name it unique.
+         * @property {string|null}
          */
         name: null,
 
@@ -46,41 +54,48 @@
         data: null,
 
         /**
-         * @property {boolean} Not to use cache for layouts. Use it if layouts are dynamic.
+         * Not to use cache for layouts. Use it if layouts are dynamic.
+         * @property {boolean}
          */
         noCache: false,
 
         /**
-         * @property {boolean} Not to rended view automatical when build view tree.
+         * Not to rended view automatical when build view tree.
          * Afterwards it can be rendered manually.
+         * @property {boolean}
          */
         notToRender: false,
 
         /**
-         * @property {string} Template itself.
+         * Template itself.
+         * @property {string}
          */
         _template: null,
 
         /**
-         * @property {Object} Layout itself.
+         * Layout itself.
+         * @property {Object}
          */
         _layout: null,
 
         layoutData: null,
 
         /**
-         * @property {boolean} Whether the view is ready for rendering (all necessary data is loaded).
+         * Whether the view is ready for rendering (all necessary data is loaded).
+         * @property {boolean}
          */
         isReady: false,
 
         /**
-         * @property {Object} Definitions for nested views that should be automaticaly created.
+         * Definitions for nested views that should be automaticaly created.
          * Example: `{body: {view: 'Body', selector: '> .body'}}`.
+         * @property {Object}
          */
         views: null,
 
         /**
-         * @property {Array.{string}} A list of options to be automatically passed to child views.
+         * A list of options to be automatically passed to child views.
+         * @property {Array.{string}}
          */
         optionsToPass: null,
 
@@ -847,7 +862,7 @@
          * Create a nested view. The important method.
          * @param {string} key Key.
          * @param {string} viewName View name.
-         * @param {Options} options View options. Custom options can be passed as well.
+         * @param {Bull.ViewOptions} options View options. Custom options can be passed as well.
          * @param {Function} [callback] Callback function. Will be invoked once nested view is ready (loaded).
          * @param {boolean} [wait] True be default. Set false if no need parent view wait for nested view loaded.
          */
