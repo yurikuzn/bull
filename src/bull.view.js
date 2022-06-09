@@ -13,6 +13,9 @@
 
     /**
      * A view.
+     *
+     * @class Bull.View
+     * @extends Backbone.View
      */
     Bull.View = Backbone.View.extend({
 
