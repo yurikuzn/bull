@@ -232,12 +232,11 @@
         initialize: function (options) {
             this.options = options || {};
 
-            this._factory = this.factory = this.options.factory || null;
-            this._renderer = this.options.renderer || null;
-            this._templator = this.options.templator || null;
-            this._layouter = this.options.layouter || null;
-
-            this._helper = this.options.helper || null;
+            this._factory = this.factory = this.options._factory || null;
+            this._renderer = this.options._renderer || null;
+            this._templator = this.options._templator || null;
+            this._layouter = this.options._layouter || null;
+            this._helper = this.options._helper || null;
 
             if ('noCache' in this.options) {
                 this.noCache = this.options.noCache;
@@ -586,8 +585,8 @@
             this.isReady = true;
             this.trigger('ready');
 
-            if (typeof this.options.onReady === 'function') {
-                this.options.onReady(this);
+            if (typeof this.options._onReady === 'function') {
+                this.options._onReady(this);
             }
         },
 

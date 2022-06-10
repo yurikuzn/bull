@@ -5,13 +5,9 @@ var Bull = Bull || {};
     var root = this;
 
     /**
-     * Bull.Factory is a factory for views.
-     * It has hard dependency from Backbone.js and uses Handlebars.js templating system by default.
+     * A view factory.
      *
-     */
-
-    /**
-     * @constructor
+     * @class Bull.Factory
      * @param {Object} options Configuration options.
      * <ul>
      *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
@@ -110,26 +106,28 @@ var Bull = Bull || {};
         },
 
         /**
-         * Create view.
-         * @param viewName
-         * @param {Object} options
-         * @param {Function} callback Will be invoked once view gets ready and view will be passed as an argument.
-         * @return {Bull.View}
+         * Create a view.
+         *
+         * @param {string} viewName A view name/path.
+         * @param {Bull.ViewOptions} [options] Options.
+         * @param {Function<Bull.View>} [callback] Invoked once the view is ready.
          */
         create: function (viewName, options, callback) {
             this._getViewClass(viewName, viewClass => {
                 if (typeof viewClass === 'undefined') {
-                    throw new Error("Class for view \"" + viewName + "\" not found.");
+                    throw new Error(`A view class '${viewName}' not found.`);
                 }
 
-                new viewClass(_.extend(options || {}, {
-                    factory: this,
-                    layouter: this._layouter,
-                    templator: this._templator,
-                    renderer: this._renderer,
-                    helper: this._helper,
-                    onReady: callback,
-                }));
+                options = _.extend(options || {}, {
+                    _factory: this,
+                    _layouter: this._layouter,
+                    _templator: this._templator,
+                    _renderer: this._renderer,
+                    _helper: this._helper,
+                    _onReady: callback,
+                });
+
+                new viewClass(options);
             });
         },
     });
