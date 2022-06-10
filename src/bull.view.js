@@ -229,9 +229,24 @@
 
         _isRenderCanceled: false,
 
+        /**
+         * Invoked by the constructor. Should not be overriden.
+         *
+         * @param {Object} options
+         * @internal
+         */
         initialize: function (options) {
             this.options = options || {};
+        },
 
+        /**
+         * To be run by the view-factory after instantiating. Should not be overriden.
+         * Not called from the constructor to be able to use ES6 classes with property initializers,
+         * as overridden properties not available in a constructor.
+         *
+         * @internal
+         */
+        _initialize: function () {
             this._factory = this.factory = this.options._factory || null;
             this._renderer = this.options._renderer || null;
             this._templator = this.options._templator || null;
@@ -339,17 +354,19 @@
         },
 
         /**
-         * Init view. Empty method by default. Is run before #setup.
+         * Initialize the view. Is run before #setup.
          */
         init: function () {},
 
         /**
-         * Setup the view. Empty method by default. Is run after #init.
+         * Setup the view. Is run after #init.
          */
         setup: function () {},
 
         /**
          * Additional setup. Empty method by default. Is run after #setup.
+         * Useful to let developers override the setup method, w/o needing to call
+         * the parent method in right order.
          */
         setupFinal: function () {},
 

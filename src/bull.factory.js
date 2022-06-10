@@ -127,7 +127,9 @@ var Bull = Bull || {};
                     _onReady: callback,
                 });
 
-                new viewClass(options);
+                let view = new viewClass(options);
+
+                view._initialize();
             });
         },
     });

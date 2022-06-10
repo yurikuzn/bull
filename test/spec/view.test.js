@@ -5,7 +5,6 @@ var Bull = Bull || {};
 describe("View", function () {
 	var view, templator, renderer;
 
-
 	beforeEach(function () {
 		renderer = {
 			render: function (template) {}
@@ -25,6 +24,7 @@ describe("View", function () {
 				callback([]);
 			},
 		};
+
 		factory = {
 			create: function (viewName, options, callback) {
 				callback({});
@@ -32,17 +32,21 @@ describe("View", function () {
 		};
 
 		view = new Bull.View({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
+			_renderer: renderer,
+			_templator: templator,
+			_layouter: layouter,
+			_factory: factory,
 		});
+
+		view._initialize();
 	});
 
 	it ('should trigger "remove" event on remove', function () {
 		var handler = jasmine.createSpy('handler');
+
 		view.on('remove', handler)
 		view.remove();
+
 		expect(handler).toHaveBeenCalled();
 	});
 
@@ -66,15 +70,20 @@ describe("View", function () {
 
 	it ('should call templator.getTemplate() with a proper template and layout names when render()', function () {
 		spyOn(templator, 'getTemplate');
+
 		var view = new Bull.View({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
+			_renderer: renderer,
+			_templator: templator,
+			_layouter: layouter,
+			_factory: factory,
 			template: 'SomeTemplate',
 			layout: 'SomeLayout',
 		});
+
+		view._initialize();
+
 		view.render();
+
 		expect(templator.getTemplate.mostRecentCall.args[0]).toBe('SomeTemplate');
 		expect(templator.getTemplate.mostRecentCall.args[2]).toBe(false);
 	});
@@ -87,21 +96,26 @@ describe("View", function () {
 		}]);
 
 		var master = new Bull.View({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
+			_renderer: renderer,
+			_templator: templator,
+			_layouter: layouter,
+			_factory: factory,
 			layout: 'SomeLayout',
 			_layout: [],
 		});
+
+		master._initialize();
 
 		var main = {
 			setElementInAdvance: {},
 			setElement: function () {},
 			_updatePath: function () {},
 		};
+
 		spyOn(main, 'setElementInAdvance');
+
 		master.setView('main', main);
+
 		expect(main.setElementInAdvance).toHaveBeenCalled();
 	});
 
@@ -137,13 +151,15 @@ describe("View", function () {
 		});
 
 		var view = new Bull.View({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
+			_renderer: renderer,
+			_templator: templator,
+			_layouter: layouter,
+			_factory: factory,
 			layout: 'SomeLayout',
 			_layout: [],
 		});
+
+		view._initialize();
 
 		expect(factory.create.calls[0].args[1]).toEqual({
 			layout: 'header',
@@ -185,12 +201,14 @@ describe("View", function () {
 		});
 
 		var view = new Bull.View({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
+			_renderer: renderer,
+			_templator: templator,
+			_layouter: layouter,
+			_factory: factory,
 			layout: 'SomeLayout',
 		});
+
+		view._initialize();
 
 		spyOn(renderer, 'render');
 		view.render();
@@ -203,6 +221,10 @@ describe("View", function () {
 	it ('should set get and check nested view', function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
+
+		view._initialize();
+		subView._initialize();
+
 		view.setView('main', subView);
 
 		expect(subView).toBe(view.getView('main'));
@@ -212,6 +234,10 @@ describe("View", function () {
 	it ('should set parent view when set view', function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
+
+		view._initialize();
+		subView._initialize();
+
 		view.setView('main', subView);
 
 		expect(view).toBe(subView.getParentView());
@@ -220,6 +246,9 @@ describe("View", function () {
 	it ('should clear nested view and trigger "remove" event', function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
+
+		view._initialize();
+		subView._initialize();
 
 		var handler = jasmine.createSpy('handler');
 		subView.on('remove', handler);
@@ -236,6 +265,11 @@ describe("View", function () {
 		var subSubView1 = new Bull.View();
 		var subSubView2 = new Bull.View();
 
+		view._initialize();
+		subView._initialize();
+		subSubView2._initialize();
+		subSubView2._initialize();
+
 		view.setView('main', subView);
 		subView.setView('some1', subSubView1);
 		subView.setView('some2', subSubView2);
@@ -245,11 +279,13 @@ describe("View", function () {
 		expect(subSubView2._path).toBe('/main/some2');
 
 		var view = new Bull.View();
+
+		view._initialize();
+
 		view._path = 'master';
 
 		view.setView('metan', subView);
 		expect(subSubView1._path).toBe('master/metan/some1');
 		expect(subSubView2._path).toBe('master/metan/some2');
 	});
-
 });
