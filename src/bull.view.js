@@ -2,13 +2,28 @@
 
     /**
      * @typedef {Object} Bull.ViewOptions
+     *
      * @property {string} [el] - A DOM element selector.
      * @property {string[]} [optionsToPass] - Options to be automatically passed to child views of the created view.
-     * @property {(function|Object)} [data] - Data that will be passed to a template.
+     * @property {(Function|Object)} [data] - Data that will be passed to a template.
      * @property {string} [template] - A template name.
      * @property {string} [templateContent] - Template content.
-     * @property {Backbone.Model} model - A model.
-     * @property {Backbone.Collection} collection - A collection.
+     * @property {boolean} [notToRender] - Not to render on ready.
+     * @property {Object} [views] - Child view defenitions.
+     * @property {string} [name] - A view name.
+     * @property {Backbone.Model} [model] - A model.
+     * @property {Backbone.Collection} [collection] - A collection.
+     */
+
+    /**
+     * @callback Bull.View.getHtmlCallback
+     *
+     * @param {string} html An HTML.
+     */
+
+    /**
+     * @callback Backbone.Events.callback
+     * @param {...*} arguments
      */
 
     /**
@@ -20,7 +35,7 @@
      *
      * @function trigger
      * @memberof Backbone.Events
-     * @param {string} event
+     * @param {string} event An event.
      * @param {...*} arguments
      */
 
@@ -29,8 +44,8 @@
      *
      * @function on
      * @memberof Backbone.Events
-     * @param {string} event
-     * @param {Function} callback
+     * @param {string} event An event.
+     * @param {Backbone.Events.callback} callback A callback.
      */
 
     /**
@@ -38,8 +53,8 @@
      *
      * @function once
      * @memberof Backbone.Events
-     * @param {string} event
-     * @param {Function} callback
+     * @param {string} event An event.
+     * @param {Backbone.Events.callback} callback A callback.
      */
 
     /**
@@ -48,7 +63,7 @@
      * @function off
      * @memberof Backbone.Events
      * @param {string} [event] From a specific event.
-     * @param {Function} [callback] From a specific callback.
+     * @param {Backbone.Events.callback} [callback] From a specific callback.
      */
 
     /**
@@ -56,9 +71,9 @@
      *
      * @function listenTo
      * @memberof Backbone.Events
-     * @param {Object} other
-     * @param {string} event
-     * @param {Function} callback
+     * @param {Object} other What to listen.
+     * @param {string} event An event.
+     * @param {Backbone.Events.callback} callback A callback.
      */
 
     /**
@@ -66,9 +81,9 @@
      *
      * @function listenToOnce
      * @memberof Backbone.Events
-     * @param {Object} other
-     * @param {string} event
-     * @param {Function} callback
+     * @param {Object} other What to listen.
+     * @param {string} event An event.
+     * @param {Backbone.Events.callback} callback A callback.
      */
 
     /**
@@ -78,7 +93,7 @@
      * @memberof Backbone.Events
      * @param {Object} [other] To remove listeners to a specific object.
      * @param {string} [event] To remove listeners to a specific event.
-     * @param {Function} [callback] To remove listeners to a specific callback.
+     * @param {Backbone.Events.callback} [callback] To remove listeners to a specific callback.
      */
 
     /**
@@ -111,128 +126,223 @@
      *
      * @mixes Backbone.Events
      */
-    Bull.View = Backbone.View.extend(/** @lends Bull.View */{
+    Bull.View = Backbone.View.extend(/** @lends Bull.View.prototype */{
 
         /**
          * A template name/path.
+         *
          * @property {?string}
+         * @protected
          */
         template: null,
 
         /**
-         * Template content.
+         * Template content. Alternative to specifying a template name/path.
+         *
          * @property {?string}
+         * @protected
          */
         templateContent: null,
 
         /**
          * A layout name/path. Used if template is not specified to build template.
-         * @property {string}
+         *
+         * @property {?string}
+         * @protected
          */
         layout: null,
 
         /**
-         * Name of the view. If template name is not defined it will be used to cache
-         * built template and layout. Otherwise they won't be cached. Name it unique.
+         * A name of the view. If template name is not defined it will be used to cache
+         * built template and layout. Otherwise they won't be cached. A name is unique.
+         *
          * @property {?string}
          */
         name: null,
 
         /**
-         * @property {(function|Object)} Data that will be passed to a template.
+         * Data that will be passed to a template.
+         *
+         * @property {(Function|Object|null)} data
+         * @protected
          */
         data: null,
 
         /**
          * Not to use cache for layouts. Use it if layouts are dynamic.
+         *
          * @property {boolean}
+         * @protected
          */
         noCache: false,
 
         /**
-         * Not to rended view automatical when build view tree.
+         * Not to rended view automatical when a view tree is built (ready).
          * Afterwards it can be rendered manually.
+         *
          * @property {boolean}
+         * @protected
          */
         notToRender: false,
 
         /**
-         * Template itself.
-         * @property {string}
+         * @property {?string}
+         * @private
          */
         _template: null,
 
         /**
          * Layout itself.
-         * @property {Object}
+         *
+         * @property {?Object}
+         * @protected
+         * @internal
          */
         _layout: null,
 
+        /**
+         * Layout data.
+         *
+         * @property {?Object}
+         * @protected
+         */
         layoutData: null,
 
         /**
          * Whether the view is ready for rendering (all necessary data is loaded).
+         *
          * @property {boolean}
+         * @public
          */
         isReady: false,
 
         /**
          * Definitions for nested views that should be automaticaly created.
          * Example: `{body: {view: 'Body', selector: '> .body'}}`.
-         * @property {Object}
+         *
+         * @property {?Object}
+         * @protected
          */
         views: null,
 
         /**
          * A list of options to be automatically passed to child views.
-         * @property {Array.<string>}
+         *
+         * @property {?string[]}
+         * @protected
          */
         optionsToPass: null,
 
+        /**
+         * @property (?Object}
+         * @protected
+         * @internal
+         */
         nestedViews: null,
 
+        /**
+         * @property (?Object}
+         * @private
+         */
         _nestedViewDefs: null,
 
+        /**
+         * @private
+         */
         _factory: null,
 
+        /**
+         * @private
+         * @deprecated
+         * @todo Remove.
+         */
         factory: null,
 
+        /**
+         * @private
+         */
         _templator: null,
 
+        /**
+         * @private
+         */
         _renderer: null,
 
+        /**
+         * @private
+         */
         _layouter: null,
 
+        /**
+         * @private
+         */
         _helper: null,
 
+        /**
+         * @private
+         */
         _templateCompiled: null,
 
+        /**
+         * @private
+         */
         _parentView: null,
 
+        /**
+         * @private
+         */
         _path: '',
 
+        /**
+         * @private
+         */
         _wait: false,
 
+        /**
+         * @private
+         */
         _waitViewList: null,
 
+        /**
+         * @private
+         */
         _nestedViewsFromLayoutLoaded: false,
 
+        /**
+         * @private
+         */
         _readyConditionList: null,
 
+        /**
+         * @private
+         */
         _isRendered: false,
 
+        /**
+         * @private
+         */
         _isFullyRendered: false,
 
+        /**
+         * @private
+         */
         _isBeingRendered: false,
 
+        /**
+         * @private
+         */
         _isRemoved: false,
 
+        /**
+         * @private
+         */
         _isRenderCanceled: false,
 
         /**
          * Invoked by the constructor. Should not be overriden.
          *
          * @param {Object} options
+         * @private
          * @internal
          */
         initialize: function (options) {
@@ -244,6 +354,7 @@
          * Not called from the constructor to be able to use ES6 classes with property initializers,
          * as overridden properties not available in a constructor.
          *
+         * @private
          * @internal
          */
         _initialize: function () {
@@ -355,11 +466,15 @@
 
         /**
          * Initialize the view. Is run before #setup.
+         *
+         * @protected
          */
         init: function () {},
 
         /**
          * Setup the view. Is run after #init.
+         *
+         * @protected
          */
         setup: function () {},
 
@@ -367,12 +482,16 @@
          * Additional setup. Empty method by default. Is run after #setup.
          * Useful to let developers override the setup method, w/o needing to call
          * the parent method in right order.
+         *
+         * @protected
          */
         setupFinal: function () {},
 
         /**
          * Set a view container element if doesn't exist yet. It will call setElement after render.
+         *
          * @param {string} el A selector.
+         * @protected
          */
         setElementInAdvance: function (el) {
             if (this._setElementInAdvancedInProcess) {
@@ -390,6 +509,9 @@
 
         /**
          * Get an element selector.
+         *
+         * @public
+         * @return {?string}
          */
         getSelector: function () {
             return this.options.el || null;
@@ -397,6 +519,8 @@
 
         /**
          * Set an element selector.
+         *
+         * @public
          * @param {string} selector A selector.
          */
         setSelector: function (selector) {
@@ -404,7 +528,9 @@
         },
 
         /**
-         * Checks whether the view has been already rendered.
+         * Checks whether the view has been already rendered
+         *
+         * @public.
          * @return {boolean}
          */
         isRendered: function () {
@@ -413,6 +539,8 @@
 
         /**
          * Checks whether the view has been fully rendered (afterRender has been executed).
+         *
+         * @public
          * @return {boolean}
          */
         isFullyRendered: function () {
@@ -421,6 +549,9 @@
 
         /**
          * Whether the view is being rendered in the moment.
+         *
+         * @public
+         * @return {boolean}
          */
         isBeingRendered: function () {
             return this._isBeingRendered;
@@ -428,6 +559,9 @@
 
         /**
          * Whether the view is removed.
+         *
+         * @public
+         * @return {boolean}
          */
         isRemoved: function () {
             return this._isRemoved;
@@ -435,6 +569,9 @@
 
         /**
          * Get HTML of view but don't render it.
+         *
+         * @public
+         * @param {Bull.View.getHtmlCallback} callback A callback with an HTML.
          */
         getHtml: function (callback) {
             this._getHtml(callback);
@@ -526,6 +663,9 @@
             return new Promise(() => {});
         },
 
+        /**
+         * @private
+         */
         _afterRender: function () {
             this._isBeingRendered = false;
             this._isRendered = true;
@@ -549,9 +689,14 @@
 
         /**
          * Executed after render.
+         *
+         * @protected
          */
         afterRender: function () {},
 
+        /**
+         * @private
+         */
         _tryReady: function () {
             if (this.isReady) {
                 return;
@@ -592,12 +737,17 @@
         },
 
         /**
-         * Run checking for view is ready.
+         * Run checking whether the view is ready.
+         *
+         * @protected
          */
         tryReady: function () {
             this._tryReady();
         },
 
+        /**
+         * @private
+         */
         _makeReady: function () {
             this.isReady = true;
             this.trigger('ready');
@@ -607,6 +757,9 @@
             }
         },
 
+        /**
+         * @private
+         */
         _addDefinedNestedViewDefs: function (list) {
             for (var name in this.views) {
                 var o = _.clone(this.views[name]);
@@ -621,6 +774,9 @@
             return list;
         },
 
+        /**
+         * @private
+         */
         _getNestedViewsFromLayout: function () {
             var nestedViewDefs = this._layouter
                 .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
@@ -647,8 +803,9 @@
 
             return nestedViewDefsFiltered;
         },
-
-
+        /**
+         * @private
+         */
         _loadNestedViews: function (callback) {
             var nestedViewDefs = [];
 
@@ -733,6 +890,9 @@
             });
         },
 
+        /**
+         * @private
+         */
         _getData: function () {
             if (typeof this.data === 'function') {
                 return this.data();
@@ -741,6 +901,9 @@
             return this.data;
         },
 
+        /**
+         * @private
+         */
         _getNestedViewsAsArray: function (nestedViews) {
             var nestedViewsArray = [];
 
@@ -759,6 +922,9 @@
 
         },
 
+        /**
+         * @private
+         */
         _getNestedViewsHtmlList: function (callback) {
             var data = {};
             var nestedViewsArray = this._getNestedViewsAsArray();
@@ -798,9 +964,14 @@
 
         /**
          * Provides the ability to modify template data right before render.
+         *
+         * @param {Object} Data
          */
         handleDataBeforeRender: function (data) {},
 
+        /**
+         * @private
+         */
         _getHtml: function (callback) {
             this._isBeingRendered = true;
             this.trigger('render', this);
@@ -828,18 +999,30 @@
             });
         },
 
+        /**
+         * @private
+         */
         _getTemplateName: function () {
             return this.template || null;
         },
 
+        /**
+         * @private
+         */
         _getLayoutName: function () {
             return this.layout || this.name || null;
         },
 
+        /**
+         * @private
+         */
         _getLayoutData: function () {
             return this.layoutData;
         },
 
+        /**
+         * @private
+         */
         _getLayout: function () {
             if (typeof this._layout === 'function') {
                 return this._layout();
@@ -848,6 +1031,9 @@
             return this._layout;
         },
 
+        /**
+         * @private
+         */
         _getTemplate: function (callback) {
             if (this._templator.compilable && this._templateCompiled !== null) {
                 callback(this._templateCompiled);
@@ -895,6 +1081,9 @@
             this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
         },
 
+        /**
+         * @private
+         */
         _updatePath: function (parentPath, viewKey) {
             this._path = parentPath + '/' + viewKey;
 
@@ -903,6 +1092,9 @@
             }
         },
 
+        /**
+         * @private
+         */
         _getSelectorForNestedView: function (key) {
             var el = false;
 
@@ -936,7 +1128,8 @@
 
         /**
          * Whether has a nested view.
-         * @param {string} key
+         *
+         * @param {string} key A key.
          * @return {boolean}
          */
         hasView: function (key) {
@@ -949,7 +1142,8 @@
 
         /**
          * Get a nested view.
-         * @param {string} key
+         *
+         * @param {string} key A key.
          * @return {Bull.View}
          */
         getView: function (key) {
@@ -960,11 +1154,12 @@
 
         /**
          * Create a nested view. The important method.
+         *
          * @param {string} key A view key.
-         * @param {string} viewName View name/path.
+         * @param {string} viewName A view name/path.
          * @param {Bull.ViewOptions} options View options. Custom options can be passed as well.
-         * @param {Function} [callback] Callback function. Will be invoked once nested view is ready (loaded).
-         * @param {boolean} [wait] True be default. Set false if no need parent view wait for nested view loaded.
+         * @param {Function} [?callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
+         * @param {boolean} [wait=true] Set false if no need parent view wait for nested view loaded.
          */
         createView: function (key, viewName, options, callback, wait) {
             this.clearView(key);
@@ -1024,6 +1219,7 @@
 
         /**
          * Set a nested view.
+         *
          * @param {string} key A view key.
          * @param {Bull.View} view A view name/path.
          * @param {string} [el] A selector for a view container.
@@ -1053,6 +1249,7 @@
 
         /**
          * Clear a nested view. Initiates removal of the nested view.
+         *
          * @param {string} key A view key.
          */
         clearView: function (key) {
@@ -1073,6 +1270,7 @@
 
         /**
          * Removes a nested view for cases when it's supposed that this view can be re-used in future.
+         *
          * @param {string} key A view key.
          */
         unchainView: function (key) {
@@ -1086,6 +1284,7 @@
 
         /**
          * Get a parent view.
+         *
          * @return {Bull.View}
          */
         getParentView: function () {
@@ -1094,6 +1293,7 @@
 
         /**
          * Has a parent view.
+         *
          * @return {boolean}
          */
         hasParentView: function () {
@@ -1102,6 +1302,7 @@
 
         /**
          * Add a condition for the view getting ready.
+         *
          * @param {(Function|boolean)} condition
          */
         addReadyCondition: function (condition) {
@@ -1110,6 +1311,8 @@
 
         /**
          * Wait for a nested view.
+         *
+         * @protected
          * @param {string} key
          */
         waitForView: function (key) {
@@ -1119,7 +1322,9 @@
         /**
          * Makes the view to wait for a promise (if a Promise is passed as a parameter).
          * Adds a wait condition if true is passed. Removes the wait condition if false.
-         * @param {(Promise|Function|boolean)} wait
+         *
+         * @protected
+         * @param {(Promise|boolean)} wait A wait-promise or true/false.
          */
         wait: function (wait) {
             if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
@@ -1136,7 +1341,7 @@
             if (typeof wait === 'function') {
                 this._waitPromiseCount++;
 
-                var promise = new Promise((resolve) => {
+                var promise = new Promise(resolve => {
                     resolve(wait.call(this));
                 });
 
@@ -1150,16 +1355,18 @@
 
             if (wait) {
                 this._wait = true;
+
+                return;
             }
-            else {
-                this._wait = false;
-                this._tryReady();
-            }
+
+            this._wait = false;
+            this._tryReady();
         },
 
         /**
          * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
          *
+         * @public
          * @param {boolean} [dontEmpty] Skips emptying an element container.
          */
         remove: function (dontEmpty) {
@@ -1198,13 +1405,21 @@
 
         /**
          * Called on view removal.
+         *
+         * @protected
          */
         onRemove: function () {},
 
+        /**
+         * @private
+         */
         _ensureElement: function () {
             this.$el = $();
         },
 
+        /**
+         * @private
+         */
         _setElement: function (el) {
             if (typeof el === 'string') {
                 var parentView = this.getParentView();
@@ -1229,6 +1444,8 @@
 
         /**
          * Propagate an event to nested views.
+         *
+         * @public
          * @param {...*} arguments
          */
         propagateEvent: function () {
@@ -1241,5 +1458,4 @@
             }
         },
     });
-
 }).call(this, Bull, Backbone, _);

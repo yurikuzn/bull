@@ -63,24 +63,51 @@ var Bull = Bull || {};
         this._viewLoader = this._getViewClassFunction;
     };
 
-    _.extend(Bull.Factory.prototype, {
+    _.extend(Bull.Factory.prototype, /** @lends Bull.Factory.prototype */ {
 
+        /**
+         * @private
+         */
         defaultViewName: 'View',
 
+        /**
+         * @private
+         */
         _layouter: null,
 
+        /**
+         * @private
+         */
         _templator: null,
 
+        /**
+         * @private
+         */
         _renderer: null,
 
+        /**
+         * @private
+         */
         _loader: null,
 
+        /**
+         * @private
+         */
         _helper: null,
 
+        /**
+         * @private
+         */
         _viewClassHash: null,
 
+        /**
+         * @private
+         */
         _viewLoader: null,
 
+        /**
+         * @private
+         */
         _getViewClassFunction: function (viewName, callback) {
             var viewClass = root[viewName];
 
@@ -91,6 +118,9 @@ var Bull = Bull || {};
             callback(viewClass);
         },
 
+        /**
+         * @private
+         */
         _getViewClass: function (viewName, callback) {
             if (viewName in this._viewClassHash) {
                 callback(this._viewClassHash[viewName]);
