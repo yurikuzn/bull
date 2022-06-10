@@ -1,6 +1,6 @@
 {
   "name": "bullbone",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A library for EspoCRM frontend.",
   "directories": {},
   "scripts": {
