@@ -42,7 +42,7 @@ var Bull = Bull || {};
      * </ul>
      */
     Bull.Factory = function (options) {
-        var options = options || {};
+        options = options || {};
 
         this.defaultViewName = options.defaultViewName || this.defaultViewName;
 

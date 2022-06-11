@@ -9,16 +9,40 @@
      * @property {string} [template] - A template name.
      * @property {string} [templateContent] - Template content.
      * @property {boolean} [notToRender] - Not to render on ready.
-     * @property {Object} [views] - Child view defenitions.
+     * @property {Object} [views] - Child view definitions.
      * @property {string} [name] - A view name.
      * @property {Backbone.Model} [model] - A model.
      * @property {Backbone.Collection} [collection] - A collection.
+     * @property {Bull.View.DomEvents} [events] - DOM events.
+     */
+
+    /**
+     * After a view is rendered.
+     *
+     * @event Bull.View#after:render
+     */
+
+    /**
+     * Once a view is ready for rendering (loaded).
+     *
+     * @event Bull.View#ready
+     */
+
+    /**
+     * Once a view is removed.
+     *
+     * @event Bull.View#remove
      */
 
     /**
      * @callback Bull.View.getHtmlCallback
      *
      * @param {string} html An HTML.
+     */
+
+    /**
+     * @callback Backbone.View.domEventCallback
+     * @param {jQuery.Event} e An event.
      */
 
     /**
@@ -113,20 +137,52 @@
      */
 
     /**
+     * DOM event listeners.
+     *
+     * @typedef {Object.<string, Bull.View.domEventCallback>} Backbone.View.DomEvents
+     */
+
+    /**
      * A view.
      *
      * @class Bull.View
      * @extends Backbone.View
      *
-     * @property {(Espo.Model|undefined)} model - A model.
-     * @property {(Espo.Collection|undefined)} collection - A collection.
-     * @property {Object} options - Passed options.
-     * @property {Object.{Function}} events DOM event listeners.
-     * @property {string} cid - An ID unique among all views.
-     *
      * @mixes Backbone.Events
      */
     Bull.View = Backbone.View.extend(/** @lends Bull.View.prototype */{
+
+        /**
+         * A model.
+         *
+         * @name model
+         * @type {?Espo.Model}
+         * @public
+         */
+
+        /**
+         * A collection.
+         *
+         * @name collection
+         * @type {?Espo.Collection}
+         * @public
+         */
+
+        /**
+         * An ID, unique among all views.
+         *
+         * @name cid
+         * @type {string}
+         * @public
+         */
+
+        /**
+         * Passed options.
+         *
+         * @name options
+         * @type {Object}
+         * @public
+         */
 
         /**
          * A template name/path.
@@ -139,7 +195,7 @@
         /**
          * Template content. Alternative to specifying a template name/path.
          *
-         * @property {?string}
+         * @type {?string}
          * @protected
          */
         templateContent: null,
@@ -147,23 +203,31 @@
         /**
          * A layout name/path. Used if template is not specified to build template.
          *
-         * @property {?string}
-         * @protected
+         * @type {?string}
+         * @private
          */
         layout: null,
 
         /**
          * A name of the view. If template name is not defined it will be used to cache
-         * built template and layout. Otherwise they won't be cached. A name is unique.
+         * built template and layout. Otherwise, they won't be cached. A name is unique.
          *
-         * @property {?string}
+         * @type {?string}
          */
         name: null,
 
         /**
+         * DOM event listeners.
+         *
+         * @type {Bull.View.DomEvents}
+         * @protected
+         */
+        events: null,
+
+        /**
          * Data that will be passed to a template.
          *
-         * @property {(Function|Object|null)} data
+         * @type {(Function|Object|null)} data
          * @protected
          */
         data: null,
@@ -171,7 +235,7 @@
         /**
          * Not to use cache for layouts. Use it if layouts are dynamic.
          *
-         * @property {boolean}
+         * @type {boolean}
          * @protected
          */
         noCache: false,
@@ -180,13 +244,13 @@
          * Not to rended view automatical when a view tree is built (ready).
          * Afterwards it can be rendered manually.
          *
-         * @property {boolean}
+         * @type {boolean}
          * @protected
          */
         notToRender: false,
 
         /**
-         * @property {?string}
+         * @type {?string}
          * @private
          */
         _template: null,
@@ -194,7 +258,7 @@
         /**
          * Layout itself.
          *
-         * @property {?Object}
+         * @type {?Object}
          * @protected
          * @internal
          */
@@ -203,7 +267,7 @@
         /**
          * Layout data.
          *
-         * @property {?Object}
+         * @type {?Object}
          * @protected
          */
         layoutData: null,
@@ -211,16 +275,23 @@
         /**
          * Whether the view is ready for rendering (all necessary data is loaded).
          *
-         * @property {boolean}
+         * @type {boolean}
          * @public
          */
         isReady: false,
 
         /**
          * Definitions for nested views that should be automaticaly created.
-         * Example: `{body: {view: 'Body', selector: '> .body'}}`.
+         * Example: ```
+         * {
+         *   body: {
+         *     view: 'view/path/body',
+         *     selector: '> .body',
+         *   }
+         * }
+         * ```
          *
-         * @property {?Object}
+         * @type {?Object}
          * @protected
          */
         views: null,
@@ -228,20 +299,22 @@
         /**
          * A list of options to be automatically passed to child views.
          *
-         * @property {?string[]}
+         * @type {?string[]}
          * @protected
          */
         optionsToPass: null,
 
         /**
-         * @property (?Object}
+         * Nested views.
+         *
+         * @type {Object.<string, Bull.View>}
          * @protected
          * @internal
          */
         nestedViews: null,
 
         /**
-         * @property (?Object}
+         * @type {Object}
          * @private
          */
         _nestedViewDefs: null,
@@ -354,36 +427,43 @@
          * Not called from the constructor to be able to use ES6 classes with property initializers,
          * as overridden properties not available in a constructor.
          *
-         * @private
          * @internal
          */
         _initialize: function () {
+            /** @private */
             this._factory = this.factory = this.options._factory || null;
+            /** @private */
             this._renderer = this.options._renderer || null;
+            /** @private */
             this._templator = this.options._templator || null;
+            /** @private */
             this._layouter = this.options._layouter || null;
+            /** @private */
             this._helper = this.options._helper || null;
 
             if ('noCache' in this.options) {
                 this.noCache = this.options.noCache;
             }
 
+            this.events = _.clone(this.events || {});
             this.name = this.options.name || this.name;
-
             this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;
-
             this.data = this.options.data || this.data;
 
             this.nestedViews = {};
+            /** @private */
             this._nestedViewDefs = {};
 
             if (this._waitViewList == null) {
+                /** @private */
                 this._waitViewList = [];
             }
 
+            /** @private */
             this._waitPromiseCount = 0;
 
             if (this._readyConditionList == null) {
+                /** @private */
                 this._readyConditionList = [];
             }
 
@@ -413,12 +493,15 @@
 
             this.template = this.options.template || this.template;
             this.layout = this.options.layout || this.layout;
+
+            /** @private */
             this._layout = this.options._layout || this._layout;
             this.layoutData = this.options.layoutData || this.layoutData;
-
+            /** @private */
             this._template = this.templateContent || this.options.templateContent || this._template;
 
             if (this._template != null && this._templator.compilable) {
+                /** @private */
                 this._templateCompiled = this._templator.compileTemplate(this._template);
             }
 
@@ -439,6 +522,7 @@
             if (this.layout != null || _layout !== null) {
                 if (_layout === null) {
                     this._layouter.getLayout(this.layout, (_layout) => {
+                        /** @private */
                         this._layout = _layout;
 
                         loadNestedViews();
@@ -803,6 +887,7 @@
 
             return nestedViewDefsFiltered;
         },
+
         /**
          * @private
          */
