@@ -156,16 +156,18 @@
          * A model.
          *
          * @name model
-         * @type {?Espo.Model}
+         * @type {?Backbone.Model}
          * @public
+         * @memberof Bull.View.prototype
          */
 
         /**
          * A collection.
          *
          * @name collection
-         * @type {?Espo.Collection}
+         * @type {?Backbone.Collection}
          * @public
+         * @memberof Bull.View.prototype
          */
 
         /**
@@ -174,6 +176,7 @@
          * @name cid
          * @type {string}
          * @public
+         * @memberof Bull.View.prototype
          */
 
         /**
@@ -182,6 +185,7 @@
          * @name options
          * @type {Object}
          * @public
+         * @memberof Bull.View.prototype
          */
 
         /**
