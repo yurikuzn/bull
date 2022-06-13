@@ -156,7 +156,7 @@
          * A model.
          *
          * @name model
-         * @type {?Backbone.Model}
+         * @type {Backbone.Model|null}
          * @public
          * @memberof Bull.View.prototype
          */
@@ -165,7 +165,7 @@
          * A collection.
          *
          * @name collection
-         * @type {?Backbone.Collection}
+         * @type {Backbone.Collection|null}
          * @public
          * @memberof Bull.View.prototype
          */
@@ -191,7 +191,7 @@
         /**
          * A template name/path.
          *
-         * @property {?string}
+         * @property {string|null}
          * @protected
          */
         template: null,
@@ -199,7 +199,7 @@
         /**
          * Template content. Alternative to specifying a template name/path.
          *
-         * @type {?string}
+         * @type {string|null}
          * @protected
          */
         templateContent: null,
@@ -207,7 +207,7 @@
         /**
          * A layout name/path. Used if template is not specified to build template.
          *
-         * @type {?string}
+         * @type {string|null}
          * @private
          */
         layout: null,
@@ -216,7 +216,7 @@
          * A name of the view. If template name is not defined it will be used to cache
          * built template and layout. Otherwise, they won't be cached. A name is unique.
          *
-         * @type {?string}
+         * @type {string|null}
          */
         name: null,
 
@@ -254,7 +254,7 @@
         notToRender: false,
 
         /**
-         * @type {?string}
+         * @type {string|null}
          * @private
          */
         _template: null,
@@ -262,7 +262,7 @@
         /**
          * Layout itself.
          *
-         * @type {?Object}
+         * @type {Object|null}
          * @protected
          * @internal
          */
@@ -271,7 +271,7 @@
         /**
          * Layout data.
          *
-         * @type {?Object}
+         * @type {Object|null}
          * @protected
          */
         layoutData: null,
@@ -295,7 +295,7 @@
          * }
          * ```
          *
-         * @type {?Object}
+         * @type {Object|null}
          * @protected
          */
         views: null,
@@ -303,7 +303,7 @@
         /**
          * A list of options to be automatically passed to child views.
          *
-         * @type {?string[]}
+         * @type {string[]|null}
          * @protected
          */
         optionsToPass: null,
@@ -599,7 +599,7 @@
          * Get an element selector.
          *
          * @public
-         * @return {?string}
+         * @return {string|null}
          */
         getSelector: function () {
             return this.options.el || null;
