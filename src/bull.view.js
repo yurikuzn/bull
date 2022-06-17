@@ -4,7 +4,8 @@
      * @typedef {Object} Bull.ViewOptions
      *
      * @property {string} [el] - A DOM element selector.
-     * @property {string[]} [optionsToPass] - Options to be automatically passed to child views of the created view.
+     * @property {string[]} [optionsToPass] - Options to be automatically passed to child views
+     *   of the created view.
      * @property {(Function|Object)} [data] - Data that will be passed to a template.
      * @property {string} [template] - A template name.
      * @property {string} [templateContent] - Template content.
@@ -686,6 +687,7 @@
         /**
          * Render the view.
          *
+         * @param {Function} [callback] Deprecated. Use promise.
          * @return {Promise<this>}
          */
         render: function (callback) {
@@ -726,6 +728,7 @@
         /**
          * Re-render the view.
          *
+         * @param {boolean} [force=false] To render if was not rendered.
          * @return {Promise<this>}
          */
         reRender: function (force) {
@@ -1054,7 +1057,7 @@
         /**
          * Provides the ability to modify template data right before render.
          *
-         * @param {Object} Data
+         * @param {Object} data Data
          */
         handleDataBeforeRender: function (data) {},
 
@@ -1218,7 +1221,7 @@
         /**
          * Whether has a nested view.
          *
-         * @param {string} key A key.
+         * @param {string} key A view key.
          * @return {boolean}
          */
         hasView: function (key) {
@@ -1232,7 +1235,7 @@
         /**
          * Get a nested view.
          *
-         * @param {string} key A key.
+         * @param {string} key A view key.
          * @return {Bull.View}
          */
         getView: function (key) {
@@ -1248,7 +1251,7 @@
          * @param {string} viewName A view name/path.
          * @param {Bull.ViewOptions} options View options. Custom options can be passed as well.
          * @param {Function} [?callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
-         * @param {boolean} [wait=true] Set false if no need parent view wait for nested view loaded.
+         * @param {boolean} [wait=true] Set false if no need a parent view to wait till nested view loaded.
          */
         createView: function (key, viewName, options, callback, wait) {
             this.clearView(key);
@@ -1392,7 +1395,7 @@
         /**
          * Add a condition for the view getting ready.
          *
-         * @param {(Function|boolean)} condition
+         * @param {(Function|boolean)} condition A condition.
          */
         addReadyCondition: function (condition) {
             this._readyConditionList.push(condition);
@@ -1402,7 +1405,7 @@
          * Wait for a nested view.
          *
          * @protected
-         * @param {string} key
+         * @param {string} key A view key.
          */
         waitForView: function (key) {
             this._waitViewList.push(key);
