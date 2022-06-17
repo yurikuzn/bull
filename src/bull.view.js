@@ -352,7 +352,9 @@
         _layouter: null,
 
         /**
-         * @private
+         * A helper.
+         *
+         * @protected
          */
         _helper: null,
 
