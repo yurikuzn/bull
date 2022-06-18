@@ -6,7 +6,8 @@
      * @property {string} [el] - A DOM element selector.
      * @property {string[]} [optionsToPass] - Options to be automatically passed to child views
      *   of the created view.
-     * @property {(Function|Object)} [data] - Data that will be passed to a template.
+     * @property {(function:Object)|Object} [data] - Data that will be passed to a template or a function
+     *   that returns data.
      * @property {string} [template] - A template name.
      * @property {string} [templateContent] - Template content.
      * @property {boolean} [notToRender] - Not to render on ready.
@@ -192,7 +193,7 @@
         /**
          * A template name/path.
          *
-         * @property {string|null}
+         * @type {string|null}
          * @protected
          */
         template: null,
@@ -228,14 +229,6 @@
          * @protected
          */
         events: null,
-
-        /**
-         * Data that will be passed to a template.
-         *
-         * @type {(Function|Object|null)} data
-         * @protected
-         */
-        data: null,
 
         /**
          * Not to use cache for layouts. Use it if layouts are dynamic.
@@ -455,7 +448,6 @@
             this.events = _.clone(this.events || {});
             this.name = this.options.name || this.name;
             this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;
-            this.data = this.options.data || this.data;
 
             this.nestedViews = {};
             /** @private */
@@ -553,6 +545,17 @@
             this._nestedViewsFromLayoutLoaded = true;
 
             this._tryReady();
+        },
+
+        /**
+         * Compose template data. A key => value result will be passed to
+         * a template.
+         *
+         * @protected
+         * @returns {Object.<string,*>|{}}
+         */
+        data: function () {
+            return {};
         },
 
         /**
@@ -988,6 +991,14 @@
          * @private
          */
         _getData: function () {
+            if (this.options.data) {
+                if (typeof this.options.data === 'function') {
+                    return this.options.data();
+                }
+
+                return this.options.data;
+            }
+
             if (typeof this.data === 'function') {
                 return this.data();
             }
