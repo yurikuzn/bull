@@ -1,6 +1,8 @@
 (function (Bull, Backbone, _) {
 
     /**
+     * View options passed to a view on creation.
+     *
      * @typedef {Object} Bull.ViewOptions
      *
      * @property {string} [el] - A DOM element selector.
@@ -16,6 +18,16 @@
      * @property {Backbone.Model} [model] - A model.
      * @property {Backbone.Collection} [collection] - A collection.
      * @property {Bull.View.DomEvents} [events] - DOM events.
+     */
+
+    /**
+     * Nested view definitions.
+     *
+     * @typedef {Object} Bull.View~NestedViewItem
+     *
+     * @property {string} view A view name/path.
+     * @property {string} [selector] A selector relative to a parent view.
+     * @property {string} [el] An absolute selector.
      */
 
     /**
@@ -37,18 +49,24 @@
      */
 
     /**
+     * A get-HTML callback.
+     *
      * @callback Bull.View.getHtmlCallback
      *
      * @param {string} html An HTML.
      */
 
     /**
-     * @callback Backbone.View.domEventCallback
+     * A DOM event callback.
+     *
+     * @callback Bull.View~domEventCallback
+     *
      * @param {jQuery.Event} e An event.
      */
 
     /**
      * @callback Backbone.Events.callback
+     *
      * @param {...*} arguments
      */
 
@@ -141,7 +159,7 @@
     /**
      * DOM event listeners.
      *
-     * @typedef {Object.<string, Bull.View.domEventCallback>} Backbone.View.DomEvents
+     * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
      */
 
     /**
@@ -280,6 +298,8 @@
 
         /**
          * Definitions for nested views that should be automaticaly created.
+         * Format: viewKey => view defs.
+         *
          * Example: ```
          * {
          *   body: {
@@ -289,7 +309,7 @@
          * }
          * ```
          *
-         * @type {Object|null}
+         * @type {Object.<string,Bull.View~NestedViewItem>|null}
          * @protected
          */
         views: null,
@@ -624,7 +644,7 @@
         /**
          * Checks whether the view has been already rendered
          *
-         * @public.
+         * @public
          * @return {boolean}
          */
         isRendered: function () {
