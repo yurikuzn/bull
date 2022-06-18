@@ -1252,7 +1252,7 @@
          * @param {string} key A view key.
          * @param {string} viewName A view name/path.
          * @param {Bull.ViewOptions} options View options. Custom options can be passed as well.
-         * @param {Function} [?callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
+         * @param {Function} [callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
          * @param {boolean} [wait=true] Set false if no need a parent view to wait till nested view loaded.
          */
         createView: function (key, viewName, options, callback, wait) {
