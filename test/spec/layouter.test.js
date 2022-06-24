@@ -11,12 +11,10 @@ describe("Layouter", function () {
 	}
 	
 	beforeEach(function () {
-	
-		
 		loader = {
 			load: {},
 		};		
-		spyOn(loader, 'load').andCallFake(function (type, name, callback) {			
+		spyOn(loader, 'load').and.callFake(function (type, name, callback) {
 			callback(defaultLayout);
 		});
 	
@@ -25,7 +23,7 @@ describe("Layouter", function () {
 		});
 	});
 	
-	it ('shoud return proper nested views definitions from the layout', function () {
+	it ('should return proper nested views definitions from the layout', function () {
 		layouter.addLayout('test_1', {
 			type: 'default',
 			layout: [

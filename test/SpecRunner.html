@@ -3,15 +3,17 @@
 <head>
 	<title>Bull Spec Runner</title>
 
-	<link rel="shortcut icon" type="image/png" href="jasmine_favicon.png">
+	<link rel="shortcut icon" type="image/png" href="jasmine/jasmine_favicon.png">
 	<link rel="stylesheet" type="text/css" href="jasmine/jasmine.css">
 	<script type="text/javascript" src="jasmine/jasmine.js"></script>
 	<script type="text/javascript" src="jasmine/jasmine-html.js"></script>
+	<script type="text/javascript" src="jasmine/boot0.js"></script>
+	<script type="text/javascript" src="jasmine/boot1.js"></script>
 
-	<script type="text/javascript" src="lib/jquery.js"></script>
-	<script type="text/javascript" src="lib/underscore.js"></script>
-	<script type="text/javascript" src="lib/backbone.js"></script>
-	<script type="text/javascript" src="lib/handlebars.js"></script>
+	<script type="text/javascript" src="../node_modules/jquery/dist/jquery.js"></script>
+	<script type="text/javascript" src="../node_modules/underscore/underscore.js"></script>
+	<script type="text/javascript" src="../node_modules/backbone/backbone.js"></script>
+	<script type="text/javascript" src="../node_modules/handlebars/dist/handlebars.js"></script>
 
 	<script type="text/javascript" src="bull-test.js"></script>
 
@@ -29,33 +31,7 @@
 	<script type="text/javascript" src="spec/renderer.test.js"></script>
 	<script type="text/javascript" src="spec/factory.test.js"></script>
 
-	<script type="text/javascript">
-		(function () {
-			var jasmineEnv = jasmine.getEnv();
-			jasmineEnv.updateInterval = 1000;
-
-			var htmlReporter = new jasmine.HtmlReporter();
-
-			jasmineEnv.addReporter(htmlReporter);
-
-			jasmineEnv.specFilter = function(spec) {
-				return htmlReporter.specFilter(spec);
-			};
-
-			var currentWindowOnload = window.onload;
-
-			window.onload = function() {
-				if (currentWindowOnload) {
-					currentWindowOnload();
-				}
-				execJasmine();
-			};
-
-			function execJasmine() {
-				jasmineEnv.execute();
-			}
-		})();
-	</script>
+	<script type="text/javascript"></script>
 </head>
 <body>
 </body>

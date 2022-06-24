@@ -1,17 +1,15 @@
 (function ($) {
-
 	var root = this;
 
 	this.BullTest = {
 		
 		include: function (path, options) {
-			var thisObject = root;			
+			var thisObject = root;
+
 			if (options != undefined && 'self' in options) {
 				thisObject = options.self;
 			}
-			
-			var self = this;
-				
+
 			var ajaxOptions = {
 				url: path,
 				async: false,
@@ -34,6 +32,5 @@
 			
 			$.ajax(ajaxOptions);		
 		},
-	
 	};
 }).call(this, $);

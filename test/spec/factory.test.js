@@ -6,7 +6,7 @@ describe("Factory", function () {
 	var factory;
 	
 	var loader = function () {};
-	var layoter = function () {};
+	var layouter = function () {};
 	var templator = function () {};
 	var renderer = function () {};
 	
@@ -26,19 +26,20 @@ describe("Factory", function () {
 		var loader = {
 			load: {}
 		};
+
 		var viewLoader = {load: {}};
-		var viewClass = function (viewName, options) {	
-		};
-		spyOn(loader, 'load').andReturn(viewClass);
+
+		var viewClass = function (viewName, options) {	};
+		spyOn(loader, 'load').and.returnValue(viewClass);
 		
-		spyOn(viewLoader, 'load').andReturn(viewClass);
+		spyOn(viewLoader, 'load').and.returnValue(viewClass);
 	
 		factory = new Bull.Factory({
 			customLoader: loader,
 			customLayouter: layouter,
 			customTemplator: templator,
 			customRenderer: renderer,
-			viewLoader: viewLoader.load		
+			viewLoader: viewLoader.load,
 		});
 		
 		factory.create('viewTest', {}, function () {});		

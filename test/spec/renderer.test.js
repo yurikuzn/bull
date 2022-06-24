@@ -16,7 +16,8 @@ describe("Renderer", function () {
 			}
 		});
 		
-		var html = renderer.render('doomy','test');		
+		var html = renderer.render('doomy','test');
+
 		expect(html).toBe('doomy:test');
 	});
 });
