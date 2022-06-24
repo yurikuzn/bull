@@ -139,7 +139,7 @@ var Bull = Bull || {};
          * Create a view.
          *
          * @param {string} viewName A view name/path.
-         * @param {Bull.ViewOptions} [options] Options.
+         * @param {Bull.View~Options} [options] Options.
          * @param {Function<Bull.View>} [callback] Invoked once the view is ready.
          */
         create: function (viewName, options, callback) {
