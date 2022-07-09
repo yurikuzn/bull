@@ -3,7 +3,7 @@
     /**
      * View options passed to a view on creation.
      *
-     * @typedef {Object} Bull.View~Options
+     * @typedef {Object.<string,*>} Bull.View~Options
      *
      * @property {string} [selector] - A DOM element selector relative to a parent view.
      * @property {string} [el] - A full DOM element selector.
