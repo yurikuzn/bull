@@ -1,4 +1,5 @@
 var Bull = Bull || {};
+window.Bull = Bull;
 
 (function (Bull, _) {
 
