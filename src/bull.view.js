@@ -813,6 +813,21 @@
         afterRender: function () {},
 
         /**
+         * Proceed when rendered.
+         *
+         * @return {Promise<void>}
+         */
+        whenRendered: function () {
+            if (this.isRendered()) {
+                return Promise.resolve();
+            }
+
+            return new Promise(resolve => {
+                this.once('after:render', () => resolve())
+            });
+        },
+
+        /**
          * @private
          */
         _tryReady: function () {
