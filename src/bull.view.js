@@ -490,8 +490,8 @@
 
             this.optionsToPass = this.options.optionsToPass || this.optionsToPass || [];
 
-            var merge = function (target, source) {
-                for (var prop in source) {
+            let merge = function (target, source) {
+                for (let prop in source) {
                     if (typeof target === 'object') {
                         if (prop in target) {
                             merge(target[prop], source[prop]);
@@ -530,9 +530,9 @@
                 this.setElementInAdvance(this.options.el);
             }
 
-            var _layout = this._getLayout();
+            let _layout = this._getLayout();
 
-            var loadNestedViews = () => {
+            let loadNestedViews = () => {
                 this._loadNestedViews(() => {
                     this._nestedViewsFromLayoutLoaded = true;
 
@@ -790,8 +790,8 @@
 
             this.trigger('after:render-internal', this);
 
-            for (var key in this.nestedViews) {
-                var nestedView = this.nestedViews[key];
+            for (let key in this.nestedViews) {
+                let nestedView = this.nestedViews[key];
 
                 if (!nestedView.notToRender) {
                     nestedView._afterRender();
@@ -843,7 +843,7 @@
                 return;
             }
 
-            for (var i = 0; i < this._waitViewList.length; i++) {
+            for (let i = 0; i < this._waitViewList.length; i++) {
                 if (!this.hasView(this._waitViewList[i])) {
                     return;
                 }
@@ -853,7 +853,7 @@
                 return;
             }
 
-            for (var i = 0; i < this._readyConditionList.length; i++) {
+            for (let i = 0; i < this._readyConditionList.length; i++) {
                 if (typeof this._readyConditionList[i] === 'function') {
                     if (!this._readyConditionList[i]()) {
                         return;
@@ -894,8 +894,8 @@
          * @private
          */
         _addDefinedNestedViewDefs: function (list) {
-            for (var name in this.views) {
-                var o = _.clone(this.views[name]);
+            for (let name in this.views) {
+                let o = _.clone(this.views[name]);
 
                 o.name = name;
 
@@ -911,17 +911,17 @@
          * @private
          */
         _getNestedViewsFromLayout: function () {
-            var nestedViewDefs = this._layouter
+            let nestedViewDefs = this._layouter
                 .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
 
             if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
                 throw new Error("Bad layout. It should be an Array.");
             }
 
-            var nestedViewDefsFiltered = [];
+            let nestedViewDefsFiltered = [];
 
-            for (var i in nestedViewDefs) {
-                var key = nestedViewDefs[i].name;
+            for (let i in nestedViewDefs) {
+                let key = nestedViewDefs[i].name;
 
                 this._nestedViewDefs[key] = nestedViewDefs[i];
 
@@ -941,7 +941,7 @@
          * @private
          */
         _loadNestedViews: function (callback) {
-            var nestedViewDefs = [];
+            let nestedViewDefs = [];
 
             if (this._layout != null) {
                 nestedViewDefs = this._getNestedViewsFromLayout();
@@ -949,10 +949,10 @@
 
             this._addDefinedNestedViewDefs(nestedViewDefs);
 
-            var count = nestedViewDefs.length;
-            var loaded = 0;
+            let count = nestedViewDefs.length;
+            let loaded = 0;
 
-            var tryReady = function () {
+            let tryReady = function () {
                 if (loaded === count) {
                     callback();
 
@@ -963,8 +963,8 @@
             tryReady();
 
             nestedViewDefs.forEach((def, i) => {
-                var key = nestedViewDefs[i].name;
-                var viewName = this._factory.defaultViewName;
+                let key = nestedViewDefs[i].name;
+                let viewName = this._factory.defaultViewName;
 
                 if ('view' in nestedViewDefs[i]) {
                     viewName = nestedViewDefs[i].view;
@@ -978,7 +978,7 @@
                     return;
                 }
 
-                var options = {};
+                let options = {};
 
                 if ('layout' in nestedViewDefs[i]) {
                     options.layout = nestedViewDefs[i].layout;
@@ -1004,8 +1004,8 @@
                     options.collection = this.collection;
                 }
 
-                for (var k in this.optionsToPass) {
-                    var name = this.optionsToPass[k];
+                for (let k in this.optionsToPass) {
+                    let name = this.optionsToPass[k];
 
                     options[name] = this.options[name];
                 }
@@ -1046,12 +1046,12 @@
         /**
          * @private
          */
-        _getNestedViewsAsArray: function (nestedViews) {
-            var nestedViewsArray = [];
+        _getNestedViewsAsArray: function () {
+            let nestedViewsArray = [];
 
-            var i = 0;
+            let i = 0;
 
-            for (var key in this.nestedViews) {
+            for (let key in this.nestedViews) {
                 nestedViewsArray.push({
                     key: key,
                     view: this.nestedViews[key]
@@ -1068,13 +1068,13 @@
          * @private
          */
         _getNestedViewsHtmlList: function (callback) {
-            var data = {};
-            var nestedViewsArray = this._getNestedViewsAsArray();
+            let data = {};
+            let nestedViewsArray = this._getNestedViewsAsArray();
 
-            var loaded = 0;
-            var count = nestedViewsArray.length;
+            let loaded = 0;
+            let count = nestedViewsArray.length;
 
-            var tryReady = () => {
+            let tryReady = () => {
                 if (loaded === count) {
                     callback(data);
 
@@ -1085,8 +1085,8 @@
             tryReady();
 
             nestedViewsArray.forEach((d, i) => {
-                var key = nestedViewsArray[i].key;
-                var view = nestedViewsArray[i].view;
+                let key = nestedViewsArray[i].key;
+                let view = nestedViewsArray[i].view;
 
                 if (!view.notToRender) {
                     view.getHtml((html) => {
@@ -1119,7 +1119,7 @@
             this.trigger('render', this);
 
             this._getNestedViewsHtmlList(nestedViewsHtmlList => {
-                var data = _.extend(this._getData() || {}, nestedViewsHtmlList);
+                let data = _.extend(this._getData() || {}, nestedViewsHtmlList);
 
                 if (this.collection || null) {
                     data.collection = this.collection;
@@ -1134,7 +1134,7 @@
                 this.handleDataBeforeRender(data);
 
                 this._getTemplate(template => {
-                    var html = this._renderer.render(template, data);
+                    let html = this._renderer.render(template, data);
 
                     callback(html);
                 });
@@ -1183,7 +1183,7 @@
                 return;
             }
 
-            var _template = this._template || null;
+            let _template = this._template || null;
 
             if (_template !== null) {
                 callback(_template);
@@ -1191,15 +1191,15 @@
                 return;
             }
 
-            var templateName = this._getTemplateName();
+            let templateName = this._getTemplateName();
 
-            var noCache = false;
-            var layoutOptions = {};
+            let noCache = false;
+            let layoutOptions = {};
 
             if (!templateName) {
                 noCache = this.noCache;
 
-                var layoutName = this._getLayoutName();
+                let layoutName = this._getLayoutName();
 
                 if (!layoutName) {
                     noCache = true;
@@ -1229,7 +1229,7 @@
         _updatePath: function (parentPath, viewKey) {
             this._path = parentPath + '/' + viewKey;
 
-            for (var key in this.nestedViews) {
+            for (let key in this.nestedViews) {
                 this.nestedViews[key]._updatePath(this._path, key);
             }
         },
@@ -1238,7 +1238,7 @@
          * @private
          */
         _getSelectorForNestedView: function (key) {
-            var el = false;
+            let el = false;
 
             if (key in this._nestedViewDefs) {
                 if ('id' in this._nestedViewDefs[key]) {
@@ -1249,14 +1249,14 @@
                         el = this._nestedViewDefs[key].el;
                     }
                     else if ('selector' in this._nestedViewDefs[key]) {
-                        var currentEl = this.getSelector();
+                        let currentEl = this.getSelector();
 
                         if (currentEl) {
                             el = currentEl + ' ' + this._nestedViewDefs[key].selector;
                         }
                     }
                     else {
-                        var currentEl = this.getSelector();
+                        let currentEl = this.getSelector();
 
                         if (currentEl) {
                             el = currentEl + ' [data-view="'+key+'"]';
@@ -1408,7 +1408,7 @@
 
             this._viewPromiseHash = this._viewPromiseHash || {};
 
-            var previousPromise = this._viewPromiseHash[key];
+            let previousPromise = this._viewPromiseHash[key];
 
             if (previousPromise) {
                 previousPromise._isToCancel = true;
@@ -1488,7 +1488,7 @@
             if (typeof wait === 'function') {
                 this._waitPromiseCount++;
 
-                var promise = new Promise(resolve => {
+                let promise = new Promise(resolve => {
                     resolve(wait.call(this));
                 });
 
@@ -1519,7 +1519,7 @@
         remove: function (dontEmpty) {
             this.cancelRender();
 
-            for (var key in this.nestedViews) {
+            for (let key in this.nestedViews) {
                 this.clearView(key);
             }
 
@@ -1569,12 +1569,12 @@
          */
         _setElement: function (el) {
             if (typeof el === 'string') {
-                var parentView = this.getParentView();
+                let parentView = this.getParentView();
 
                 if (parentView && parentView.isRendered()) {
                     if (parentView.$el && parentView.$el.length && parentView.getSelector()) {
                         if (el.indexOf(parentView.getSelector()) === 0) {
-                            var subEl = el.substr(parentView.getSelector().length, el.length - 1);
+                            let subEl = el.substr(parentView.getSelector().length, el.length - 1);
 
                             this.$el = $(subEl, parentView.$el).eq(0);
                             this.el = this.$el[0];
@@ -1598,8 +1598,8 @@
         propagateEvent: function () {
             this.trigger.apply(this, arguments);
 
-            for (var key in this.nestedViews) {
-                var view = this.nestedViews[key];
+            for (let key in this.nestedViews) {
+                let view = this.nestedViews[key];
 
                 view.propagateEvent.apply(view, arguments);
             }
