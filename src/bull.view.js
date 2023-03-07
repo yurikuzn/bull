@@ -1329,10 +1329,10 @@
                 }
 
                 this._factory.create(viewName, options, view => {
-                    let previusView = this.getView(key);
+                    let previousView = this.getView(key);
 
-                    if (previusView) {
-                        previusView.cancelRender();
+                    if (previousView) {
+                        previousView.cancelRender();
                     }
 
                     delete this._viewPromiseHash[key];
