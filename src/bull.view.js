@@ -3,22 +3,25 @@
     /**
      * View options passed to a view on creation.
      *
-     * @typedef {Object.<string,*>} Bull.View~Options
+     * @typedef {Object.<string, *>} Bull.View~Options
      *
-     * @property {string} [selector] - A DOM element selector relative to a parent view.
-     * @property {string} [el] - A full DOM element selector.
-     * @property {string[]} [optionsToPass] - Options to be automatically passed to child views
+     * @property {string} [selector] A DOM element selector relative to a parent view.
+     * @property {string} [el] A full DOM element selector.
+     * @property {string[]} [optionsToPass] Options to be automatically passed to child views
      *   of the created view.
-     * @property {(function:Object)|Object} [data] - Data that will be passed to a template or a function
+     * @property {(function: Object)|Object} [data] Data that will be passed to a template or a function
      *   that returns data.
-     * @property {string} [template] - A template name.
-     * @property {string} [templateContent] - Template content.
-     * @property {boolean} [notToRender] - Not to render on ready.
-     * @property {Object} [views] - Child view definitions.
-     * @property {string} [name] - A view name.
-     * @property {Backbone.Model} [model] - A model.
-     * @property {Backbone.Collection} [collection] - A collection.
-     * @property {Bull.View.DomEvents} [events] - DOM events.
+     * @property {string} [template] A template name.
+     * @property {string} [templateContent] Template content.
+     * @property {Object} [layoutDefs] Internal layout defs.
+     * @property {Object} [layoutData] Internal layout data.
+     * @property {boolean} [notToRender] Not to render on ready.
+     * @property {boolean} [noCache] Disable layout cache.
+     * @property {Object} [views] Child view definitions.
+     * @property {string} [name] A view name.
+     * @property {Backbone.Model} [model] A model.
+     * @property {Backbone.Collection} [collection] A collection.
+     * @property {Bull.View.DomEvents} [events] DOM events.
      * @property {boolean} [setViewBeforeCallback] A child view will be set to a parent before a promise is resolved.
      */
 
@@ -606,7 +609,7 @@
             this.layout = this.options.layout || this.layout;
 
             /** @private */
-            this._layout = this.options._layout || this._layout;
+            this._layout = this.options.layoutDefs || this.options._layout || this._layout;
             /**
              * @private
              * @type {Object|null}
