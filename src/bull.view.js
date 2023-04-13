@@ -598,12 +598,24 @@
             this.setupFinal();
 
             this.template = this.options.template || this.template;
+            /**
+             * @todo Revise.
+             * @type {string}
+             * @private
+             */
             this.layout = this.options.layout || this.layout;
 
             /** @private */
             this._layout = this.options._layout || this._layout;
+            /**
+             * @private
+             * @type {Object|null}
+             */
             this.layoutData = this.options.layoutData || this.layoutData;
-            /** @private */
+            /**
+             * @type {string|null}
+             * @private
+             */
             this._template = this.templateContent || this.options.templateContent || this._template;
 
             if (this._template != null && this._templator.compilable) {
