@@ -1338,6 +1338,10 @@
                     delete this._viewPromiseHash[key];
 
                     if (promise && promise._isToCancel) {
+                        if (!view.isRemoved()) {
+                            view.remove();
+                        }
+
                         return;
                     }
 
