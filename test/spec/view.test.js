@@ -4,11 +4,11 @@ describe("View", function () {
 	/**
 	 * @var {Bull.View}
 	 */
-	var view;
-	var templator;
-	var renderer;
-	var layouter;
-	var factory;
+	let view;
+	let templator;
+	let renderer;
+	let layouter;
+	let factory;
 
 	beforeEach(() => {
 		renderer = {
@@ -46,6 +46,33 @@ describe("View", function () {
 		});
 	});
 
+	it ('should assign view with child selector', () => {
+		view.setSelector('parent-selector');
+
+		let childView = new Bull.View();
+
+		view
+			.assignView('test', childView, 'child-selector')
+			.then(childView => {
+				expect(childView.getSelector()).toEqual('parent-selector child-selector');
+
+				expect(childView).toEqual(view.getView('test'));
+			});
+	});
+
+	it ('should assign view with selector pre-set', () => {
+		view.setSelector('parent-selector');
+
+		let childView = new Bull.View();
+		childView.setSelector('parent-selector child-selector');
+
+		view
+			.assignView('test', childView)
+			.then(childView => {
+				expect(childView.getSelector()).toEqual('parent-selector child-selector');
+			});
+	});
+
 	it ('should concat parent and relative selector', () => {
 		view.setSelector('parent-selector');
 
@@ -71,7 +98,7 @@ describe("View", function () {
 	});
 
 	it ('should trigger "remove" event on remove', () => {
-		var handler = jasmine.createSpy('handler');
+		let handler = jasmine.createSpy('handler');
 
 		view.on('remove', handler)
 		view.remove();
@@ -100,7 +127,7 @@ describe("View", function () {
 	it ('should call templator.getTemplate() with a proper template and layout names when render()', () => {
 		spyOn(templator, 'getTemplate');
 
-		var view = new Bull.View({
+		let view = new Bull.View({
 			template: 'SomeTemplate',
 			layout: 'SomeLayout',
 		});
@@ -125,7 +152,7 @@ describe("View", function () {
 			id: 'main',
 		}]);
 
-		var master = new Bull.View({
+		let master = new Bull.View({
 			layout: 'SomeLayout',
 			_layout: [],
 		});
@@ -137,7 +164,7 @@ describe("View", function () {
 			factory: factory,
 		});
 
-		var main = {
+		let main = {
 			setElementInAdvance: {},
 			setElement: function () {},
 			_updatePath: function () {},
@@ -181,7 +208,7 @@ describe("View", function () {
 			});
 		});
 
-		var view = new Bull.View({
+		let view = new Bull.View({
 			layout: 'SomeLayout',
 			_layout: [],
 		});
@@ -231,7 +258,7 @@ describe("View", function () {
 			});
 		});
 
-		var view = new Bull.View({
+		let view = new Bull.View({
 			layout: 'SomeLayout',
 		});
 
@@ -251,8 +278,8 @@ describe("View", function () {
 	});
 
 	it ('should set get and check nested view', () => {
-		var view = new Bull.View();
-		var subView = new Bull.View();
+		let view = new Bull.View();
+		let subView = new Bull.View();
 
 		view._initialize({});
 		subView._initialize({});
@@ -264,8 +291,8 @@ describe("View", function () {
 	});
 
 	it ('should set parent view when set view', () => {
-		var view = new Bull.View();
-		var subView = new Bull.View();
+		let view = new Bull.View();
+		let subView = new Bull.View();
 
 		view._initialize({});
 		subView._initialize({});
@@ -276,13 +303,13 @@ describe("View", function () {
 	});
 
 	it ('should clear nested view and trigger "remove" event', () => {
-		var view = new Bull.View();
-		var subView = new Bull.View();
+		let view = new Bull.View();
+		let subView = new Bull.View();
 
 		view._initialize({});
 		subView._initialize({});
 
-		var handler = jasmine.createSpy('handler');
+		let handler = jasmine.createSpy('handler');
 		subView.on('remove', handler);
 
 		view.setView('main', subView);
@@ -292,10 +319,10 @@ describe("View", function () {
 	});
 
 	it ('should set proper paths for nested views', () => {
-		var view = new Bull.View();
-		var subView = new Bull.View();
-		var subSubView1 = new Bull.View();
-		var subSubView2 = new Bull.View();
+		let view = new Bull.View();
+		let subView = new Bull.View();
+		let subSubView1 = new Bull.View();
+		let subSubView2 = new Bull.View();
 
 		view._initialize({});
 		subView._initialize({});

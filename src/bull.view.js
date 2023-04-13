@@ -143,22 +143,6 @@
      */
 
     /**
-     * Set a DOM element selector.
-     *
-     * @function setElement
-     * @memberof Bull.View
-     * @param {string} selector A full DOM selector.
-     */
-
-    /**
-     * Removes all view's delegated events. Useful if you want to disable
-     * or remove a view from the DOM temporarily.
-     *
-     * @function undelegateEvents
-     * @memberof Bull.View
-     */
-
-    /**
      * DOM event listeners.
      *
      * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
@@ -168,11 +152,30 @@
      * A view.
      *
      * @class Bull.View
-     * @extends Backbone.View
+     * @param {Object.<string, *>|null} [options]
      *
      * @mixes Backbone.Events
      */
-    Bull.View = Backbone.View.extend(/** @lends Bull.View.prototype */{
+    Bull.View = function (options) {
+        this.cid = _.uniqueId('view');
+        _.extend(this, _.pick(options, viewOptions));
+        this.$el = $();
+        this.options = options || {};
+    };
+
+    Bull.View.extend = Backbone.View.extend;
+
+    let viewOptions = [
+        'model',
+        'collection',
+        'el',
+        'id',
+        'events',
+    ];
+
+    let delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
+    _.extend(Bull.View.prototype, Backbone.Events, /** @lends Bull.View.prototype */{
 
         /**
          * A model.
@@ -434,14 +437,63 @@
         _isRenderCanceled: false,
 
         /**
-         * Invoked by the constructor. Should not be overridden.
+         * Set a DOM element selector.
          *
-         * @param {Object} options
-         * @private
-         * @internal
+         * @param {string} selector A full DOM selector.
          */
-        initialize: function (options) {
-            this.options = options || {};
+        setElement: function (selector) {
+            this.undelegateEvents();
+            this._setElement(selector);
+            this._delegateEvents();
+        },
+
+        /**
+         * Removes all view's delegated events. Useful if you want to disable
+         * or remove a view from the DOM temporarily.
+         */
+        undelegateEvents: function() {
+            if (!this.$el) {
+                return;
+            }
+
+            this.$el.off('.delegateEvents' + this.cid);
+        },
+
+        /**
+         * @private
+         */
+        _delegateEvents: function () {
+            let events = _.result(this, 'events');
+
+            if (!events) {
+                return;
+            }
+
+            this.undelegateEvents();
+
+            for (let key in events) {
+                let method = events[key];
+
+                if (!_.isFunction(method)) {
+                    /** @todo Revise. */
+                    method = this[method];
+                }
+
+                if (!method) {
+                    continue;
+                }
+
+                let match = key.match(delegateEventSplitter);
+
+                this._delegate(match[1], match[2], method.bind(this));
+            }
+        },
+
+        /**
+         * @private
+         */
+        _delegate: function (eventName, selector, listener) {
+            this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
         },
 
         /**
@@ -607,30 +659,30 @@
          * a template.
          *
          * @protected
-         * @returns {Object.<string,*>|{}}
+         * @returns {Object.<string, *>|{}}
          */
         data: function () {
             return {};
         },
 
         /**
-         * Initialize the view. Is run before #setup.
+         * Initialize the view. Is invoked before #setup.
          *
          * @protected
          */
         init: function () {},
 
         /**
-         * Setup the view. Is run after #init.
+         * Set up the view. Is invoked after #init.
          *
          * @protected
          */
         setup: function () {},
 
         /**
-         * Additional setup. Empty method by default. Is run after #setup.
-         * Useful to let developers override the setup method, w/o needing to call
-         * the parent method in right order.
+         * Additional setup. Is invoked after #setup.
+         * Useful to let developers override setup logic w/o needing to call
+         * a parent method in right order.
          *
          * @protected
          */
@@ -754,7 +806,7 @@
             this._isRendered = false;
             this._isFullyRendered = false;
 
-            return new Promise((resolve) => {
+            return new Promise(resolve => {
                 this._getHtml(html => {
                     if (this._isRenderCanceled) {
                         this._isRenderCanceled = false;
@@ -900,15 +952,6 @@
             }
 
             this._makeReady();
-        },
-
-        /**
-         * Run checking whether the view is ready.
-         *
-         * @protected
-         */
-        tryReady: function () {
-            this._tryReady();
         },
 
         /**
@@ -1302,17 +1345,13 @@
         },
 
         /**
-         * Whether has a nested view.
+         * Whether the view has a nested view.
          *
          * @param {string} key A view key.
          * @return {boolean}
          */
         hasView: function (key) {
-            if (key in this.nestedViews) {
-                return true;
-            }
-
-            return false;
+            return key in this.nestedViews;
         },
 
         /**
@@ -1325,6 +1364,44 @@
             if (key in this.nestedViews) {
                 return this.nestedViews[key];
             }
+        },
+
+        /**
+         * Assign an already instantiated nested view.
+         *
+         * @param {string} key A view key.
+         * @param {Bull.View} view A view.
+         * @param {string|null} [selector] A relative selector.
+         * @return {Promise<Bull.View>}
+         */
+        assignView: function (key, view, selector) {
+            this.clearView(key);
+
+            this._viewPromiseHash = this._viewPromiseHash || {};
+            let promise = null;
+
+            promise = this._viewPromiseHash[key] = new Promise(resolve => {
+                if (!this.isReady) {
+                    this.waitForView(key);
+                }
+
+                if (selector || !view.getSelector()) {
+                    selector = selector || `[data-view="${key}"]`;
+
+                    view.setSelector(this.getSelector() + ' ' + selector);
+                }
+
+                view._initialize({
+                    factory: this._factory,
+                    layouter: this._layouter,
+                    templator: this._templator,
+                    renderer: this._renderer,
+                    helper: this._helper,
+                    onReady: () => this._assignViewCallback(key, view, resolve, promise),
+                });
+            });
+
+            return promise;
         },
 
         /**
@@ -1358,47 +1435,74 @@
                 }
 
                 if (!options.el) {
-                    options.el = this.getSelector() + ' [data-view="'+key+'"]';
+                    options.el = this.getSelector() + ` [data-view="${key}"]`;
                 }
 
                 this._factory.create(viewName, options, view => {
-                    let previousView = this.getView(key);
-
-                    if (previousView) {
-                        previousView.cancelRender();
-                    }
-
-                    delete this._viewPromiseHash[key];
-
-                    if (promise && promise._isToCancel) {
-                        if (!view.isRemoved()) {
-                            view.remove();
-                        }
-
-                        return;
-                    }
-
-                    let isSet = false;
-
-                    if (this._isRendered || options.setViewBeforeCallback) {
-                        this.setView(key, view);
-
-                        isSet = true;
-                    }
-
-                    if (typeof callback === 'function') {
-                        callback.call(this, view);
-                    }
-
-                    resolve(view);
-
-                    if (!this._isRendered && !options.setViewBeforeCallback && !isSet) {
-                        this.setView(key, view);
-                    }
+                    this._assignViewCallback(
+                        key,
+                        view,
+                        resolve,
+                        promise,
+                        callback,
+                        options.setViewBeforeCallback
+                    );
                 });
             });
 
             return promise;
+        },
+
+        /**
+         * @param {string} key
+         * @param {Bull.View} view
+         * @param {function} resolve
+         * @param {Promise} promise
+         * @param {function} [callback]
+         * @param {boolean} [setViewBeforeCallback]
+         * @private
+         */
+        _assignViewCallback: function (
+            key,
+            view,
+            resolve,
+            promise,
+            callback,
+            setViewBeforeCallback
+        ) {
+            let previousView = this.getView(key);
+
+            if (previousView) {
+                previousView.cancelRender();
+            }
+
+            delete this._viewPromiseHash[key];
+
+            if (promise && promise._isToCancel) {
+                if (!view.isRemoved()) {
+                    view.remove();
+                }
+
+                return;
+            }
+
+            let isSet = false;
+
+            if (this._isRendered || setViewBeforeCallback) {
+                this.setView(key, view);
+
+                isSet = true;
+            }
+
+            if (typeof callback === 'function') {
+                callback.call(this, view);
+            }
+
+            resolve(view);
+
+            if (!this._isRendered && !setViewBeforeCallback && !isSet) {
+                this.setView(key, view);
+            }
         },
 
         /**
@@ -1597,28 +1701,24 @@
         /**
          * @private
          */
-        _ensureElement: function () {
-            this.$el = $();
-        },
-
-        /**
-         * @private
-         */
         _setElement: function (el) {
             if (typeof el === 'string') {
                 let parentView = this.getParentView();
 
-                if (parentView && parentView.isRendered()) {
-                    if (parentView.$el && parentView.$el.length && parentView.getSelector()) {
-                        if (el.indexOf(parentView.getSelector()) === 0) {
-                            let subEl = el.substr(parentView.getSelector().length, el.length - 1);
+                if (
+                    parentView &&
+                    parentView.isRendered() &&
+                    parentView.$el &&
+                    parentView.$el.length &&
+                    parentView.getSelector() &&
+                    el.indexOf(parentView.getSelector()) === 0
+                ) {
+                    let subEl = el.substr(parentView.getSelector().length, el.length - 1);
 
-                            this.$el = $(subEl, parentView.$el).eq(0);
-                            this.el = this.$el[0];
+                    this.$el = $(subEl, parentView.$el).eq(0);
+                    this.el = this.$el[0];
 
-                            return;
-                        }
-                    }
+                    return;
                 }
             }
 
