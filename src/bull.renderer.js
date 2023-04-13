@@ -1,7 +1,11 @@
 (function (Bull, _) {
 
+    /**
+     * @class Bull.Renderer
+     */
     Bull.Renderer = function (options) {
-        var options = options || {};
+        options = options || {};
+
         this._render = options.method || this._render;
     };
 

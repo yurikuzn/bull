@@ -1,18 +1,27 @@
 (function (Bull, _) {
 
+    /**
+     * @class Bull.Layouter
+     * @param {{
+     *   loader: Bull.Loader,
+     * }|null} data
+     */
     Bull.Layouter = function (data) {
-        var data = data || {};
-        this._layouts = {};
+        data = data || {};
+
+        /**
+         * @type {Bull.Loader|null}
+         * @private
+         */
         this._loader = data.loader || null;
+
+        this._layouts = {};
         this._cachedNestedViews = {};
     };
 
-    _.extend(Bull.Layouter.prototype, {
+    _.extend(Bull.Layouter.prototype, /** @lends Bull.Layouter.prototype */{
 
         _layouts: null,
-
-        _loader: null,
-
         _cachedNestedViews: null,
 
         addLayout: function (layoutName, layout) {
@@ -26,15 +35,11 @@
                 return;
             }
 
-            //if (!layout) {
-                this._loader.load('layout', layoutName, layout => {
-                    this.addLayout(layoutName, layout);
+            this._loader.load('layout', layoutName, layout => {
+                this.addLayout(layoutName, layout);
 
-                    callback(layout);
-                });
-
-                return;
-            //}
+                callback(layout);
+            });
         },
 
         _getCachedNestedViews: function (layoutName) {
@@ -57,7 +62,7 @@
             }
 
             if (layoutName && !noCache) {
-                var cached = this._getCachedNestedViews(layoutName);
+                let cached = this._getCachedNestedViews(layoutName);
 
                 if (cached) {
                     return cached;
@@ -74,19 +79,19 @@
                 }
             }
 
-            var layout = layoutDefs.layout;
-            var viewPathList = [];
+            let layout = layoutDefs.layout;
+            let viewPathList = [];
 
-            var uniqName = (name, count) => {
-                var modName = name;
+            let uniqName = (name, count) => {
+                let modName = name;
 
                 if (typeof count !== 'undefined') {
                     modName = modName + '_' + count;
                 } else {
-                    var count = 0;
+                    count = 0;
                 }
 
-                for (var i in viewPathList) {
+                for (let i in viewPathList) {
                     if (viewPathList[i].name === modName) {
                         return uniqName(name, count + 1);
                     }
@@ -95,13 +100,13 @@
                 return modName;
             };
 
-            var getDefsForNestedView = (defsInLayout) => {
-                var defs = {};
+            let getDefsForNestedView = (defsInLayout) => {
+                let defs = {};
 
-                var params = ['view', 'layout', 'notToRender', 'options', 'template', 'id', 'selector', 'el'];
+                let params = ['view', 'layout', 'notToRender', 'options', 'template', 'id', 'selector', 'el'];
 
-                for (var i in params) {
-                    var param = params[i];
+                for (let i in params) {
+                    let param = params[i];
 
                     if (param in defsInLayout) {
                         defs[param] = defsInLayout[param];
@@ -115,11 +120,11 @@
                 return defs;
             };
 
-            var seekForViews = (tree) => {
-                for (var key in tree) {
+            let seekForViews = (tree) => {
+                for (let key in tree) {
                     if (tree[key] !== null && typeof tree[key] === 'object') {
                         if ('view' in tree[key] || 'layout' in tree[key] || 'template' in tree[key]) {
-                            var def = getDefsForNestedView(tree[key]);
+                            let def = getDefsForNestedView(tree[key]);
 
                             if ('name' in def) {
                                 viewPathList.push(def);

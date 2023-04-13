@@ -36,14 +36,14 @@ describe("View", function () {
 			}
 		};
 
-		view = new Bull.View({
-			_renderer: renderer,
-			_templator: templator,
-			_layouter: layouter,
-			_factory: factory,
-		});
+		view = new Bull.View();
 
-		view._initialize();
+		view._initialize({
+			renderer: renderer,
+			templator: templator,
+			layouter: layouter,
+			factory: factory,
+		});
 	});
 
 	it ('should concat parent and relative selector', () => {
@@ -101,15 +101,16 @@ describe("View", function () {
 		spyOn(templator, 'getTemplate');
 
 		var view = new Bull.View({
-			_renderer: renderer,
-			_templator: templator,
-			_layouter: layouter,
-			_factory: factory,
 			template: 'SomeTemplate',
 			layout: 'SomeLayout',
 		});
 
-		view._initialize();
+		view._initialize({
+			renderer: renderer,
+			templator: templator,
+			layouter: layouter,
+			factory: factory,
+		});
 
 		view.render();
 
@@ -125,15 +126,16 @@ describe("View", function () {
 		}]);
 
 		var master = new Bull.View({
-			_renderer: renderer,
-			_templator: templator,
-			_layouter: layouter,
-			_factory: factory,
 			layout: 'SomeLayout',
 			_layout: [],
 		});
 
-		master._initialize();
+		master._initialize({
+			renderer: renderer,
+			templator: templator,
+			layouter: layouter,
+			factory: factory,
+		});
 
 		var main = {
 			setElementInAdvance: {},
@@ -180,15 +182,16 @@ describe("View", function () {
 		});
 
 		var view = new Bull.View({
-			_renderer: renderer,
-			_templator: templator,
-			_layouter: layouter,
-			_factory: factory,
 			layout: 'SomeLayout',
 			_layout: [],
 		});
 
-		view._initialize();
+		view._initialize({
+			renderer: renderer,
+			templator: templator,
+			layouter: layouter,
+			factory: factory,
+		});
 
 		expect(factory.create.calls.first().args[1]).toEqual({
 			layout: 'header',
@@ -229,14 +232,15 @@ describe("View", function () {
 		});
 
 		var view = new Bull.View({
-			_renderer: renderer,
-			_templator: templator,
-			_layouter: layouter,
-			_factory: factory,
 			layout: 'SomeLayout',
 		});
 
-		view._initialize();
+		view._initialize({
+			renderer: renderer,
+			templator: templator,
+			layouter: layouter,
+			factory: factory,
+		});
 
 		spyOn(renderer, 'render');
 		view.render();
@@ -250,8 +254,8 @@ describe("View", function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
 
-		view._initialize();
-		subView._initialize();
+		view._initialize({});
+		subView._initialize({});
 
 		view.setView('main', subView);
 
@@ -263,8 +267,8 @@ describe("View", function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
 
-		view._initialize();
-		subView._initialize();
+		view._initialize({});
+		subView._initialize({});
 
 		view.setView('main', subView);
 
@@ -275,8 +279,8 @@ describe("View", function () {
 		var view = new Bull.View();
 		var subView = new Bull.View();
 
-		view._initialize();
-		subView._initialize();
+		view._initialize({});
+		subView._initialize({});
 
 		var handler = jasmine.createSpy('handler');
 		subView.on('remove', handler);
@@ -293,10 +297,10 @@ describe("View", function () {
 		var subSubView1 = new Bull.View();
 		var subSubView2 = new Bull.View();
 
-		view._initialize();
-		subView._initialize();
-		subSubView2._initialize();
-		subSubView2._initialize();
+		view._initialize({});
+		subView._initialize({});
+		subSubView2._initialize({});
+		subSubView2._initialize({});
 
 		view.setView('main', subView);
 		subView.setView('some1', subSubView1);
@@ -308,7 +312,7 @@ describe("View", function () {
 
 		view = new Bull.View();
 
-		view._initialize();
+		view._initialize({});
 
 		view._path = 'master';
 

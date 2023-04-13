@@ -449,19 +449,52 @@
          * Not called from the constructor to be able to use ES6 classes with property initializers,
          * as overridden properties not available in a constructor.
          *
+         * @param {{
+         *   factory: Bull.Factory,
+         *   renderer: Bull.Renderer,
+         *   templator: Bull.Templator,
+         *   layouter: Bull.Layouter,
+         *   helper: Object,
+         *   onReady: function(): void,
+         * }} data
          * @internal
          */
-        _initialize: function () {
-            /** @private */
-            this._factory = this.factory = this.options._factory || null;
-            /** @private */
-            this._renderer = this.options._renderer || null;
-            /** @private */
-            this._templator = this.options._templator || null;
-            /** @private */
-            this._layouter = this.options._layouter || null;
-            /** @private */
-            this._helper = this.options._helper || null;
+        _initialize: function (data) {
+            /**
+             * @type {Bull.Factory}
+             * @private
+             */
+            this._factory = this.factory = data.factory;
+
+            /**
+             * @type {Bull.Renderer}
+             * @private
+             */
+            this._renderer = data.renderer;
+
+            /**
+             * @type {Bull.Templator}
+             * @private
+             */
+            this._templator = data.templator;
+
+            /**
+             * @type {Bull.Layouter}
+             * @private
+             */
+            this._layouter = data.layouter;
+
+            /**
+             * @type {(function(): void)|null}
+             * @private
+             */
+            this._onReady = data.onReady || null;
+
+            /**
+             * @type {Object|null}
+             * @private
+             */
+            this._helper = data.helper || null;
 
             if ('noCache' in this.options) {
                 this.noCache = this.options.noCache;
@@ -885,8 +918,8 @@
             this.isReady = true;
             this.trigger('ready');
 
-            if (typeof this.options._onReady === 'function') {
-                this.options._onReady(this);
+            if (typeof this._onReady === 'function') {
+                this._onReady(this);
             }
         },
 

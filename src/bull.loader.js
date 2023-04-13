@@ -1,7 +1,12 @@
 (function (Bull, _) {
 
+    /**
+     * @class Bull.Loader
+     * @param options
+     */
     Bull.Loader = function (options) {
-        var options = options || {};
+        options = options || {};
+
         this._paths = _.extend(this._paths, options.paths || {});
         this._exts = _.extend(this._exts, options.exts || {});
         this._normalize = _.extend(this._normalize, options.normalize || {});
@@ -12,7 +17,7 @@
         this._externalPathFunction = options.path || null;
     };
 
-    _.extend(Bull.Loader.prototype, {
+    _.extend(Bull.Loader.prototype, /** @lends Bull.Loader.prototype */{
 
         _exts: {
             layout: 'json',
@@ -55,12 +60,13 @@
                 throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
             }
 
-            var namePart = name;
+            let namePart = name;
+
             if (type in this._normalize) {
                 namePart = this._normalize[type](name);
             }
 
-            var pathPart = this._paths[type];
+            let pathPart = this._paths[type];
 
             if (pathPart.substr(-1) === '/') {
                 pathPart = pathPart.substr(0, pathPart.length - 1);
@@ -84,13 +90,13 @@
         },
 
         load: function (type, name, callback) {
-            var customCalled = this._callExternalLoader(type, name, callback);
+            let customCalled = this._callExternalLoader(type, name, callback);
 
             if (customCalled) {
                 return;
             }
 
-            var response, filePath;
+            let response, filePath;
 
             if (this._externalPathFunction != null) {
                 filePath = this._externalPathFunction.call(this, type, name);
@@ -100,7 +106,7 @@
 
             filePath += '?_=' + new Date().getTime();
 
-            var xhr = new XMLHttpRequest();
+            let xhr = new XMLHttpRequest();
 
             xhr.open('GET', filePath, true);
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -111,7 +117,7 @@
 
                     if (type in this._isJson) {
                         if (this._isJson[type]) {
-                            var obj;
+                            let obj;
 
                             if (xhr.status == 404 || xhr.status == 403) {
                                 throw new Error("Could not load " + type + " \"" + name + "\".");

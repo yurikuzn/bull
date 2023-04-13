@@ -6,15 +6,33 @@ window.Bull = Bull;
     var root = this;
 
     /**
+     * @callback viewLoader
+     * @param {string} viewName,
+     * @param {function(): void} callback
+     */
+
+    /**
      * A view factory.
      *
      * @class Bull.Factory
-     * @param {Object} options Configuration options.
+     * @param {{
+     *   defaultViewName?: string,
+     *   customLoader?: Object,
+     *   customRenderer?: Object,
+     *   customLayouter?: Object,
+     *   customTemplator?: Object,
+     *   helper?: Object,
+     *   viewLoader?: viewLoader,
+     *   resources: Object.<string, *>,
+     *   rendering: Object.<string, *>,
+     *   layouting: Object.<string, *>,
+     *   templating: Object.<string, *>,
+     * }|null} options Configuration options.
      * <ul>
      *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
      *  <li>viewLoader: {Function} Function that loads view class ({Function} in javascript)
      *  by the given view name and callback function as parameters. Here you can load js code using sync XHR request.
-     *  If not defined it will lookup classes in window object.</li>
+     *  If not defined it will look up classes in window object.</li>
      *  <li>helper: {Object} View Helper that will be injected into all views.</li>
      *  <li>resources: {Object} Resources loading options: paths, exts, loaders. Example: <br>
      *    <i>{
@@ -49,13 +67,15 @@ window.Bull = Bull;
 
         this._loader = options.customLoader || new Bull.Loader(options.resources || {});
         this._renderer = options.customRenderer || new Bull.Renderer(options.rendering || {});
-        this._layouter = options.customLayouter || new Bull.Layouter(_.extend(options.layouting || {}, {
-            loader: this._loader,
-        }));
-        this._templator = options.customTemplator || new Bull.Templator(_.extend(options.templating || {}, {
-            loader: this._loader,
-            layouter: this._layouter,
-        }));
+        this._layouter = options.customLayouter ||
+            new Bull.Layouter(_.extend(options.layouting || {}, {
+                loader: this._loader,
+            }));
+        this._templator = options.customTemplator ||
+            new Bull.Templator(_.extend(options.templating || {}, {
+                loader: this._loader,
+                layouter: this._layouter,
+            }));
 
         this._helper = options.helper || null;
 
@@ -110,7 +130,7 @@ window.Bull = Bull;
          * @private
          */
         _getViewClassFunction: function (viewName, callback) {
-            var viewClass = root[viewName];
+            let viewClass = root[viewName];
 
             if (typeof viewClass !== "function") {
                 throw new Error("function \"" + viewClass + "\" not found.");
@@ -149,18 +169,16 @@ window.Bull = Bull;
                     throw new Error(`A view class '${viewName}' not found.`);
                 }
 
-                options = _.extend(options || {}, {
-                    _factory: this,
-                    _layouter: this._layouter,
-                    _templator: this._templator,
-                    _renderer: this._renderer,
-                    _helper: this._helper,
-                    _onReady: callback,
+                let view = new viewClass(options || {});
+
+                view._initialize({
+                    factory: this,
+                    layouter: this._layouter,
+                    templator: this._templator,
+                    renderer: this._renderer,
+                    helper: this._helper,
+                    onReady: callback,
                 });
-
-                let view = new viewClass(options);
-
-                view._initialize();
             });
         },
     });
