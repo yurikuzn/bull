@@ -375,8 +375,6 @@ describe("View", function () {
 			test3: 3,
 		});
 
-		View1.extend()
-
 		let view1 = new View1({test1: 1});
 
 		expect(view1.options.test1).toBe(1);
@@ -458,5 +456,6 @@ describe("View", function () {
 
 		expect(view4.test6).toBe(-6);
 		expect(view4.test7).toBe(7);
+		expect(view4.test4).toBe(4);
 	});
 });
