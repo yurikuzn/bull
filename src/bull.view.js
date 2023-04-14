@@ -166,7 +166,55 @@
         this.options = options || {};
     };
 
-    Bull.View.extend = Backbone.View.extend;
+    const isEsClass = fn => {
+        return typeof fn === 'function' &&
+            Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable === false;
+    };
+
+    Bull.View.extend = function (protoProps, staticProps) {
+        let parent = this;
+
+        let child;
+
+        if (isEsClass(parent)) {
+            let TemporaryHelperConstructor = function () {};
+
+            child = function () {
+                if (new.target) {
+                    return Reflect.construct(parent, arguments, new.target);
+                }
+
+                return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
+            };
+
+            _.extend(child, parent, staticProps);
+
+            child.prototype = _.create(parent.prototype, protoProps);
+            child.prototype.constructor = child;
+            child.__super__ = parent.prototype;
+            child.prototype.__isEs = true;
+
+            TemporaryHelperConstructor.prototype = child.prototype;
+
+            return child;
+        }
+
+        child = function () {
+            if (parent.prototype.__isEs) {
+                return Reflect.construct(parent, arguments, new.target);
+            }
+
+            return parent.apply(this, arguments);
+        };
+
+        _.extend(child, parent, staticProps);
+
+        child.prototype = _.create(parent.prototype, protoProps);
+        child.prototype.constructor = child;
+        child.__super__ = parent.prototype;
+
+        return child;
+    };
 
     let viewOptions = [
         'model',
@@ -179,6 +227,16 @@
     let delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
     _.extend(Bull.View.prototype, Backbone.Events, /** @lends Bull.View.prototype */{
+
+        /**
+         * Extend the class.
+         *
+         * @name extend
+         * @param {Object.<string, *>} proto Child prototype.
+         * @return this
+         * @static
+         * @memberof Bull.View
+         */
 
         /**
          * A model.

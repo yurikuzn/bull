@@ -51,7 +51,7 @@ describe("View", function () {
 
 		let childView = new Bull.View();
 
-		view
+		return view
 			.assignView('test', childView, 'child-selector')
 			.then(childView => {
 				expect(childView.getSelector()).toEqual('parent-selector child-selector');
@@ -66,7 +66,7 @@ describe("View", function () {
 		let childView = new Bull.View();
 		childView.setSelector('parent-selector child-selector');
 
-		view
+		return view
 			.assignView('test', childView)
 			.then(childView => {
 				expect(childView.getSelector()).toEqual('parent-selector child-selector');
@@ -76,7 +76,7 @@ describe("View", function () {
 	it ('should concat parent and relative selector', () => {
 		view.setSelector('parent-selector');
 
-		view
+		return view
 			.createView('test', 'test/view', {
 				selector: 'child-selector',
 			})
@@ -343,8 +343,120 @@ describe("View", function () {
 
 		view._path = 'master';
 
-		view.setView('metan', subView);
-		expect(subSubView1._path).toBe('master/metan/some1');
-		expect(subSubView2._path).toBe('master/metan/some2');
+		view.setView('methane', subView);
+		expect(subSubView1._path).toBe('master/methane/some1');
+		expect(subSubView2._path).toBe('master/methane/some2');
+	});
+
+	it ('should be extendable using native classes', () => {
+		let View = class extends Bull.View {
+			test3 = 3;
+
+			constructor(options) {
+				options.test2 = 2;
+
+				super(options);
+
+				this.test4 = 4;
+			}
+		};
+
+		let view = new View({test1: 1});
+
+		expect(view.options.test1).toBe(1);
+		expect(view.options.test2).toBe(2);
+		expect(view.test3).toBe(3);
+		expect(view.test4).toBe(4);
+	});
+
+	it ('should be extendable using legacy extend', () => {
+		let View1 = Bull.View.extend({
+			test2: 2,
+			test3: 3,
+		});
+
+		View1.extend()
+
+		let view1 = new View1({test1: 1});
+
+		expect(view1.options.test1).toBe(1);
+		expect(view1.test2).toBe(2);
+
+		let View2 = View1.extend({
+			test3: -3,
+			test4: 4,
+		});
+
+		let view2 = new View2({test1: -1});
+
+		expect(view2.options.test1).toBe(-1);
+		expect(view2.test2).toBe(2);
+		expect(view2.test3).toBe(-3);
+		expect(view2.test4).toBe(4);
+	});
+
+	it ('should be extendable using both legacy and native classes', () => {
+		let View1 = class extends Bull.View {
+			test3 = 3;
+
+			constructor(options) {
+				options.test2 = 2;
+
+				super(options);
+
+				this.test4 = 4;
+			}
+
+			hello1() {
+				return 1;
+			}
+		}
+
+		let View2 = View1.extend({
+			test5: 5,
+
+			hello2: function () {
+				return 2;
+			},
+		});
+
+		let view = new View2({test1: 1});
+
+		expect(view.options.test1).toBe(1);
+		expect(view.options.test2).toBe(2);
+		expect(view.test3).toBe(3);
+		expect(view.test4).toBe(4);
+		expect(view.test5).toBe(5);
+		expect(view.hello1()).toBe(1);
+		expect(view.hello2()).toBe(2);
+
+		let View3 = View2.extend({
+			test6: 6,
+
+			hello3: function () {
+				return 3;
+			},
+		});
+
+		let view3 = new View3({test1: -1});
+
+		expect(view3.options.test1).toBe(-1);
+		expect(view3.options.test2).toBe(2);
+		expect(view3.hello1()).toBe(1);
+		expect(view3.hello2()).toBe(2);
+		expect(view3.test4).toBe(4);
+		expect(view3.test5).toBe(5);
+		expect(view3.test6).toBe(6);
+		expect(view3.hello3()).toBe(3);
+
+		let View4 = View3.extend({
+			test6: -6,
+			test7: 7,
+		});
+
+		let view4 = new View4({});
+
+		expect(view4.test6).toBe(-6);
+		expect(view4.test7).toBe(7);
 	});
 });
