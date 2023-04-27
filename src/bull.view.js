@@ -162,6 +162,7 @@
     Bull.View = function (options) {
         this.cid = _.uniqueId('view');
         _.extend(this, _.pick(options, viewOptions));
+        /** @type {JQuery} */
         this.$el = $();
         this.options = options || {};
     };
@@ -261,6 +262,24 @@
          *
          * @name cid
          * @type {string}
+         * @public
+         * @memberof Bull.View.prototype
+         */
+
+        /**
+         * A DOM element.
+         *
+         * @name $el
+         * @type {JQuery}
+         * @public
+         * @memberof Bull.View.prototype
+         */
+
+        /**
+         * A DOM element.
+         *
+         * @name el
+         * @type {Element|null}
          * @public
          * @memberof Bull.View.prototype
          */
@@ -1440,7 +1459,7 @@
         },
 
         /**
-         * Assign an already instantiated nested view.
+         * Assign a view instance as nested.
          *
          * @param {string} key A view key.
          * @param {Bull.View} view A view.
