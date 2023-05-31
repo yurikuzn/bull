@@ -27,6 +27,7 @@ window.Bull = Bull;
      *   rendering: Object.<string, *>,
      *   layouting: Object.<string, *>,
      *   templating: Object.<string, *>,
+     *   preCompiledTemplates: Object,
      * }|null} options Configuration options.
      * <ul>
      *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
@@ -82,6 +83,7 @@ window.Bull = Bull;
         this._viewClassHash = {};
         this._getViewClassFunction = options.viewLoader || this._getViewClassFunction;
         this._viewLoader = this._getViewClassFunction;
+        this._preCompiledTemplates = options.preCompiledTemplates;
     };
 
     _.extend(Bull.Factory.prototype, /** @lends Bull.Factory.prototype */ {
@@ -177,6 +179,7 @@ window.Bull = Bull;
                     templator: this._templator,
                     renderer: this._renderer,
                     helper: this._helper,
+                    preCompiledTemplates: this._preCompiledTemplates,
                     onReady: callback,
                 });
             });

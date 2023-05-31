@@ -517,6 +517,11 @@
         _isRenderCanceled: false,
 
         /**
+         * @private
+         */
+        _preCompiledTemplates: null,
+
+        /**
          * Set a DOM element selector.
          *
          * @param {string} selector A full DOM selector.
@@ -588,6 +593,7 @@
          *   layouter: Bull.Layouter,
          *   helper: Object,
          *   onReady: function(): void,
+         *   preCompiledTemplates?: Object,
          * }} data
          * @internal
          */
@@ -627,6 +633,12 @@
              * @private
              */
             this._helper = data.helper || null;
+
+            /**
+             * @type {Object}
+             * @private
+             */
+            this._preCompiledTemplates = data.preCompiledTemplates || {};
 
             if ('noCache' in this.options) {
                 this.noCache = this.options.noCache;
@@ -1345,7 +1357,11 @@
          * @private
          */
         _getTemplate: function (callback) {
-            if (this._templator.compilable && this._templateCompiled !== null) {
+            if (
+                this._templator &&
+                this._templator.compilable &&
+                this._templateCompiled !== null
+            ) {
                 callback(this._templateCompiled);
 
                 return;
@@ -1360,6 +1376,15 @@
             }
 
             let templateName = this._getTemplateName();
+
+            if (
+                templateName &&
+                templateName in (this._preCompiledTemplates || {})
+            ) {
+                callback(this._preCompiledTemplates[templateName]);
+
+                return;
+            }
 
             let noCache = false;
             let layoutOptions = {};

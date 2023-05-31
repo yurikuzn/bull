@@ -12,7 +12,9 @@ describe("View", function () {
 
 	beforeEach(() => {
 		renderer = {
-			render: function (template) {}
+			render: function (template, data) {
+				return template(data, {allowProtoPropertiesByDefault: true});
+			}
 		};
 
 		templator = {
@@ -457,5 +459,36 @@ describe("View", function () {
 		expect(view4.test6).toBe(-6);
 		expect(view4.test7).toBe(7);
 		expect(view4.test4).toBe(4);
+	});
+
+	it ('should use pre-compiled template', () => {
+		let View = class extends Bull.View {
+			template = 'test/template';
+
+			data = function () {
+				return {
+					test: 'hello'
+				};
+			};
+		}
+
+		let view = new View({});
+
+		view._initialize({
+			renderer: renderer,
+			preCompiledTemplates: {
+				'test/template': Handlebars.compile(
+					'{{test}} test'
+				),
+			},
+		});
+
+		return new Promise(resolve => {
+			view.getHtml(html => {
+				expect(html).toBe('hello test');
+
+				resolve();
+			});
+		});
 	});
 });
