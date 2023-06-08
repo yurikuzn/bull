@@ -398,6 +398,7 @@ describe("View", function () {
 	it ('should be extendable using both legacy and native classes', () => {
 		let View1 = class extends Bull.View {
 			test3 = 3;
+			testE = 'B';
 
 			constructor(options) {
 				options.test2 = 2;
@@ -410,14 +411,27 @@ describe("View", function () {
 			hello1() {
 				return 1;
 			}
+
+			helloE() {
+				return 'B';
+			}
+
+			getTestE() {
+				return this.testE;
+			}
 		}
 
 		let View2 = View1.extend({
 			test5: 5,
+			testE: 'E',
 
 			hello2: function () {
 				return 2;
 			},
+
+			helloE() {
+				return 'E';
+			}
 		});
 
 		let view = new View2({test1: 1});
@@ -427,8 +441,11 @@ describe("View", function () {
 		expect(view.test3).toBe(3);
 		expect(view.test4).toBe(4);
 		expect(view.test5).toBe(5);
+		expect(view.testE).toBe('E');
 		expect(view.hello1()).toBe(1);
 		expect(view.hello2()).toBe(2);
+		expect(view.helloE()).toBe('E');
+		expect(view.getTestE()).toBe('E');
 
 		let View3 = View2.extend({
 			test6: 6,
@@ -459,6 +476,54 @@ describe("View", function () {
 		expect(view4.test6).toBe(-6);
 		expect(view4.test7).toBe(7);
 		expect(view4.test4).toBe(4);
+	});
+
+	it ('extend should work on native classes', () => {
+		class Test {
+			test1 = 1;
+			testE = 'B';
+
+			constructor() {
+				this.test2 = 2;
+			}
+
+			hello1() {
+				return 1;
+			}
+
+			helloE() {
+				return 'B';
+			}
+
+			getTestE() {
+				return this.testE;
+			}
+		}
+
+		Test.extend = Bull.View.extend;
+
+		const T1 = Test.extend({
+			test3: 3,
+			testE: 'E',
+
+			hello2: function () {
+				return 2;
+			},
+
+			helloE() {
+				return 'E';
+			}
+		});
+
+		let t1 = new T1();
+
+		expect(t1.test1).toBe(1);
+		expect(t1.test2).toBe(2);
+		expect(t1.test3).toBe(3);
+		expect(t1.testE).toBe('E');
+		expect(t1.hello2()).toBe(2);
+		expect(t1.helloE()).toBe('E');
+		expect(t1.getTestE()).toBe('E');
 	});
 
 	it ('should use pre-compiled template', () => {

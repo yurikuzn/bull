@@ -182,7 +182,15 @@
 
             child = function () {
                 if (new.target) {
-                    return Reflect.construct(parent, arguments, new.target);
+                    let obj = Reflect.construct(parent, arguments, new.target);
+
+                    for (let prop of Object.getOwnPropertyNames(obj)) {
+                        if (typeof this[prop] !== 'undefined') {
+                            obj[prop] = this[prop];
+                        }
+                    }
+
+                    return obj;
                 }
 
                 return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
