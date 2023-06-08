@@ -19,10 +19,26 @@
      * @property {boolean} [noCache] Disable layout cache.
      * @property {Object} [views] Child view definitions.
      * @property {string} [name] A view name.
-     * @property {Backbone.Model} [model] A model.
-     * @property {Backbone.Collection} [collection] A collection.
+     * @property {Bull.Model} [model] A model.
+     * @property {Bull.Collection} [collection] A collection.
      * @property {Bull.View.DomEvents} [events] DOM events.
      * @property {boolean} [setViewBeforeCallback] A child view will be set to a parent before a promise is resolved.
+     */
+
+    /**
+     * A model.
+     *
+     * @typedef {Object} Bull~Model
+     * @type Object
+     * @mixes Backbone.Events
+     */
+
+    /**
+     * A collection.
+     *
+     * @typedef {Object} Bull~Collection
+     * @type Object
+     * @mixes Backbone.Events
      */
 
     /**
@@ -251,7 +267,7 @@
          * A model.
          *
          * @name model
-         * @type {Backbone.Model|null}
+         * @type {Bull.Model|null}
          * @public
          * @memberof Bull.View.prototype
          */
@@ -260,7 +276,7 @@
          * A collection.
          *
          * @name collection
-         * @type {Backbone.Collection|null}
+         * @type {Bull.Collection|null}
          * @public
          * @memberof Bull.View.prototype
          */
