@@ -6,6 +6,7 @@ module.exports = (grunt) => {
 			dist: {
 				src: [
 					'src/bull.factory.js',
+					'src/bull.events.js',
 					'src/bull.view.js',
 					'src/bull.loader.js',
 					'src/bull.templator.js',

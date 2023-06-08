@@ -556,4 +556,90 @@ describe("View", function () {
 			});
 		});
 	});
+
+	it ('should support events 1', () => {
+		let view1 = new Bull.View();
+		let view2 = new Bull.View();
+
+		return new Promise((resolve, reject) => {
+			view1.listenTo(view2, 'test1', () => {
+				expect(true).toBe(true);
+
+				resolve();
+			});
+
+			view1.listenTo(view2, 'test2', () => {
+				reject();
+			});
+
+			view1.stopListening(view2, 'test2');
+
+			view2.trigger('test2');
+			view2.trigger('test1');
+		})
+	});
+
+	it ('should support events 2', () => {
+		let view1 = new Bull.View();
+
+		return new Promise((resolve, reject) => {
+			view1.on('test1', () => {
+				expect(true).toBe(true);
+
+				resolve();
+			});
+
+			view1.on('test2', () => {
+				reject();
+			});
+
+			view1.off('test2');
+
+			view1.trigger('test2');
+			view1.trigger('test1');
+		})
+	});
+
+	it ('should support events 3', () => {
+		let view1 = new Bull.View();
+		let view2 = new Bull.View();
+
+		return new Promise((resolve, reject) => {
+			view1.listenToOnce(view2, 'test1', () => {
+				expect(true).toBe(true);
+
+				resolve();
+			});
+
+			view1.listenToOnce(view2, 'test2', () => {
+				reject();
+			});
+
+			view1.stopListening(view2, 'test2');
+
+			view2.trigger('test2');
+			view2.trigger('test1');
+		})
+	});
+
+	it ('should support events 4', () => {
+		let view1 = new Bull.View();
+
+		return new Promise((resolve, reject) => {
+			view1.once('test1', () => {
+				expect(true).toBe(true);
+
+				resolve();
+			});
+
+			view1.once('test2', () => {
+				reject();
+			});
+
+			view1.off('test2');
+
+			view1.trigger('test2');
+			view1.trigger('test1');
+		})
+	});
 });

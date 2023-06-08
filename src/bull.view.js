@@ -1,4 +1,4 @@
-(function (Bull, Backbone, _) {
+(function (Bull, _) {
 
     /**
      * View options passed to a view on creation.
@@ -30,7 +30,7 @@
      *
      * @typedef {Object} Bull~Model
      * @type Object
-     * @mixes Backbone.Events
+     * @mixes Bull.Events
      */
 
     /**
@@ -38,7 +38,7 @@
      *
      * @typedef {Object} Bull~Collection
      * @type Object
-     * @mixes Backbone.Events
+     * @mixes Bull.Events
      */
 
     /**
@@ -86,20 +86,20 @@
      */
 
     /**
-     * @callback Backbone.Events~callback
+     * @callback Bull.Events~callback
      *
      * @param {...*} arguments
      */
 
     /**
-     * @mixin Backbone.Events
+     * @mixin Bull.Events
      */
 
     /**
      * Trigger an event.
      *
      * @function trigger
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {string} event An event.
      * @param {...*} arguments
      */
@@ -108,57 +108,57 @@
      * Subscribe to an event.
      *
      * @function on
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {string} event An event.
-     * @param {Backbone.Events~callback} callback A callback.
+     * @param {Bull.Events~callback} callback A callback.
      */
 
     /**
      * Subscribe to an event. Fired once.
      *
      * @function once
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {string} event An event.
-     * @param {Backbone.Events~callback} callback A callback.
+     * @param {Bull.Events~callback} callback A callback.
      */
 
     /**
      * Unsubscribe from an event or all events.
      *
      * @function off
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {string} [event] From a specific event.
-     * @param {Backbone.Events~callback} [callback] From a specific callback.
+     * @param {Bull.Events~callback} [callback] From a specific callback.
      */
 
     /**
      * Subscribe to an event of other object. Will be automatically unsubscribed on view removal.
      *
      * @function listenTo
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {Object} other What to listen.
      * @param {string} event An event.
-     * @param {Backbone.Events~callback} callback A callback.
+     * @param {Bull.Events~callback} callback A callback.
      */
 
     /**
      * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
      *
      * @function listenToOnce
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {Object} other What to listen.
      * @param {string} event An event.
-     * @param {Backbone.Events~callback} callback A callback.
+     * @param {Bull.Events~callback} callback A callback.
      */
 
     /**
      * Stop listening to other object. No arguments will remove all listeners.
      *
      * @function stopListening
-     * @memberof Backbone.Events
+     * @memberof Bull.Events
      * @param {Object} [other] To remove listeners to a specific object.
      * @param {string} [event] To remove listeners to a specific event.
-     * @param {Backbone.Events~callback} [callback] To remove listeners to a specific callback.
+     * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
      */
 
     /**
@@ -173,7 +173,7 @@
      * @class Bull.View
      * @param {Object.<string, *>|null} [options]
      *
-     * @mixes Backbone.Events
+     * @mixes Bull.Events
      */
     Bull.View = function (options) {
         this.cid = _.uniqueId('view');
@@ -251,7 +251,7 @@
 
     let delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
-    _.extend(Bull.View.prototype, Backbone.Events, /** @lends Bull.View.prototype */{
+    _.extend(Bull.View.prototype, Bull.Events, /** @lends Bull.View.prototype */{
 
         /**
          * Extend the class.
@@ -1883,4 +1883,4 @@
             }
         },
     });
-}).call(this, Bull, Backbone, _);
+}).call(this, Bull, _);

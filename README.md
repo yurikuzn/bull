@@ -6,6 +6,7 @@ A front-end library developed for EspoCRM. See [docs](https://docs.espocrm.com/d
 
 * Nested views
 * Layout engine
+* Events (from Backbone.js)
 
 ## License
 
