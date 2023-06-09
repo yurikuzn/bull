@@ -478,7 +478,7 @@ describe("View", function () {
 		expect(view4.test4).toBe(4);
 	});
 
-	it ('extend should work on native classes', () => {
+	it ('extend should extend native classes', () => {
 		class Test {
 			test1 = 1;
 			testE = 'B';
@@ -524,6 +524,36 @@ describe("View", function () {
 		expect(t1.hello2()).toBe(2);
 		expect(t1.helloE()).toBe('E');
 		expect(t1.getTestE()).toBe('E');
+	});
+
+	it ('should extend multiple native classes', () => {
+		class Test extends Bull.View {}
+
+		class Test1 extends Test {
+			helloE() {
+				return 'B';
+			}
+
+			getTemplateTest() {
+				return this.template;
+			}
+		}
+
+		class Test2 extends Test1 {
+			template = 'test'
+		}
+
+		const Test3 = Test2.extend({
+			helloE() {
+				return 'E';
+			}
+		});
+
+		let t1 = new Test3();
+
+		expect(t1.template).toBe('test');
+		expect(t1.getTemplateTest()).toBe('test');
+		expect(t1.helloE()).toBe('E');
 	});
 
 	it ('should use pre-compiled template', () => {

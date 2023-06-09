@@ -1,4 +1,4 @@
-(function (Bull, _) {
+(function (Bull, _, $) {
 
     /**
      * View options passed to a view on creation.
@@ -167,155 +167,23 @@
      * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
      */
 
+
     /**
      * A view.
      *
-     * @class Bull.View
-     * @param {Object.<string, *>|null} [options]
-     *
      * @mixes Bull.Events
      */
-    Bull.View = function (options) {
-        this.cid = _.uniqueId('view');
-        _.extend(this, _.pick(options, viewOptions));
-        /** @type {JQuery} */
-        this.$el = $();
-        this.options = options || {};
-    };
-
-    const isEsClass = fn => {
-        return typeof fn === 'function' &&
-            Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable === false;
-    };
-
-    Bull.View.extend = function (protoProps, staticProps) {
-        let parent = this;
-
-        let child;
-
-        if (isEsClass(parent)) {
-            let TemporaryHelperConstructor = function () {};
-
-            child = function () {
-                if (new.target) {
-                    let obj = Reflect.construct(parent, arguments, new.target);
-
-                    for (let prop of Object.getOwnPropertyNames(obj)) {
-                        if (typeof this[prop] !== 'undefined') {
-                            obj[prop] = this[prop];
-                        }
-                    }
-
-                    return obj;
-                }
-
-                return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
-            };
-
-            _.extend(child, parent, staticProps);
-
-            child.prototype = _.create(parent.prototype, protoProps);
-            child.prototype.constructor = child;
-            child.__super__ = parent.prototype;
-            child.prototype.__isEs = true;
-
-            TemporaryHelperConstructor.prototype = child.prototype;
-
-            return child;
+    class View {
+        /**
+         * @param {Object.<string, *>|null} [options]
+         */
+        constructor(options) {
+            this.cid = _.uniqueId('view');
+            _.extend(this, _.pick(options, viewOptions));
+            /** @type {JQuery} */
+            this.$el = $();
+            this.options = options || {};
         }
-
-        child = function () {
-            if (parent.prototype.__isEs) {
-                return Reflect.construct(parent, arguments, new.target);
-            }
-
-            return parent.apply(this, arguments);
-        };
-
-        _.extend(child, parent, staticProps);
-
-        child.prototype = _.create(parent.prototype, protoProps);
-        child.prototype.constructor = child;
-        child.__super__ = parent.prototype;
-
-        return child;
-    };
-
-    let viewOptions = [
-        'model',
-        'collection',
-        'el',
-        'id',
-        'events',
-    ];
-
-    let delegateEventSplitter = /^(\S+)\s*(.*)$/;
-
-    _.extend(Bull.View.prototype, Bull.Events, /** @lends Bull.View.prototype */{
-
-        /**
-         * Extend the class.
-         *
-         * @name extend
-         * @param {Object.<string, *>} proto Child prototype.
-         * @return this
-         * @static
-         * @memberof Bull.View
-         */
-
-        /**
-         * A model.
-         *
-         * @name model
-         * @type {Bull.Model|null}
-         * @public
-         * @memberof Bull.View.prototype
-         */
-
-        /**
-         * A collection.
-         *
-         * @name collection
-         * @type {Bull.Collection|null}
-         * @public
-         * @memberof Bull.View.prototype
-         */
-
-        /**
-         * An ID, unique among all views.
-         *
-         * @name cid
-         * @type {string}
-         * @public
-         * @memberof Bull.View.prototype
-         */
-
-        /**
-         * A DOM element.
-         *
-         * @name $el
-         * @type {JQuery}
-         * @public
-         * @memberof Bull.View.prototype
-         */
-
-        /**
-         * A DOM element.
-         *
-         * @name el
-         * @type {Element|null}
-         * @public
-         * @memberof Bull.View.prototype
-         */
-
-        /**
-         * Passed options.
-         *
-         * @name options
-         * @type {Object}
-         * @public
-         * @memberof Bull.View.prototype
-         */
 
         /**
          * A template name/path.
@@ -323,7 +191,7 @@
          * @type {string|null}
          * @protected
          */
-        template: null,
+        template = null
 
         /**
          * Template content. Alternative to specifying a template name/path.
@@ -331,15 +199,7 @@
          * @type {string|null}
          * @protected
          */
-        templateContent: null,
-
-        /**
-         * A layout name/path. Used if template is not specified to build template.
-         *
-         * @type {string|null}
-         * @private
-         */
-        layout: null,
+        templateContent = null
 
         /**
          * A name of the view. If template name is not defined it will be used to cache
@@ -347,7 +207,7 @@
          *
          * @type {string|null}
          */
-        name: null,
+        name = null
 
         /**
          * DOM event listeners.
@@ -355,7 +215,7 @@
          * @type {Bull.View.DomEvents}
          * @protected
          */
-        events: null,
+        events = null
 
         /**
          * Not to use cache for layouts. Use it if layouts are dynamic.
@@ -363,7 +223,7 @@
          * @type {boolean}
          * @protected
          */
-        noCache: false,
+        noCache = false
 
         /**
          * Not to render a view automatically when a view tree is built (ready).
@@ -372,13 +232,7 @@
          * @type {boolean}
          * @protected
          */
-        notToRender: false,
-
-        /**
-         * @type {string|null}
-         * @private
-         */
-        _template: null,
+        notToRender = false
 
         /**
          * Layout itself.
@@ -387,7 +241,7 @@
          * @protected
          * @internal
          */
-        _layout: null,
+        _layout = null
 
         /**
          * Layout data.
@@ -395,7 +249,7 @@
          * @type {Object|null}
          * @protected
          */
-        layoutData: null,
+        layoutData = null
 
         /**
          * Whether the view is ready for rendering (all necessary data is loaded).
@@ -403,7 +257,7 @@
          * @type {boolean}
          * @public
          */
-        isReady: false,
+        isReady = false
 
         /**
          * Definitions for nested views that should be automatically created.
@@ -418,10 +272,10 @@
          * }
          * ```
          *
-         * @type {Object.<string,Bull.View~NestedViewItem>|null}
+         * @type {Object.<string, Bull.View~NestedViewItem>|null}
          * @protected
          */
-        views: null,
+        views = null
 
         /**
          * A list of options to be automatically passed to child views.
@@ -429,149 +283,106 @@
          * @type {string[]|null}
          * @protected
          */
-        optionsToPass: null,
+        optionsToPass = null
 
+        /**
+         * @type {string|null}
+         * @private
+         */
+        layout = null
         /**
          * Nested views.
          *
-         * @type {Object.<string, Bull.View>}
+         * @type {Object.<string, View>}
          * @protected
          * @internal
          */
-        nestedViews: null,
+        nestedViews = null
 
-        /**
-         * @type {Object}
-         * @private
-         */
-        _nestedViewDefs: null,
-
-        /**
-         * @private
-         */
-        _factory: null,
-
-        /**
-         * @private
-         * @deprecated
-         * @todo Remove.
-         */
-        factory: null,
-
-        /**
-         * @private
-         */
-        _templator: null,
-
-        /**
-         * @private
-         */
-        _renderer: null,
-
-        /**
-         * @private
-         */
-        _layouter: null,
+        /** @private */
+        _factory = null
 
         /**
          * A helper.
          *
          * @protected
          */
-        _helper: null,
+        _helper = null
 
         /**
          * @private
+         * @deprecated
+         * @todo Remove.
          */
-        _templateCompiled: null,
-
+        factory = null
         /**
+         * @type {string|null}
          * @private
          */
-        _parentView: null,
-
+        _template = null
         /**
+         * @type {Object}
          * @private
          */
-        _path: '',
-
-        /**
-         * @private
-         */
-        _wait: false,
-
-        /**
-         * @private
-         */
-        _waitViewList: null,
-
-        /**
-         * @private
-         */
-        _nestedViewsFromLayoutLoaded: false,
-
-        /**
-         * @private
-         */
-        _readyConditionList: null,
-
-        /**
-         * @private
-         */
-        _isRendered: false,
-
-        /**
-         * @private
-         */
-        _isFullyRendered: false,
-
-        /**
-         * @private
-         */
-        _isBeingRendered: false,
-
-        /**
-         * @private
-         */
-        _isRemoved: false,
-
-        /**
-         * @private
-         */
-        _isRenderCanceled: false,
-
-        /**
-         * @private
-         */
-        _preCompiledTemplates: null,
+        _nestedViewDefs = null
+        /** @private */
+        _templator = null
+        /** @private */
+        _renderer = null
+        /** @private */
+        _layouter = null
+        /** @private */
+        _templateCompiled = null
+        /** @private */
+        _parentView = null
+        /** @private */
+        _path = ''
+        /** @private */
+        _wait = false
+        /** @private */
+        _waitViewList = null
+        /** @private */
+        _nestedViewsFromLayoutLoaded = false
+        /** @private */
+        _readyConditionList = null
+        /** @private */
+        _isRendered = false
+        /** @private */
+        _isFullyRendered = false
+        /** @private */
+        _isBeingRendered = false
+        /** @private */
+        _isRemoved = false
+        /** @private */
+        _isRenderCanceled = false
+        /** @private */
+        _preCompiledTemplates = null
 
         /**
          * Set a DOM element selector.
          *
          * @param {string} selector A full DOM selector.
          */
-        setElement: function (selector) {
+        setElement(selector) {
             this.undelegateEvents();
             this._setElement(selector);
             this._delegateEvents();
-        },
+        }
 
         /**
          * Removes all view's delegated events. Useful if you want to disable
          * or remove a view from the DOM temporarily.
          */
-        undelegateEvents: function() {
+        undelegateEvents() {
             if (!this.$el) {
                 return;
             }
 
             this.$el.off('.delegateEvents' + this.cid);
-        },
+        }
 
-        /**
-         * @private
-         */
-        _delegateEvents: function () {
+        /** @private */
+        _delegateEvents() {
             let events = _.result(this, 'events');
 
             if (!events) {
@@ -596,14 +407,12 @@
 
                 this._delegate(match[1], match[2], method.bind(this));
             }
-        },
+        }
 
-        /**
-         * @private
-         */
-        _delegate: function (eventName, selector, listener) {
+        /** @private */
+        _delegate(eventName, selector, listener) {
             this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
-        },
+        }
 
         /**
          * To be run by the view-factory after instantiating. Should not be overridden.
@@ -621,7 +430,7 @@
          * }} data
          * @internal
          */
-        _initialize: function (data) {
+        _initialize(data) {
             /**
              * @type {Bull.Factory}
              * @private
@@ -719,7 +528,7 @@
              * @type {string}
              * @private
              */
-            this.layout = this.options.layout || this.layout;
+            this.layout = this.options.layout;
 
             /** @private */
             this._layout = this.options.layoutDefs || this.options._layout || this._layout;
@@ -780,7 +589,7 @@
             this._nestedViewsFromLayoutLoaded = true;
 
             this._tryReady();
-        },
+        }
 
         /**
          * Compose template data. A key => value result will be passed to
@@ -789,23 +598,23 @@
          * @protected
          * @returns {Object.<string, *>|{}}
          */
-        data: function () {
+        data() {
             return {};
-        },
+        }
 
         /**
          * Initialize the view. Is invoked before #setup.
          *
          * @protected
          */
-        init: function () {},
+        init() {}
 
         /**
          * Set up the view. Is invoked after #init.
          *
          * @protected
          */
-        setup: function () {},
+        setup() {}
 
         /**
          * Additional setup. Is invoked after #setup.
@@ -814,7 +623,7 @@
          *
          * @protected
          */
-        setupFinal: function () {},
+        setupFinal() {}
 
         /**
          * Set a view container element if it doesn't exist yet. It will call setElement after render.
@@ -822,7 +631,7 @@
          * @param {string} el A full DOM selector.
          * @protected
          */
-        setElementInAdvance: function (el) {
+        setElementInAdvance(el) {
             if (this._setElementInAdvancedInProcess) {
                 return;
             }
@@ -834,7 +643,7 @@
 
                 this._setElementInAdvancedInProcess = false;
             });
-        },
+        }
 
         /**
          * Get a full DOM element selector.
@@ -842,9 +651,9 @@
          * @public
          * @return {string|null}
          */
-        getSelector: function () {
+        getSelector() {
             return this.options.el || null;
-        },
+        }
 
         /**
          * Set a full DOM element selector.
@@ -852,9 +661,9 @@
          * @public
          * @param {string} selector A selector.
          */
-        setSelector: function (selector) {
+        setSelector(selector) {
             this.options.el = selector;
-        },
+        }
 
         /**
          * Checks whether the view has been already rendered
@@ -862,9 +671,9 @@
          * @public
          * @return {boolean}
          */
-        isRendered: function () {
+        isRendered() {
             return this._isRendered;
-        },
+        }
 
         /**
          * Checks whether the view has been fully rendered (afterRender has been executed).
@@ -872,9 +681,9 @@
          * @public
          * @return {boolean}
          */
-        isFullyRendered: function () {
+        isFullyRendered() {
             return this._isFullyRendered;
-        },
+        }
 
         /**
          * Whether the view is being rendered at the moment.
@@ -882,9 +691,9 @@
          * @public
          * @return {boolean}
          */
-        isBeingRendered: function () {
+        isBeingRendered() {
             return this._isBeingRendered;
-        },
+        }
 
         /**
          * Whether the view is removed.
@@ -892,9 +701,9 @@
          * @public
          * @return {boolean}
          */
-        isRemoved: function () {
+        isRemoved() {
             return this._isRemoved;
-        },
+        }
 
         /**
          * Get HTML of view but don't render it.
@@ -902,27 +711,27 @@
          * @public
          * @param {Bull.View~getHtmlCallback} callback A callback with an HTML.
          */
-        getHtml: function (callback) {
+        getHtml(callback) {
             this._getHtml(callback);
-        },
+        }
 
         /**
          * Cancel rendering.
          */
-        cancelRender: function () {
+        cancelRender() {
             if (!this.isBeingRendered()) {
                 return;
             }
 
             this._isRenderCanceled = true;
-        },
+        }
 
         /**
          * Un-cancel rendering.
          */
-        uncancelRender: function () {
+        uncancelRender() {
             this._isRenderCanceled = false;
-        },
+        }
 
         /**
          * Render the view.
@@ -930,7 +739,7 @@
          * @param {Function} [callback] Deprecated. Use promise.
          * @return {Promise<this>}
          */
-        render: function (callback) {
+        render(callback) {
             this._isRendered = false;
             this._isFullyRendered = false;
 
@@ -948,7 +757,7 @@
                     }
                     else {
                         if (this.options.el) {
-                           this.setElement(this.options.el);
+                            this.setElement(this.options.el);
                         }
 
                         this.$el.html(html);
@@ -963,7 +772,7 @@
                     resolve(this);
                 });
             });
-        },
+        }
 
         /**
          * Re-render the view.
@@ -971,7 +780,7 @@
          * @param {boolean} [force=false] To render if was not rendered.
          * @return {Promise<this>}
          */
-        reRender: function (force) {
+        reRender(force) {
             if (this.isRendered()) {
                 return this.render();
             }
@@ -992,12 +801,10 @@
 
             // Don't reject, preventing an exception on a non-caught promise.
             return new Promise(() => {});
-        },
+        }
 
-        /**
-         * @private
-         */
-        _afterRender: function () {
+        /** @private */
+        _afterRender() {
             this._isBeingRendered = false;
             this._isRendered = true;
 
@@ -1016,21 +823,21 @@
             this.trigger('after:render', this);
 
             this._isFullyRendered = true;
-        },
+        }
 
         /**
          * Executed after render.
          *
          * @protected
          */
-        afterRender: function () {},
+        afterRender() {}
 
         /**
          * Proceed when rendered.
          *
          * @return {Promise<void>}
          */
-        whenRendered: function () {
+        whenRendered() {
             if (this.isRendered()) {
                 return Promise.resolve();
             }
@@ -1038,12 +845,10 @@
             return new Promise(resolve => {
                 this.once('after:render', () => resolve())
             });
-        },
+        }
 
-        /**
-         * @private
-         */
-        _tryReady: function () {
+        /** @private */
+        _tryReady() {
             if (this.isReady) {
                 return;
             }
@@ -1080,24 +885,20 @@
             }
 
             this._makeReady();
-        },
+        }
 
-        /**
-         * @private
-         */
-        _makeReady: function () {
+        /** @private */
+        _makeReady() {
             this.isReady = true;
             this.trigger('ready');
 
             if (typeof this._onReady === 'function') {
                 this._onReady(this);
             }
-        },
+        }
 
-        /**
-         * @private
-         */
-        _addDefinedNestedViewDefs: function (list) {
+        /** @private */
+        _addDefinedNestedViewDefs(list) {
             for (let name in this.views) {
                 let o = _.clone(this.views[name]);
 
@@ -1109,12 +910,10 @@
             }
 
             return list;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getNestedViewsFromLayout: function () {
+        /** @private */
+        _getNestedViewsFromLayout() {
             let nestedViewDefs = this._layouter
                 .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
 
@@ -1139,12 +938,10 @@
             }
 
             return nestedViewDefsFiltered;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _loadNestedViews: function (callback) {
+        /** @private */
+        _loadNestedViews(callback) {
             let nestedViewDefs = [];
 
             if (this._layout != null) {
@@ -1226,12 +1023,10 @@
                     tryReady();
                 });
             });
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getData: function () {
+        /** @private */
+        _getData() {
             if (this.options.data) {
                 if (typeof this.options.data === 'function') {
                     return this.options.data();
@@ -1245,12 +1040,10 @@
             }
 
             return this.data;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getNestedViewsAsArray: function () {
+        /** @private */
+        _getNestedViewsAsArray() {
             let nestedViewsArray = [];
 
             let i = 0;
@@ -1266,12 +1059,10 @@
 
             return nestedViewsArray;
 
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getNestedViewsHtmlList: function (callback) {
+        /** @private */
+        _getNestedViewsHtmlList(callback) {
             let data = {};
             let nestedViewsArray = this._getNestedViewsAsArray();
 
@@ -1306,19 +1097,17 @@
                 loaded++;
                 tryReady();
             });
-        },
+        }
 
         /**
          * Provides the ability to modify template data right before render.
          *
          * @param {Object} data Data.
          */
-        handleDataBeforeRender: function (data) {},
+        handleDataBeforeRender(data) {}
 
-        /**
-         * @private
-         */
-        _getHtml: function (callback) {
+        /** @private */
+        _getHtml(callback) {
             this._isBeingRendered = true;
             this.trigger('render', this);
 
@@ -1343,44 +1132,34 @@
                     callback(html);
                 });
             });
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getTemplateName: function () {
+        /** @private */
+        _getTemplateName() {
             return this.template || null;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getLayoutName: function () {
+        /** @private */
+        _getLayoutName() {
             return this.layout || this.name || null;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getLayoutData: function () {
+        /** @private */
+        _getLayoutData() {
             return this.layoutData;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getLayout: function () {
+        /** @private */
+        _getLayout() {
             if (typeof this._layout === 'function') {
                 return this._layout();
             }
 
             return this._layout;
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getTemplate: function (callback) {
+        /** @private */
+        _getTemplate(callback) {
             if (
                 this._templator &&
                 this._templator.compilable &&
@@ -1438,23 +1217,19 @@
             }
 
             this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
-        },
+        }
 
-        /**
-         * @private
-         */
-        _updatePath: function (parentPath, viewKey) {
+        /** @private */
+        _updatePath(parentPath, viewKey) {
             this._path = parentPath + '/' + viewKey;
 
             for (let key in this.nestedViews) {
                 this.nestedViews[key]._updatePath(this._path, key);
             }
-        },
+        }
 
-        /**
-         * @private
-         */
-        _getSelectorForNestedView: function (key) {
+        /** @private */
+        _getSelectorForNestedView(key) {
             let el = false;
 
             if (key in this._nestedViewDefs) {
@@ -1483,7 +1258,7 @@
             }
 
             return el;
-        },
+        }
 
         /**
          * Whether the view has a nested view.
@@ -1491,31 +1266,33 @@
          * @param {string} key A view key.
          * @return {boolean}
          */
-        hasView: function (key) {
+        hasView(key) {
             return key in this.nestedViews;
-        },
+        }
 
         /**
          * Get a nested view.
          *
          * @param {string} key A view key.
-         * @return {Bull.View}
+         * @return {View|null}
          */
-        getView: function (key) {
+        getView(key) {
             if (key in this.nestedViews) {
                 return this.nestedViews[key];
             }
-        },
+
+            return null;
+        }
 
         /**
          * Assign a view instance as nested.
          *
          * @param {string} key A view key.
-         * @param {Bull.View} view A view.
+         * @param {View} view A view.
          * @param {string|null} [selector] A relative selector.
-         * @return {Promise<Bull.View>}
+         * @return {Promise<View>}
          */
-        assignView: function (key, view, selector) {
+        assignView(key, view, selector) {
             this.clearView(key);
 
             this._viewPromiseHash = this._viewPromiseHash || {};
@@ -1543,7 +1320,7 @@
             });
 
             return promise;
-        },
+        }
 
         /**
          * Create a nested view. The important method.
@@ -1553,9 +1330,9 @@
          * @param {Bull.View~Options} options View options. Custom options can be passed as well.
          * @param {Function} [callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
          * @param {boolean} [wait=true] Set false if no need a parent view to wait till nested view loaded.
-         * @return {Promise<Bull.View>}
+         * @return {Promise<View>}
          */
-        createView: function (key, viewName, options, callback, wait) {
+        createView(key, viewName, options, callback, wait) {
             this.clearView(key);
 
             this._viewPromiseHash = this._viewPromiseHash || {};
@@ -1592,18 +1369,18 @@
             });
 
             return promise;
-        },
+        }
 
         /**
          * @param {string} key
-         * @param {Bull.View} view
+         * @param {View} view
          * @param {function} resolve
          * @param {Promise} promise
          * @param {function} [callback]
          * @param {boolean} [setViewBeforeCallback]
          * @private
          */
-        _assignViewCallback: function (
+        _assignViewCallback(
             key,
             view,
             resolve,
@@ -1644,16 +1421,16 @@
             if (!this._isRendered && !setViewBeforeCallback && !isSet) {
                 this.setView(key, view);
             }
-        },
+        }
 
         /**
          * Set a nested view.
          *
          * @param {string} key A view key.
-         * @param {Bull.View} view A view name/path.
+         * @param {View} view A view name/path.
          * @param {string} [el] A full DOM selector for a view container.
          */
-        setView: function (key, view, el) {
+        setView(key, view, el) {
             el = el || this._getSelectorForNestedView(key) || view.options.el || false;
 
             if (el) {
@@ -1674,14 +1451,14 @@
             view._updatePath(this._path, key);
 
             this._tryReady();
-        },
+        }
 
         /**
          * Clear a nested view. Initiates removal of the nested view.
          *
          * @param {string} key A view key.
          */
-        clearView: function (key) {
+        clearView(key) {
             if (key in this.nestedViews) {
                 this.nestedViews[key].remove();
 
@@ -1695,48 +1472,48 @@
             if (previousPromise) {
                 previousPromise._isToCancel = true;
             }
-        },
+        }
 
         /**
          * Removes a nested view for cases when it's supposed that this view can be re-used in future.
          *
          * @param {string} key A view key.
          */
-        unchainView: function (key) {
+        unchainView(key) {
             if (key in this.nestedViews) {
                 this.nestedViews[key]._parentView = null;
                 this.nestedViews[key].undelegateEvents();
 
                 delete this.nestedViews[key];
             }
-        },
+        }
 
         /**
          * Get a parent view.
          *
-         * @return {Bull.View}
+         * @return {View}
          */
-        getParentView: function () {
+        getParentView() {
             return this._parentView;
-        },
+        }
 
         /**
          * Has a parent view.
          *
          * @return {boolean}
          */
-        hasParentView: function () {
+        hasParentView() {
             return !!this._parentView;
-        },
+        }
 
         /**
          * Add a condition for the view getting ready.
          *
          * @param {(Function|boolean)} condition A condition.
          */
-        addReadyCondition: function (condition) {
+        addReadyCondition(condition) {
             this._readyConditionList.push(condition);
-        },
+        }
 
         /**
          * Wait for a nested view.
@@ -1744,9 +1521,9 @@
          * @protected
          * @param {string} key A view key.
          */
-        waitForView: function (key) {
+        waitForView(key) {
             this._waitViewList.push(key);
-        },
+        }
 
         /**
          * Makes the view to wait for a promise (if a Promise is passed as a parameter).
@@ -1755,7 +1532,7 @@
          * @protected
          * @param {Promise|boolean} wait A wait-promise or true/false.
          */
-        wait: function (wait) {
+        wait(wait) {
             if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
                 this._waitPromiseCount++;
 
@@ -1790,7 +1567,7 @@
 
             this._wait = false;
             this._tryReady();
-        },
+        }
 
         /**
          * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
@@ -1798,7 +1575,7 @@
          * @public
          * @param {boolean} [dontEmpty] Skips emptying an element container.
          */
-        remove: function (dontEmpty) {
+        remove(dontEmpty) {
             this.cancelRender();
 
             for (let key in this.nestedViews) {
@@ -1830,19 +1607,17 @@
             this._isRemoved = true;
 
             return this;
-        },
+        }
 
         /**
          * Called on view removal.
          *
          * @protected
          */
-        onRemove: function () {},
+        onRemove() {}
 
-        /**
-         * @private
-         */
-        _setElement: function (el) {
+        /** @private */
+        _setElement(el) {
             if (typeof el === 'string') {
                 let parentView = this.getParentView();
 
@@ -1865,7 +1640,7 @@
 
             this.$el = $(el).eq(0);
             this.el = this.$el[0];
-        },
+        }
 
         /**
          * Propagate an event to nested views.
@@ -1873,7 +1648,7 @@
          * @public
          * @param {...*} arguments
          */
-        propagateEvent: function () {
+        propagateEvent() {
             this.trigger.apply(this, arguments);
 
             for (let key in this.nestedViews) {
@@ -1881,6 +1656,143 @@
 
                 view.propagateEvent.apply(view, arguments);
             }
-        },
-    });
-}).call(this, Bull, _);
+        }
+    }
+
+    _.extend(View.prototype, Bull.Events);
+
+    Bull.View = View;
+
+    const isEsClass = fn => {
+        return typeof fn === 'function' &&
+            Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable === false;
+    };
+
+    Bull.View.extend = function (protoProps, staticProps) {
+        let parent = this;
+
+        let child;
+
+        if (isEsClass(parent)) {
+            let TemporaryHelperConstructor = function () {};
+
+            child = function () {
+                if (new.target) {
+                    let obj = Reflect.construct(parent, arguments, new.target);
+
+                    for (let prop of Object.getOwnPropertyNames(obj)) {
+                        if (typeof this[prop] !== 'undefined') {
+                            obj[prop] = this[prop];
+                        }
+                    }
+
+                    return obj;
+                }
+
+                return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
+            };
+
+            _.extend(child, parent, staticProps);
+
+            child.prototype = _.create(parent.prototype, protoProps);
+            child.prototype.constructor = child;
+            child.__super__ = parent.prototype;
+            child.prototype.__isEs = true;
+
+            TemporaryHelperConstructor.prototype = child.prototype;
+
+            return child;
+        }
+
+        child = function () {
+            if (parent.prototype.__isEs) {
+                return Reflect.construct(parent, arguments, new.target);
+            }
+
+            return parent.apply(this, arguments);
+        };
+
+        _.extend(child, parent, staticProps);
+
+        child.prototype = _.create(parent.prototype, protoProps);
+        child.prototype.constructor = child;
+        child.__super__ = parent.prototype;
+
+        return child;
+    };
+
+    let viewOptions = [
+        'model',
+        'collection',
+        'el',
+        'id',
+        'events',
+    ];
+
+    let delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
+    /**
+     * Extend the class.
+     *
+     * @name extend
+     * @param {Object.<string, *>} proto Child prototype.
+     * @return this
+     * @static
+     * @memberof Bull.View
+     */
+
+    /**
+     * A model.
+     *
+     * @name model
+     * @type {Bull.Model|null}
+     * @public
+     * @memberof Bull.View#
+     */
+
+    /**
+     * A collection.
+     *
+     * @name collection
+     * @type {Bull.Collection|null}
+     * @public
+     * @memberof Bull.View#
+     */
+
+    /**
+     * An ID, unique among all views.
+     *
+     * @name cid
+     * @type {string}
+     * @public
+     * @memberof Bull.View#
+     */
+
+    /**
+     * A DOM element.
+     *
+     * @name $el
+     * @type {JQuery}
+     * @public
+     * @memberof Bull.View#
+     */
+
+    /**
+     * A DOM element.
+     *
+     * @name el
+     * @type {Element|null}
+     * @public
+     * @memberof Bull.View#
+     */
+
+    /**
+     * Passed options.
+     *
+     * @name options
+     * @type {Object.<string, *>}
+     * @public
+     * @memberof Bull.View#
+     */
+
+}).call(this, Bull, _, $);
