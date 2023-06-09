@@ -167,15 +167,16 @@
      * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
      */
 
-
     /**
      * A view.
      *
+     * @alias Bull.View
      * @mixes Bull.Events
      */
-    class View {
+     class View {
         /**
          * @param {Object.<string, *>|null} [options]
+         * @mixes Bull.Events
          */
         constructor(options) {
             this.cid = _.uniqueId('view');
@@ -1288,7 +1289,7 @@
          * Assign a view instance as nested.
          *
          * @param {string} key A view key.
-         * @param {View} view A view.
+         * @param {Bull.View} view A view.
          * @param {string|null} [selector] A relative selector.
          * @return {Promise<View>}
          */
@@ -1373,7 +1374,7 @@
 
         /**
          * @param {string} key
-         * @param {View} view
+         * @param {Bull.View} view
          * @param {function} resolve
          * @param {Promise} promise
          * @param {function} [callback]
@@ -1427,7 +1428,7 @@
          * Set a nested view.
          *
          * @param {string} key A view key.
-         * @param {View} view A view name/path.
+         * @param {Bull.View} view A view name/path.
          * @param {string} [el] A full DOM selector for a view container.
          */
         setView(key, view, el) {
@@ -1491,7 +1492,7 @@
         /**
          * Get a parent view.
          *
-         * @return {View}
+         * @return {Bull.View}
          */
         getParentView() {
             return this._parentView;
@@ -1659,9 +1660,9 @@
         }
     }
 
-    _.extend(View.prototype, Bull.Events);
-
     Bull.View = View;
+
+    _.extend(View.prototype, Bull.Events);
 
     const isEsClass = fn => {
         return typeof fn === 'function' &&
