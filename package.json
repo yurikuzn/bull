@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build-umd": "npx rollup src/bullbone.js --format umd --file dist/bullbone.umd.js --name bullbone --amd.id bullbone",
     "build-esm": "npx rollup src/bullbone.js --format esm --file dist/bullbone.js",
-    "prepare": "npm run build-umd && npm-build-esm"
+    "prepare": "npm run build-umd && npm run build-esm"
   },
   "repository": "https://github.com/yurikuzn/bull",
   "author": "Yuri Kuznersov & EspoCRM team",
