@@ -2,14 +2,16 @@
   "name": "bullbone",
   "version": "1.2.1",
   "description": "A library for EspoCRM frontend.",
-  "main": "src/bullbone.js",
-  "browser": "dist/bullbone.js",
+  "main": "dist/bullbone.js",
+  "browser": "dist/bullbone.umd.js",
   "files": [
     "dist"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "npx rollup src/bullbone.js --format umd --file dist/bullbone.js --name bullbone --amd.id bullbone"
+    "build-umd": "npx rollup src/bullbone.js --format umd --file dist/bullbone.umd.js --name bullbone --amd.id bullbone",
+    "build-esm": "npx rollup src/bullbone.js --format esm --file dist/bullbone.js",
+    "prepare": "npm run build-umd && npm-build-esm"
   },
   "repository": "https://github.com/yurikuzn/bull",
   "author": "Yuri Kuznersov & EspoCRM team",
