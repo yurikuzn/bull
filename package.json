@@ -1,6 +1,6 @@
 {
   "name": "bullbone",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A library for EspoCRM frontend.",
   "main": "src/bullbone.js",
   "browser": "dist/bullbone.js",
