@@ -1,24 +1,23 @@
-var Bull = Bull || {};
 
-BullTest.include('../src/bull.loader.js');
+import Loader from "../../src/bull.loader.js";
 
-describe("Loader", function () {
-	var loader;
+describe("Loader", () => {
+	let loader;
 
-	it ('should call external loader if injected', function () {
-		var layoutManager = {
-			load: function () {}
+	it('should call external loader if injected', () => {
+		let layoutManager = {
+			load: () => {}
 		};
 
 		spyOn(layoutManager, 'load');
 	
-		loader = new Bull.Loader({
+		loader = new Loader({
 			loaders: {
 				layout: layoutManager.load
 			}
 		});
 
-		loader.load('layout', 'account.detail', function () {});
+		loader.load('layout', 'account.detail', () => {});
 
 		expect(layoutManager.load.calls.first().args[0]).toBe('account.detail');
 	});

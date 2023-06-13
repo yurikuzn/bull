@@ -1,23 +1,23 @@
-(function (Bull, _) {
 
-    /**
-     * @class Bull.Renderer
-     */
-    Bull.Renderer = function (options) {
-        options = options || {};
+/**
+ * @class Renderer
+ * @alias Bull.Renderer
+ */
+const Renderer = function (options) {
+    options = options || {};
 
-        this._render = options.method || this._render;
-    };
+    this._render = options.method || this._render;
+};
 
-    _.extend(Bull.Renderer.prototype, {
+_.extend(Renderer.prototype, {
 
-        _render: function (template, data) {
-            return template(data, {allowProtoPropertiesByDefault: true});
-        },
+    _render: function (template, data) {
+        return template(data, {allowProtoPropertiesByDefault: true});
+    },
 
-        render: function (template, data) {
-            return this._render.call(this, template, data);
-        },
-    });
+    render: function (template, data) {
+        return this._render.call(this, template, data);
+    },
+});
 
-}).call(this, Bull, _);
+export default Renderer;

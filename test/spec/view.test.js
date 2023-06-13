@@ -1,6 +1,7 @@
-var Bull = Bull || {};
 
-describe("View", function () {
+import View from '../../src/bull.view.js';
+
+describe('View', function () {
 	/**
 	 * @var {Bull.View}
 	 */
@@ -34,11 +35,11 @@ describe("View", function () {
 
 		factory = {
 			create: function (viewName, options, callback) {
-				callback(new Bull.View(options));
+				callback(new View(options));
 			}
 		};
 
-		view = new Bull.View();
+		view = new View();
 
 		view._initialize({
 			renderer: renderer,
@@ -51,7 +52,7 @@ describe("View", function () {
 	it ('should assign view with child selector', () => {
 		view.setSelector('parent-selector');
 
-		let childView = new Bull.View();
+		let childView = new View();
 
 		return view
 			.assignView('test', childView, 'child-selector')
@@ -65,7 +66,7 @@ describe("View", function () {
 	it ('should assign view with selector pre-set', () => {
 		view.setSelector('parent-selector');
 
-		let childView = new Bull.View();
+		let childView = new View();
 		childView.setSelector('parent-selector child-selector');
 
 		return view
@@ -129,7 +130,7 @@ describe("View", function () {
 	it ('should call templator.getTemplate() with a proper template and layout names when render()', () => {
 		spyOn(templator, 'getTemplate');
 
-		let view = new Bull.View({
+		let view = new View({
 			template: 'SomeTemplate',
 			layout: 'SomeLayout',
 		});
@@ -154,7 +155,7 @@ describe("View", function () {
 			id: 'main',
 		}]);
 
-		let master = new Bull.View({
+		let master = new View({
 			layout: 'SomeLayout',
 			_layout: [],
 		});
@@ -210,7 +211,7 @@ describe("View", function () {
 			});
 		});
 
-		let view = new Bull.View({
+		let view = new View({
 			layout: 'SomeLayout',
 			_layout: [],
 		});
@@ -260,7 +261,7 @@ describe("View", function () {
 			});
 		});
 
-		let view = new Bull.View({
+		let view = new View({
 			layout: 'SomeLayout',
 		});
 
@@ -280,8 +281,8 @@ describe("View", function () {
 	});
 
 	it ('should set get and check nested view', () => {
-		let view = new Bull.View();
-		let subView = new Bull.View();
+		let view = new View();
+		let subView = new View();
 
 		view._initialize({});
 		subView._initialize({});
@@ -293,8 +294,8 @@ describe("View", function () {
 	});
 
 	it ('should set parent view when set view', () => {
-		let view = new Bull.View();
-		let subView = new Bull.View();
+		let view = new View();
+		let subView = new View();
 
 		view._initialize({});
 		subView._initialize({});
@@ -305,8 +306,8 @@ describe("View", function () {
 	});
 
 	it ('should clear nested view and trigger "remove" event', () => {
-		let view = new Bull.View();
-		let subView = new Bull.View();
+		let view = new View();
+		let subView = new View();
 
 		view._initialize({});
 		subView._initialize({});
@@ -321,10 +322,10 @@ describe("View", function () {
 	});
 
 	it ('should set proper paths for nested views', () => {
-		let view = new Bull.View();
-		let subView = new Bull.View();
-		let subSubView1 = new Bull.View();
-		let subSubView2 = new Bull.View();
+		let view = new View();
+		let subView = new View();
+		let subSubView1 = new View();
+		let subSubView2 = new View();
 
 		view._initialize({});
 		subView._initialize({});
@@ -339,7 +340,7 @@ describe("View", function () {
 		expect(subSubView1._path).toBe('/main/some1');
 		expect(subSubView2._path).toBe('/main/some2');
 
-		view = new Bull.View();
+		view = new View();
 
 		view._initialize({});
 
@@ -351,7 +352,7 @@ describe("View", function () {
 	});
 
 	it ('should be extendable using native classes', () => {
-		let View = class extends Bull.View {
+		let ViewB = class extends View {
 			test3 = 3;
 
 			constructor(options) {
@@ -363,7 +364,7 @@ describe("View", function () {
 			}
 		};
 
-		let view = new View({test1: 1});
+		let view = new ViewB({test1: 1});
 
 		expect(view.options.test1).toBe(1);
 		expect(view.options.test2).toBe(2);
@@ -372,7 +373,7 @@ describe("View", function () {
 	});
 
 	it ('should be extendable using legacy extend', () => {
-		let View1 = Bull.View.extend({
+		let View1 = View.extend({
 			test2: 2,
 			test3: 3,
 		});
@@ -396,7 +397,7 @@ describe("View", function () {
 	});
 
 	it ('should be extendable using both legacy and native classes', () => {
-		let View1 = class extends Bull.View {
+		let View1 = class extends View {
 			test3 = 3;
 			testE = 'B';
 
@@ -500,7 +501,7 @@ describe("View", function () {
 			}
 		}
 
-		Test.extend = Bull.View.extend;
+		Test.extend = View.extend;
 
 		const T1 = Test.extend({
 			test3: 3,
@@ -527,7 +528,7 @@ describe("View", function () {
 	});
 
 	it ('should extend multiple native classes', () => {
-		class Test extends Bull.View {}
+		class Test extends View {}
 
 		class Test1 extends Test {
 			helloE() {
@@ -557,7 +558,7 @@ describe("View", function () {
 	});
 
 	it ('should use pre-compiled template', () => {
-		let View = class extends Bull.View {
+		let ViewB = class extends View {
 			template = 'test/template';
 
 			data = function () {
@@ -567,7 +568,7 @@ describe("View", function () {
 			};
 		}
 
-		let view = new View({});
+		let view = new ViewB({});
 
 		view._initialize({
 			renderer: renderer,
@@ -588,8 +589,8 @@ describe("View", function () {
 	});
 
 	it ('should support events 1', () => {
-		let view1 = new Bull.View();
-		let view2 = new Bull.View();
+		let view1 = new View();
+		let view2 = new View();
 
 		return new Promise((resolve, reject) => {
 			view1.listenTo(view2, 'test1', () => {
@@ -610,7 +611,7 @@ describe("View", function () {
 	});
 
 	it ('should support events 2', () => {
-		let view1 = new Bull.View();
+		let view1 = new View();
 
 		return new Promise((resolve, reject) => {
 			view1.on('test1', () => {
@@ -631,8 +632,8 @@ describe("View", function () {
 	});
 
 	it ('should support events 3', () => {
-		let view1 = new Bull.View();
-		let view2 = new Bull.View();
+		let view1 = new View();
+		let view2 = new View();
 
 		return new Promise((resolve, reject) => {
 			view1.listenToOnce(view2, 'test1', () => {
@@ -653,7 +654,7 @@ describe("View", function () {
 	});
 
 	it ('should support events 4', () => {
-		let view1 = new Bull.View();
+		let view1 = new View();
 
 		return new Promise((resolve, reject) => {
 			view1.once('test1', () => {

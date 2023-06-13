@@ -1,29 +1,30 @@
 
+import Layouter from "../../src/bull.layouter.js";
 
-var Bull = Bull || {};
+describe("Layouter", () => {
+	let layouter;
+	let loader;
 
-describe("Layouter", function () {
-	var layouter;
-	
-	var defaultLayout = {
+	let defaultLayout = {
 		type: 'default',
 		layout: {},
 	}
 	
-	beforeEach(function () {
+	beforeEach(() => {
 		loader = {
 			load: {},
-		};		
-		spyOn(loader, 'load').and.callFake(function (type, name, callback) {
+		};
+
+		spyOn(loader, 'load').and.callFake((type, name, callback) => {
 			callback(defaultLayout);
 		});
 	
-		layouter = new Bull.Layouter({
+		layouter = new Layouter({
 			loader: loader,
 		});
 	});
 	
-	it ('should return proper nested views definitions from the layout', function () {
+	it ('should return proper nested views definitions from the layout', () => {
 		layouter.addLayout('test_1', {
 			type: 'default',
 			layout: [
@@ -98,7 +99,8 @@ describe("Layouter", function () {
 			}
 		});		
 		
-		var nestedViewList = layouter.findNestedViews('test_1');		
+		var nestedViewList = layouter.findNestedViews('test_1');
+
 		expect(nestedViewList).toEqual([
 			{
 				name: 'header',
@@ -112,7 +114,8 @@ describe("Layouter", function () {
 			},
 		]);
 		
-		var nestedViewList = layouter.findNestedViews('test_2');		
+		nestedViewList = layouter.findNestedViews('test_2');
+
 		expect(nestedViewList).toEqual([
 			{
 				name: 'graph',
@@ -127,8 +130,10 @@ describe("Layouter", function () {
 			},
 		]);
 		
-		var nestedViewList = layouter.findNestedViews('test_3');		
+		nestedViewList = layouter.findNestedViews('test_3');
+
 		expect(nestedViewList).toEqual([
+
 			{
 				name: 'graph',
 				view: 'Graph',
@@ -148,7 +153,5 @@ describe("Layouter", function () {
 				},				
 			},
 		]);
-		
 	});
-	
 });

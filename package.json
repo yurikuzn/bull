@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "grunt"
+    "prepare": "npx rollup src/bull.js --format umd --file dist/bullbone.js --name bullbone --amd.id bullbone"
   },
   "repository": "https://github.com/yurikuzn/bull",
   "author": "Yuri Kuznersov & EspoCRM team",

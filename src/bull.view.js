@@ -1,1716 +1,1695 @@
-(function (Bull, _, $) {
 
-    /**
-     * View options passed to a view on creation.
-     *
-     * @typedef {Object.<string, *>} Bull.View~Options
-     *
-     * @property {string} [selector] A DOM element selector relative to a parent view.
-     * @property {string} [el] A full DOM element selector.
-     * @property {string[]} [optionsToPass] Options to be automatically passed to child views
-     *   of the created view.
-     * @property {(function: Object)|Object} [data] Data that will be passed to a template or a function
-     *   that returns data.
-     * @property {string} [template] A template name.
-     * @property {string} [templateContent] Template content.
-     * @property {Object} [layoutDefs] Internal layout defs.
-     * @property {Object} [layoutData] Internal layout data.
-     * @property {boolean} [notToRender] Not to render on ready.
-     * @property {boolean} [noCache] Disable layout cache.
-     * @property {Object} [views] Child view definitions.
-     * @property {string} [name] A view name.
-     * @property {Bull.Model} [model] A model.
-     * @property {Bull.Collection} [collection] A collection.
-     * @property {Bull.View.DomEvents} [events] DOM events.
-     * @property {boolean} [setViewBeforeCallback] A child view will be set to a parent before a promise is resolved.
-     */
+import Events from './bull.events.js';
 
+/**
+ * View options passed to a view on creation.
+ *
+ * @typedef {Object.<string, *>} Bull.View~Options
+ *
+ * @property {string} [selector] A DOM element selector relative to a parent view.
+ * @property {string} [el] A full DOM element selector.
+ * @property {string[]} [optionsToPass] Options to be automatically passed to child views
+ *   of the created view.
+ * @property {(function: Object)|Object} [data] Data that will be passed to a template or a function
+ *   that returns data.
+ * @property {string} [template] A template name.
+ * @property {string} [templateContent] Template content.
+ * @property {Object} [layoutDefs] Internal layout defs.
+ * @property {Object} [layoutData] Internal layout data.
+ * @property {boolean} [notToRender] Not to render on ready.
+ * @property {boolean} [noCache] Disable layout cache.
+ * @property {Object} [views] Child view definitions.
+ * @property {string} [name] A view name.
+ * @property {Bull.Model} [model] A model.
+ * @property {Bull.Collection} [collection] A collection.
+ * @property {Bull.View.DomEvents} [events] DOM events.
+ * @property {boolean} [setViewBeforeCallback] A child view will be set to a parent before a promise is resolved.
+ */
+
+/**
+ * A model.
+ *
+ * @typedef {Object} Bull~Model
+ * @type Object
+ * @mixes Bull.Events
+ */
+
+/**
+ * A collection.
+ *
+ * @typedef {Object} Bull~Collection
+ * @type Object
+ * @mixes Bull.Events
+ */
+
+/**
+ * Nested view definitions.
+ *
+ * @typedef {Object} Bull.View~NestedViewItem
+ *
+ * @property {string} view A view name/path.
+ * @property {string} [selector] A DOM element selector relative to a parent view.
+ * @property {string} [el] A full DOM element selector.
+ */
+
+/**
+ * After a view is rendered.
+ *
+ * @event Bull.View#after:render
+ */
+
+/**
+ * Once a view is ready for rendering (loaded).
+ *
+ * @event Bull.View#ready
+ */
+
+/**
+ * Once a view is removed.
+ *
+ * @event Bull.View#remove
+ */
+
+/**
+ * A get-HTML callback.
+ *
+ * @callback Bull.View~getHtmlCallback
+ *
+ * @param {string} html An HTML.
+ */
+
+/**
+ * A DOM event callback.
+ *
+ * @callback Bull.View~domEventCallback
+ *
+ * @param {jQuery.Event} e An event.
+ */
+
+/**
+ * @callback Bull.Events~callback
+ *
+ * @param {...*} arguments
+ */
+
+/**
+ * @mixin Bull.Events
+ */
+
+/**
+ * Trigger an event.
+ *
+ * @function trigger
+ * @memberof Bull.Events
+ * @param {string} event An event.
+ * @param {...*} arguments
+ */
+
+/**
+ * Subscribe to an event.
+ *
+ * @function on
+ * @memberof Bull.Events
+ * @param {string} event An event.
+ * @param {Bull.Events~callback} callback A callback.
+ */
+
+/**
+ * Subscribe to an event. Fired once.
+ *
+ * @function once
+ * @memberof Bull.Events
+ * @param {string} event An event.
+ * @param {Bull.Events~callback} callback A callback.
+ */
+
+/**
+ * Unsubscribe from an event or all events.
+ *
+ * @function off
+ * @memberof Bull.Events
+ * @param {string} [event] From a specific event.
+ * @param {Bull.Events~callback} [callback] From a specific callback.
+ */
+
+/**
+ * Subscribe to an event of other object. Will be automatically unsubscribed on view removal.
+ *
+ * @function listenTo
+ * @memberof Bull.Events
+ * @param {Object} other What to listen.
+ * @param {string} event An event.
+ * @param {Bull.Events~callback} callback A callback.
+ */
+
+/**
+ * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
+ *
+ * @function listenToOnce
+ * @memberof Bull.Events
+ * @param {Object} other What to listen.
+ * @param {string} event An event.
+ * @param {Bull.Events~callback} callback A callback.
+ */
+
+/**
+ * Stop listening to other object. No arguments will remove all listeners.
+ *
+ * @function stopListening
+ * @memberof Bull.Events
+ * @param {Object} [other] To remove listeners to a specific object.
+ * @param {string} [event] To remove listeners to a specific event.
+ * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
+ */
+
+/**
+ * DOM event listeners.
+ *
+ * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
+ */
+
+/**
+ * A view.
+ *
+ * @alias Bull.View
+ * @mixes Bull.Events
+ */
+class View {
     /**
-     * A model.
-     *
-     * @typedef {Object} Bull~Model
-     * @type Object
+     * @param {Object.<string, *>|null} [options]
      * @mixes Bull.Events
      */
+    constructor(options) {
+        this.cid = _.uniqueId('view');
+        _.extend(this, _.pick(options, viewOptions));
+        /** @type {JQuery} */
+        this.$el = $();
+        this.options = options || {};
+    }
 
     /**
-     * A collection.
+     * A template name/path.
      *
-     * @typedef {Object} Bull~Collection
-     * @type Object
-     * @mixes Bull.Events
+     * @type {string|null}
+     * @protected
      */
+    template = null
 
     /**
-     * Nested view definitions.
+     * Template content. Alternative to specifying a template name/path.
      *
-     * @typedef {Object} Bull.View~NestedViewItem
-     *
-     * @property {string} view A view name/path.
-     * @property {string} [selector] A DOM element selector relative to a parent view.
-     * @property {string} [el] A full DOM element selector.
+     * @type {string|null}
+     * @protected
      */
+    templateContent = null
 
     /**
-     * After a view is rendered.
+     * A name of the view. If template name is not defined it will be used to cache
+     * built template and layout. Otherwise, they won't be cached. A name is unique.
      *
-     * @event Bull.View#after:render
+     * @type {string|null}
      */
-
-    /**
-     * Once a view is ready for rendering (loaded).
-     *
-     * @event Bull.View#ready
-     */
-
-    /**
-     * Once a view is removed.
-     *
-     * @event Bull.View#remove
-     */
-
-    /**
-     * A get-HTML callback.
-     *
-     * @callback Bull.View~getHtmlCallback
-     *
-     * @param {string} html An HTML.
-     */
-
-    /**
-     * A DOM event callback.
-     *
-     * @callback Bull.View~domEventCallback
-     *
-     * @param {jQuery.Event} e An event.
-     */
-
-    /**
-     * @callback Bull.Events~callback
-     *
-     * @param {...*} arguments
-     */
-
-    /**
-     * @mixin Bull.Events
-     */
-
-    /**
-     * Trigger an event.
-     *
-     * @function trigger
-     * @memberof Bull.Events
-     * @param {string} event An event.
-     * @param {...*} arguments
-     */
-
-    /**
-     * Subscribe to an event.
-     *
-     * @function on
-     * @memberof Bull.Events
-     * @param {string} event An event.
-     * @param {Bull.Events~callback} callback A callback.
-     */
-
-    /**
-     * Subscribe to an event. Fired once.
-     *
-     * @function once
-     * @memberof Bull.Events
-     * @param {string} event An event.
-     * @param {Bull.Events~callback} callback A callback.
-     */
-
-    /**
-     * Unsubscribe from an event or all events.
-     *
-     * @function off
-     * @memberof Bull.Events
-     * @param {string} [event] From a specific event.
-     * @param {Bull.Events~callback} [callback] From a specific callback.
-     */
-
-    /**
-     * Subscribe to an event of other object. Will be automatically unsubscribed on view removal.
-     *
-     * @function listenTo
-     * @memberof Bull.Events
-     * @param {Object} other What to listen.
-     * @param {string} event An event.
-     * @param {Bull.Events~callback} callback A callback.
-     */
-
-    /**
-     * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
-     *
-     * @function listenToOnce
-     * @memberof Bull.Events
-     * @param {Object} other What to listen.
-     * @param {string} event An event.
-     * @param {Bull.Events~callback} callback A callback.
-     */
-
-    /**
-     * Stop listening to other object. No arguments will remove all listeners.
-     *
-     * @function stopListening
-     * @memberof Bull.Events
-     * @param {Object} [other] To remove listeners to a specific object.
-     * @param {string} [event] To remove listeners to a specific event.
-     * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
-     */
+    name = null
 
     /**
      * DOM event listeners.
      *
-     * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
+     * @type {Bull.View.DomEvents}
+     * @protected
      */
+    events = null
 
     /**
-     * A view.
+     * Not to use cache for layouts. Use it if layouts are dynamic.
      *
-     * @alias Bull.View
-     * @mixes Bull.Events
+     * @type {boolean}
+     * @protected
      */
-     class View {
-        /**
-         * @param {Object.<string, *>|null} [options]
-         * @mixes Bull.Events
-         */
-        constructor(options) {
-            this.cid = _.uniqueId('view');
-            _.extend(this, _.pick(options, viewOptions));
-            /** @type {JQuery} */
-            this.$el = $();
-            this.options = options || {};
+    noCache = false
+
+    /**
+     * Not to render a view automatically when a view tree is built (ready).
+     * Afterwards it can be rendered manually.
+     *
+     * @type {boolean}
+     * @protected
+     */
+    notToRender = false
+
+    /**
+     * Layout itself.
+     *
+     * @type {Object|null}
+     * @protected
+     * @internal
+     */
+    _layout = null
+
+    /**
+     * Layout data.
+     *
+     * @type {Object|null}
+     * @protected
+     */
+    layoutData = null
+
+    /**
+     * Whether the view is ready for rendering (all necessary data is loaded).
+     *
+     * @type {boolean}
+     * @public
+     */
+    isReady = false
+
+    /**
+     * Definitions for nested views that should be automatically created.
+     * Format: viewKey => view defs.
+     *
+     * Example: ```
+     * {
+     *   body: {
+     *     view: 'view/path/body',
+     *     selector: '> .body',
+     *   }
+     * }
+     * ```
+     *
+     * @type {Object.<string, Bull.View~NestedViewItem>|null}
+     * @protected
+     */
+    views = null
+
+    /**
+     * A list of options to be automatically passed to child views.
+     *
+     * @type {string[]|null}
+     * @protected
+     */
+    optionsToPass = null
+
+    /**
+     * @type {string|null}
+     * @private
+     */
+    layout = null
+    /**
+     * Nested views.
+     *
+     * @type {Object.<string, View>}
+     * @protected
+     * @internal
+     */
+    nestedViews = null
+
+    /** @private */
+    _factory = null
+
+    /**
+     * A helper.
+     *
+     * @protected
+     */
+    _helper = null
+
+    /**
+     * @private
+     * @deprecated
+     * @todo Remove.
+     */
+    factory = null
+    /**
+     * @type {string|null}
+     * @private
+     */
+    _template = null
+    /**
+     * @type {Object}
+     * @private
+     */
+    _nestedViewDefs = null
+    /** @private */
+    _templator = null
+    /** @private */
+    _renderer = null
+    /** @private */
+    _layouter = null
+    /** @private */
+    _templateCompiled = null
+    /** @private */
+    _parentView = null
+    /** @private */
+    _path = ''
+    /** @private */
+    _wait = false
+    /** @private */
+    _waitViewList = null
+    /** @private */
+    _nestedViewsFromLayoutLoaded = false
+    /** @private */
+    _readyConditionList = null
+    /** @private */
+    _isRendered = false
+    /** @private */
+    _isFullyRendered = false
+    /** @private */
+    _isBeingRendered = false
+    /** @private */
+    _isRemoved = false
+    /** @private */
+    _isRenderCanceled = false
+    /** @private */
+    _preCompiledTemplates = null
+
+    /**
+     * Set a DOM element selector.
+     *
+     * @param {string} selector A full DOM selector.
+     */
+    setElement(selector) {
+        this.undelegateEvents();
+        this._setElement(selector);
+        this._delegateEvents();
+    }
+
+    /**
+     * Removes all view's delegated events. Useful if you want to disable
+     * or remove a view from the DOM temporarily.
+     */
+    undelegateEvents() {
+        if (!this.$el) {
+            return;
         }
 
+        this.$el.off('.delegateEvents' + this.cid);
+    }
+
+    /** @private */
+    _delegateEvents() {
+        let events = _.result(this, 'events');
+
+        if (!events) {
+            return;
+        }
+
+        this.undelegateEvents();
+
+        for (let key in events) {
+            let method = events[key];
+
+            if (!_.isFunction(method)) {
+                /** @todo Revise. */
+                method = this[method];
+            }
+
+            if (!method) {
+                continue;
+            }
+
+            let match = key.match(delegateEventSplitter);
+
+            this._delegate(match[1], match[2], method.bind(this));
+        }
+    }
+
+    /** @private */
+    _delegate(eventName, selector, listener) {
+        this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+    }
+
+    /**
+     * To be run by the view-factory after instantiating. Should not be overridden.
+     * Not called from the constructor to be able to use ES6 classes with property initializers,
+     * as overridden properties not available in a constructor.
+     *
+     * @param {{
+     *   factory: Bull.Factory,
+     *   renderer: Bull.Renderer,
+     *   templator: Bull.Templator,
+     *   layouter: Bull.Layouter,
+     *   helper: Object,
+     *   onReady: function(): void,
+     *   preCompiledTemplates?: Object,
+     * }} data
+     * @internal
+     */
+    _initialize(data) {
         /**
-         * A template name/path.
-         *
-         * @type {string|null}
-         * @protected
+         * @type {Bull.Factory}
+         * @private
          */
-        template = null
+        this._factory = this.factory = data.factory;
 
         /**
-         * Template content. Alternative to specifying a template name/path.
-         *
-         * @type {string|null}
-         * @protected
+         * @type {Bull.Renderer}
+         * @private
          */
-        templateContent = null
+        this._renderer = data.renderer;
 
         /**
-         * A name of the view. If template name is not defined it will be used to cache
-         * built template and layout. Otherwise, they won't be cached. A name is unique.
-         *
-         * @type {string|null}
+         * @type {Bull.Templator}
+         * @private
          */
-        name = null
+        this._templator = data.templator;
 
         /**
-         * DOM event listeners.
-         *
-         * @type {Bull.View.DomEvents}
-         * @protected
+         * @type {Bull.Layouter}
+         * @private
          */
-        events = null
+        this._layouter = data.layouter;
 
         /**
-         * Not to use cache for layouts. Use it if layouts are dynamic.
-         *
-         * @type {boolean}
-         * @protected
+         * @type {(function(): void)|null}
+         * @private
          */
-        noCache = false
+        this._onReady = data.onReady || null;
 
         /**
-         * Not to render a view automatically when a view tree is built (ready).
-         * Afterwards it can be rendered manually.
-         *
-         * @type {boolean}
-         * @protected
-         */
-        notToRender = false
-
-        /**
-         * Layout itself.
-         *
          * @type {Object|null}
-         * @protected
-         * @internal
-         */
-        _layout = null
-
-        /**
-         * Layout data.
-         *
-         * @type {Object|null}
-         * @protected
-         */
-        layoutData = null
-
-        /**
-         * Whether the view is ready for rendering (all necessary data is loaded).
-         *
-         * @type {boolean}
-         * @public
-         */
-        isReady = false
-
-        /**
-         * Definitions for nested views that should be automatically created.
-         * Format: viewKey => view defs.
-         *
-         * Example: ```
-         * {
-         *   body: {
-         *     view: 'view/path/body',
-         *     selector: '> .body',
-         *   }
-         * }
-         * ```
-         *
-         * @type {Object.<string, Bull.View~NestedViewItem>|null}
-         * @protected
-         */
-        views = null
-
-        /**
-         * A list of options to be automatically passed to child views.
-         *
-         * @type {string[]|null}
-         * @protected
-         */
-        optionsToPass = null
-
-        /**
-         * @type {string|null}
          * @private
          */
-        layout = null
-        /**
-         * Nested views.
-         *
-         * @type {Object.<string, View>}
-         * @protected
-         * @internal
-         */
-        nestedViews = null
+        this._helper = data.helper || null;
 
-        /** @private */
-        _factory = null
-
-        /**
-         * A helper.
-         *
-         * @protected
-         */
-        _helper = null
-
-        /**
-         * @private
-         * @deprecated
-         * @todo Remove.
-         */
-        factory = null
-        /**
-         * @type {string|null}
-         * @private
-         */
-        _template = null
         /**
          * @type {Object}
          * @private
          */
-        _nestedViewDefs = null
-        /** @private */
-        _templator = null
-        /** @private */
-        _renderer = null
-        /** @private */
-        _layouter = null
-        /** @private */
-        _templateCompiled = null
-        /** @private */
-        _parentView = null
-        /** @private */
-        _path = ''
-        /** @private */
-        _wait = false
-        /** @private */
-        _waitViewList = null
-        /** @private */
-        _nestedViewsFromLayoutLoaded = false
-        /** @private */
-        _readyConditionList = null
-        /** @private */
-        _isRendered = false
-        /** @private */
-        _isFullyRendered = false
-        /** @private */
-        _isBeingRendered = false
-        /** @private */
-        _isRemoved = false
-        /** @private */
-        _isRenderCanceled = false
-        /** @private */
-        _preCompiledTemplates = null
+        this._preCompiledTemplates = data.preCompiledTemplates || {};
 
-        /**
-         * Set a DOM element selector.
-         *
-         * @param {string} selector A full DOM selector.
-         */
-        setElement(selector) {
-            this.undelegateEvents();
-            this._setElement(selector);
-            this._delegateEvents();
+        if ('noCache' in this.options) {
+            this.noCache = this.options.noCache;
         }
 
-        /**
-         * Removes all view's delegated events. Useful if you want to disable
-         * or remove a view from the DOM temporarily.
-         */
-        undelegateEvents() {
-            if (!this.$el) {
-                return;
-            }
+        this.events = _.clone(this.events || {});
+        this.name = this.options.name || this.name;
+        this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;
 
-            this.$el.off('.delegateEvents' + this.cid);
-        }
-
+        this.nestedViews = {};
         /** @private */
-        _delegateEvents() {
-            let events = _.result(this, 'events');
+        this._nestedViewDefs = {};
 
-            if (!events) {
-                return;
-            }
-
-            this.undelegateEvents();
-
-            for (let key in events) {
-                let method = events[key];
-
-                if (!_.isFunction(method)) {
-                    /** @todo Revise. */
-                    method = this[method];
-                }
-
-                if (!method) {
-                    continue;
-                }
-
-                let match = key.match(delegateEventSplitter);
-
-                this._delegate(match[1], match[2], method.bind(this));
-            }
-        }
-
-        /** @private */
-        _delegate(eventName, selector, listener) {
-            this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
-        }
-
-        /**
-         * To be run by the view-factory after instantiating. Should not be overridden.
-         * Not called from the constructor to be able to use ES6 classes with property initializers,
-         * as overridden properties not available in a constructor.
-         *
-         * @param {{
-         *   factory: Bull.Factory,
-         *   renderer: Bull.Renderer,
-         *   templator: Bull.Templator,
-         *   layouter: Bull.Layouter,
-         *   helper: Object,
-         *   onReady: function(): void,
-         *   preCompiledTemplates?: Object,
-         * }} data
-         * @internal
-         */
-        _initialize(data) {
-            /**
-             * @type {Bull.Factory}
-             * @private
-             */
-            this._factory = this.factory = data.factory;
-
-            /**
-             * @type {Bull.Renderer}
-             * @private
-             */
-            this._renderer = data.renderer;
-
-            /**
-             * @type {Bull.Templator}
-             * @private
-             */
-            this._templator = data.templator;
-
-            /**
-             * @type {Bull.Layouter}
-             * @private
-             */
-            this._layouter = data.layouter;
-
-            /**
-             * @type {(function(): void)|null}
-             * @private
-             */
-            this._onReady = data.onReady || null;
-
-            /**
-             * @type {Object|null}
-             * @private
-             */
-            this._helper = data.helper || null;
-
-            /**
-             * @type {Object}
-             * @private
-             */
-            this._preCompiledTemplates = data.preCompiledTemplates || {};
-
-            if ('noCache' in this.options) {
-                this.noCache = this.options.noCache;
-            }
-
-            this.events = _.clone(this.events || {});
-            this.name = this.options.name || this.name;
-            this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;
-
-            this.nestedViews = {};
+        if (this._waitViewList == null) {
             /** @private */
-            this._nestedViewDefs = {};
+            this._waitViewList = [];
+        }
 
-            if (this._waitViewList == null) {
-                /** @private */
-                this._waitViewList = [];
-            }
+        /** @private */
+        this._waitPromiseCount = 0;
 
+        if (this._readyConditionList == null) {
             /** @private */
-            this._waitPromiseCount = 0;
+            this._readyConditionList = [];
+        }
 
-            if (this._readyConditionList == null) {
-                /** @private */
-                this._readyConditionList = [];
-            }
+        this.optionsToPass = this.options.optionsToPass || this.optionsToPass || [];
 
-            this.optionsToPass = this.options.optionsToPass || this.optionsToPass || [];
-
-            let merge = function (target, source) {
-                for (let prop in source) {
-                    if (typeof target === 'object') {
-                        if (prop in target) {
-                            merge(target[prop], source[prop]);
-                        } else {
-                            target[prop] = source[prop];
-                        }
+        let merge = function (target, source) {
+            for (let prop in source) {
+                if (typeof target === 'object') {
+                    if (prop in target) {
+                        merge(target[prop], source[prop]);
+                    } else {
+                        target[prop] = source[prop];
                     }
                 }
-
-                return target;
-            };
-
-            if (this.views || this.options.views) {
-                this.views = merge(this.options.views || {}, this.views || {});
             }
 
-            this.init();
-            this.setup();
-            this.setupFinal();
+            return target;
+        };
 
-            this.template = this.options.template || this.template;
-            /**
-             * @todo Revise.
-             * @type {string}
-             * @private
-             */
-            this.layout = this.options.layout;
+        if (this.views || this.options.views) {
+            this.views = merge(this.options.views || {}, this.views || {});
+        }
 
+        this.init();
+        this.setup();
+        this.setupFinal();
+
+        this.template = this.options.template || this.template;
+        /**
+         * @todo Revise.
+         * @type {string}
+         * @private
+         */
+        this.layout = this.options.layout;
+
+        /** @private */
+        this._layout = this.options.layoutDefs || this.options._layout || this._layout;
+        /**
+         * @private
+         * @type {Object|null}
+         */
+        this.layoutData = this.options.layoutData || this.layoutData;
+        /**
+         * @type {string|null}
+         * @private
+         */
+        this._template = this.templateContent || this.options.templateContent || this._template;
+
+        if (this._template != null && this._templator.compilable) {
             /** @private */
-            this._layout = this.options.layoutDefs || this.options._layout || this._layout;
-            /**
-             * @private
-             * @type {Object|null}
-             */
-            this.layoutData = this.options.layoutData || this.layoutData;
-            /**
-             * @type {string|null}
-             * @private
-             */
-            this._template = this.templateContent || this.options.templateContent || this._template;
+            this._templateCompiled = this._templator.compileTemplate(this._template);
+        }
 
-            if (this._template != null && this._templator.compilable) {
-                /** @private */
-                this._templateCompiled = this._templator.compileTemplate(this._template);
-            }
+        if (this.options.el) {
+            this.setElementInAdvance(this.options.el);
+        }
 
-            if (this.options.el) {
-                this.setElementInAdvance(this.options.el);
-            }
+        let _layout = this._getLayout();
 
-            let _layout = this._getLayout();
+        let loadNestedViews = () => {
+            this._loadNestedViews(() => {
+                this._nestedViewsFromLayoutLoaded = true;
 
-            let loadNestedViews = () => {
-                this._loadNestedViews(() => {
-                    this._nestedViewsFromLayoutLoaded = true;
+                this._tryReady();
+            });
+        };
 
-                    this._tryReady();
+        if (this.layout != null || _layout !== null) {
+            if (_layout === null) {
+                this._layouter.getLayout(this.layout, (_layout) => {
+                    /** @private */
+                    this._layout = _layout;
+
+                    loadNestedViews();
                 });
-            };
 
-            if (this.layout != null || _layout !== null) {
-                if (_layout === null) {
-                    this._layouter.getLayout(this.layout, (_layout) => {
-                        /** @private */
-                        this._layout = _layout;
+                return;
+            }
 
-                        loadNestedViews();
-                    });
+            loadNestedViews();
 
-                    return;
-                }
-
+            return;
+        }
+        else {
+            if (this.views != null) {
                 loadNestedViews();
 
                 return;
             }
-            else {
-                if (this.views != null) {
-                    loadNestedViews();
+        }
+
+        this._nestedViewsFromLayoutLoaded = true;
+
+        this._tryReady();
+    }
+
+    /**
+     * Compose template data. A key => value result will be passed to
+     * a template.
+     *
+     * @protected
+     * @returns {Object.<string, *>|{}}
+     */
+    data() {
+        return {};
+    }
+
+    /**
+     * Initialize the view. Is invoked before #setup.
+     *
+     * @protected
+     */
+    init() {}
+
+    /**
+     * Set up the view. Is invoked after #init.
+     *
+     * @protected
+     */
+    setup() {}
+
+    /**
+     * Additional setup. Is invoked after #setup.
+     * Useful to let developers override setup logic w/o needing to call
+     * a parent method in right order.
+     *
+     * @protected
+     */
+    setupFinal() {}
+
+    /**
+     * Set a view container element if it doesn't exist yet. It will call setElement after render.
+     *
+     * @param {string} el A full DOM selector.
+     * @protected
+     */
+    setElementInAdvance(el) {
+        if (this._setElementInAdvancedInProcess) {
+            return;
+        }
+
+        this._setElementInAdvancedInProcess = true;
+
+        this.on('after:render-internal', () => {
+            this.setElement(el);
+
+            this._setElementInAdvancedInProcess = false;
+        });
+    }
+
+    /**
+     * Get a full DOM element selector.
+     *
+     * @public
+     * @return {string|null}
+     */
+    getSelector() {
+        return this.options.el || null;
+    }
+
+    /**
+     * Set a full DOM element selector.
+     *
+     * @public
+     * @param {string} selector A selector.
+     */
+    setSelector(selector) {
+        this.options.el = selector;
+    }
+
+    /**
+     * Checks whether the view has been already rendered
+     *
+     * @public
+     * @return {boolean}
+     */
+    isRendered() {
+        return this._isRendered;
+    }
+
+    /**
+     * Checks whether the view has been fully rendered (afterRender has been executed).
+     *
+     * @public
+     * @return {boolean}
+     */
+    isFullyRendered() {
+        return this._isFullyRendered;
+    }
+
+    /**
+     * Whether the view is being rendered at the moment.
+     *
+     * @public
+     * @return {boolean}
+     */
+    isBeingRendered() {
+        return this._isBeingRendered;
+    }
+
+    /**
+     * Whether the view is removed.
+     *
+     * @public
+     * @return {boolean}
+     */
+    isRemoved() {
+        return this._isRemoved;
+    }
+
+    /**
+     * Get HTML of view but don't render it.
+     *
+     * @public
+     * @param {Bull.View~getHtmlCallback} callback A callback with an HTML.
+     */
+    getHtml(callback) {
+        this._getHtml(callback);
+    }
+
+    /**
+     * Cancel rendering.
+     */
+    cancelRender() {
+        if (!this.isBeingRendered()) {
+            return;
+        }
+
+        this._isRenderCanceled = true;
+    }
+
+    /**
+     * Un-cancel rendering.
+     */
+    uncancelRender() {
+        this._isRenderCanceled = false;
+    }
+
+    /**
+     * Render the view.
+     *
+     * @param {Function} [callback] Deprecated. Use promise.
+     * @return {Promise<this>}
+     */
+    render(callback) {
+        this._isRendered = false;
+        this._isFullyRendered = false;
+
+        return new Promise(resolve => {
+            this._getHtml(html => {
+                if (this._isRenderCanceled) {
+                    this._isRenderCanceled = false;
+                    this._isBeingRendered = false;
 
                     return;
                 }
-            }
 
-            this._nestedViewsFromLayoutLoaded = true;
-
-            this._tryReady();
-        }
-
-        /**
-         * Compose template data. A key => value result will be passed to
-         * a template.
-         *
-         * @protected
-         * @returns {Object.<string, *>|{}}
-         */
-        data() {
-            return {};
-        }
-
-        /**
-         * Initialize the view. Is invoked before #setup.
-         *
-         * @protected
-         */
-        init() {}
-
-        /**
-         * Set up the view. Is invoked after #init.
-         *
-         * @protected
-         */
-        setup() {}
-
-        /**
-         * Additional setup. Is invoked after #setup.
-         * Useful to let developers override setup logic w/o needing to call
-         * a parent method in right order.
-         *
-         * @protected
-         */
-        setupFinal() {}
-
-        /**
-         * Set a view container element if it doesn't exist yet. It will call setElement after render.
-         *
-         * @param {string} el A full DOM selector.
-         * @protected
-         */
-        setElementInAdvance(el) {
-            if (this._setElementInAdvancedInProcess) {
-                return;
-            }
-
-            this._setElementInAdvancedInProcess = true;
-
-            this.on('after:render-internal', () => {
-                this.setElement(el);
-
-                this._setElementInAdvancedInProcess = false;
-            });
-        }
-
-        /**
-         * Get a full DOM element selector.
-         *
-         * @public
-         * @return {string|null}
-         */
-        getSelector() {
-            return this.options.el || null;
-        }
-
-        /**
-         * Set a full DOM element selector.
-         *
-         * @public
-         * @param {string} selector A selector.
-         */
-        setSelector(selector) {
-            this.options.el = selector;
-        }
-
-        /**
-         * Checks whether the view has been already rendered
-         *
-         * @public
-         * @return {boolean}
-         */
-        isRendered() {
-            return this._isRendered;
-        }
-
-        /**
-         * Checks whether the view has been fully rendered (afterRender has been executed).
-         *
-         * @public
-         * @return {boolean}
-         */
-        isFullyRendered() {
-            return this._isFullyRendered;
-        }
-
-        /**
-         * Whether the view is being rendered at the moment.
-         *
-         * @public
-         * @return {boolean}
-         */
-        isBeingRendered() {
-            return this._isBeingRendered;
-        }
-
-        /**
-         * Whether the view is removed.
-         *
-         * @public
-         * @return {boolean}
-         */
-        isRemoved() {
-            return this._isRemoved;
-        }
-
-        /**
-         * Get HTML of view but don't render it.
-         *
-         * @public
-         * @param {Bull.View~getHtmlCallback} callback A callback with an HTML.
-         */
-        getHtml(callback) {
-            this._getHtml(callback);
-        }
-
-        /**
-         * Cancel rendering.
-         */
-        cancelRender() {
-            if (!this.isBeingRendered()) {
-                return;
-            }
-
-            this._isRenderCanceled = true;
-        }
-
-        /**
-         * Un-cancel rendering.
-         */
-        uncancelRender() {
-            this._isRenderCanceled = false;
-        }
-
-        /**
-         * Render the view.
-         *
-         * @param {Function} [callback] Deprecated. Use promise.
-         * @return {Promise<this>}
-         */
-        render(callback) {
-            this._isRendered = false;
-            this._isFullyRendered = false;
-
-            return new Promise(resolve => {
-                this._getHtml(html => {
-                    if (this._isRenderCanceled) {
-                        this._isRenderCanceled = false;
-                        this._isBeingRendered = false;
-
-                        return;
-                    }
-
-                    if (this.$el.length) {
-                        this.$el.html(html);
-                    }
-                    else {
-                        if (this.options.el) {
-                            this.setElement(this.options.el);
-                        }
-
-                        this.$el.html(html);
-                    }
-
-                    this._afterRender();
-
-                    if (typeof callback === 'function') {
-                        callback();
-                    }
-
-                    resolve(this);
-                });
-            });
-        }
-
-        /**
-         * Re-render the view.
-         *
-         * @param {boolean} [force=false] To render if was not rendered.
-         * @return {Promise<this>}
-         */
-        reRender(force) {
-            if (this.isRendered()) {
-                return this.render();
-            }
-
-            if (this.isBeingRendered()) {
-                return new Promise((resolve, reject) => {
-                    this.once('after:render', () => {
-                        this.render()
-                            .then(() => resolve(this))
-                            .catch(reject);
-                    });
-                });
-            }
-
-            if (force) {
-                return this.render();
-            }
-
-            // Don't reject, preventing an exception on a non-caught promise.
-            return new Promise(() => {});
-        }
-
-        /** @private */
-        _afterRender() {
-            this._isBeingRendered = false;
-            this._isRendered = true;
-
-            this.trigger('after:render-internal', this);
-
-            for (let key in this.nestedViews) {
-                let nestedView = this.nestedViews[key];
-
-                if (!nestedView.notToRender) {
-                    nestedView._afterRender();
-                }
-            }
-
-            this.afterRender();
-
-            this.trigger('after:render', this);
-
-            this._isFullyRendered = true;
-        }
-
-        /**
-         * Executed after render.
-         *
-         * @protected
-         */
-        afterRender() {}
-
-        /**
-         * Proceed when rendered.
-         *
-         * @return {Promise<void>}
-         */
-        whenRendered() {
-            if (this.isRendered()) {
-                return Promise.resolve();
-            }
-
-            return new Promise(resolve => {
-                this.once('after:render', () => resolve())
-            });
-        }
-
-        /** @private */
-        _tryReady() {
-            if (this.isReady) {
-                return;
-            }
-
-            if (this._wait) {
-                return;
-            }
-
-            if (!this._nestedViewsFromLayoutLoaded) {
-                return;
-            }
-
-            for (let i = 0; i < this._waitViewList.length; i++) {
-                if (!this.hasView(this._waitViewList[i])) {
-                    return;
-                }
-            }
-
-            if (this._waitPromiseCount) {
-                return;
-            }
-
-            for (let i = 0; i < this._readyConditionList.length; i++) {
-                if (typeof this._readyConditionList[i] === 'function') {
-                    if (!this._readyConditionList[i]()) {
-                        return;
-                    }
+                if (this.$el.length) {
+                    this.$el.html(html);
                 }
                 else {
-                    if (!this._readyConditionList) {
-                        return;
+                    if (this.options.el) {
+                        this.setElement(this.options.el);
                     }
-                }
-            }
 
-            this._makeReady();
-        }
-
-        /** @private */
-        _makeReady() {
-            this.isReady = true;
-            this.trigger('ready');
-
-            if (typeof this._onReady === 'function') {
-                this._onReady(this);
-            }
-        }
-
-        /** @private */
-        _addDefinedNestedViewDefs(list) {
-            for (let name in this.views) {
-                let o = _.clone(this.views[name]);
-
-                o.name = name;
-
-                list.push(o);
-
-                this._nestedViewDefs[name] = o;
-            }
-
-            return list;
-        }
-
-        /** @private */
-        _getNestedViewsFromLayout() {
-            let nestedViewDefs = this._layouter
-                .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
-
-            if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
-                throw new Error("Bad layout. It should be an Array.");
-            }
-
-            let nestedViewDefsFiltered = [];
-
-            for (let i in nestedViewDefs) {
-                let key = nestedViewDefs[i].name;
-
-                this._nestedViewDefs[key] = nestedViewDefs[i];
-
-                if ('view' in nestedViewDefs[i] && nestedViewDefs[i].view === true) {
-                    if (!('layout' in nestedViewDefs[i] || 'template' in nestedViewDefs[i])) {
-                        continue;
-                    }
+                    this.$el.html(html);
                 }
 
-                nestedViewDefsFiltered.push(nestedViewDefs[i]);
-            }
+                this._afterRender();
 
-            return nestedViewDefsFiltered;
-        }
-
-        /** @private */
-        _loadNestedViews(callback) {
-            let nestedViewDefs = [];
-
-            if (this._layout != null) {
-                nestedViewDefs = this._getNestedViewsFromLayout();
-            }
-
-            this._addDefinedNestedViewDefs(nestedViewDefs);
-
-            let count = nestedViewDefs.length;
-            let loaded = 0;
-
-            let tryReady = function () {
-                if (loaded === count) {
+                if (typeof callback === 'function') {
                     callback();
-
-                    return true;
-                }
-            };
-
-            tryReady();
-
-            nestedViewDefs.forEach((def, i) => {
-                let key = nestedViewDefs[i].name;
-                let viewName = this._factory.defaultViewName;
-
-                if ('view' in nestedViewDefs[i]) {
-                    viewName = nestedViewDefs[i].view;
                 }
 
-                if (viewName === false) {
-                    loaded++;
+                resolve(this);
+            });
+        });
+    }
 
-                    tryReady();
+    /**
+     * Re-render the view.
+     *
+     * @param {boolean} [force=false] To render if was not rendered.
+     * @return {Promise<this>}
+     */
+    reRender(force) {
+        if (this.isRendered()) {
+            return this.render();
+        }
 
-                    return;
-                }
-
-                let options = {};
-
-                if ('layout' in nestedViewDefs[i]) {
-                    options.layout = nestedViewDefs[i].layout;
-                }
-
-                if ('template' in nestedViewDefs[i]) {
-                    options.template = nestedViewDefs[i].template;
-                }
-
-                if ('el' in nestedViewDefs[i]) {
-                    options.el = nestedViewDefs[i].el;
-                }
-
-                if ('options' in nestedViewDefs[i]) {
-                    options = _.extend(options, nestedViewDefs[i].options);
-                }
-
-                if (this.model) {
-                    options.model = this.model;
-                }
-
-                if (this.collection) {
-                    options.collection = this.collection;
-                }
-
-                for (let k in this.optionsToPass) {
-                    let name = this.optionsToPass[k];
-
-                    options[name] = this.options[name];
-                }
-
-                this._factory.create(viewName, options, (view) => {
-                    if ('notToRender' in nestedViewDefs[i]) {
-                        view.notToRender = nestedViewDefs[i].notToRender;
-                    }
-
-                    this.setView(key, view);
-
-                    loaded++;
-
-                    tryReady();
+        if (this.isBeingRendered()) {
+            return new Promise((resolve, reject) => {
+                this.once('after:render', () => {
+                    this.render()
+                        .then(() => resolve(this))
+                        .catch(reject);
                 });
             });
         }
 
-        /** @private */
-        _getData() {
-            if (this.options.data) {
-                if (typeof this.options.data === 'function') {
-                    return this.options.data();
-                }
+        if (force) {
+            return this.render();
+        }
 
-                return this.options.data;
+        // Don't reject, preventing an exception on a non-caught promise.
+        return new Promise(() => {});
+    }
+
+    /** @private */
+    _afterRender() {
+        this._isBeingRendered = false;
+        this._isRendered = true;
+
+        this.trigger('after:render-internal', this);
+
+        for (let key in this.nestedViews) {
+            let nestedView = this.nestedViews[key];
+
+            if (!nestedView.notToRender) {
+                nestedView._afterRender();
             }
-
-            if (typeof this.data === 'function') {
-                return this.data();
-            }
-
-            return this.data;
         }
 
-        /** @private */
-        _getNestedViewsAsArray() {
-            let nestedViewsArray = [];
+        this.afterRender();
 
-            let i = 0;
+        this.trigger('after:render', this);
 
-            for (let key in this.nestedViews) {
-                nestedViewsArray.push({
-                    key: key,
-                    view: this.nestedViews[key]
-                });
+        this._isFullyRendered = true;
+    }
 
-                i++;
-            }
+    /**
+     * Executed after render.
+     *
+     * @protected
+     */
+    afterRender() {}
 
-            return nestedViewsArray;
-
+    /**
+     * Proceed when rendered.
+     *
+     * @return {Promise<void>}
+     */
+    whenRendered() {
+        if (this.isRendered()) {
+            return Promise.resolve();
         }
 
-        /** @private */
-        _getNestedViewsHtmlList(callback) {
-            let data = {};
-            let nestedViewsArray = this._getNestedViewsAsArray();
+        return new Promise(resolve => {
+            this.once('after:render', () => resolve())
+        });
+    }
 
-            let loaded = 0;
-            let count = nestedViewsArray.length;
-
-            let tryReady = () => {
-                if (loaded === count) {
-                    callback(data);
-
-                    return true;
-                }
-            };
-
-            tryReady();
-
-            nestedViewsArray.forEach((d, i) => {
-                let key = nestedViewsArray[i].key;
-                let view = nestedViewsArray[i].view;
-
-                if (!view.notToRender) {
-                    view.getHtml((html) => {
-                        data[key] = html;
-
-                        loaded++;
-                        tryReady();
-                    });
-
-                    return;
-                }
-
-                loaded++;
-                tryReady();
-            });
+    /** @private */
+    _tryReady() {
+        if (this.isReady) {
+            return;
         }
 
-        /**
-         * Provides the ability to modify template data right before render.
-         *
-         * @param {Object} data Data.
-         */
-        handleDataBeforeRender(data) {}
-
-        /** @private */
-        _getHtml(callback) {
-            this._isBeingRendered = true;
-            this.trigger('render', this);
-
-            this._getNestedViewsHtmlList(nestedViewsHtmlList => {
-                let data = _.extend(this._getData() || {}, nestedViewsHtmlList);
-
-                if (this.collection || null) {
-                    data.collection = this.collection;
-                }
-
-                if (this.model || null) {
-                    data.model = this.model;
-                }
-
-                data.viewObject = this;
-
-                this.handleDataBeforeRender(data);
-
-                this._getTemplate(template => {
-                    let html = this._renderer.render(template, data);
-
-                    callback(html);
-                });
-            });
+        if (this._wait) {
+            return;
         }
 
-        /** @private */
-        _getTemplateName() {
-            return this.template || null;
+        if (!this._nestedViewsFromLayoutLoaded) {
+            return;
         }
 
-        /** @private */
-        _getLayoutName() {
-            return this.layout || this.name || null;
-        }
-
-        /** @private */
-        _getLayoutData() {
-            return this.layoutData;
-        }
-
-        /** @private */
-        _getLayout() {
-            if (typeof this._layout === 'function') {
-                return this._layout();
-            }
-
-            return this._layout;
-        }
-
-        /** @private */
-        _getTemplate(callback) {
-            if (
-                this._templator &&
-                this._templator.compilable &&
-                this._templateCompiled !== null
-            ) {
-                callback(this._templateCompiled);
-
+        for (let i = 0; i < this._waitViewList.length; i++) {
+            if (!this.hasView(this._waitViewList[i])) {
                 return;
             }
-
-            let _template = this._template || null;
-
-            if (_template !== null) {
-                callback(_template);
-
-                return;
-            }
-
-            let templateName = this._getTemplateName();
-
-            if (
-                templateName &&
-                templateName in (this._preCompiledTemplates || {})
-            ) {
-                callback(this._preCompiledTemplates[templateName]);
-
-                return;
-            }
-
-            let noCache = false;
-            let layoutOptions = {};
-
-            if (!templateName) {
-                noCache = this.noCache;
-
-                let layoutName = this._getLayoutName();
-
-                if (!layoutName) {
-                    noCache = true;
-                }
-                else {
-                    if (layoutName) {
-                        templateName = 'built-' + layoutName;
-                    }
-                    else {
-                        templateName = null;
-                    }
-                }
-
-                layoutOptions = {
-                    name: layoutName,
-                    data: this._getLayoutData(),
-                    layout: this._getLayout(),
-                };
-            }
-
-            this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
         }
 
-        /** @private */
-        _updatePath(parentPath, viewKey) {
-            this._path = parentPath + '/' + viewKey;
-
-            for (let key in this.nestedViews) {
-                this.nestedViews[key]._updatePath(this._path, key);
-            }
+        if (this._waitPromiseCount) {
+            return;
         }
 
-        /** @private */
-        _getSelectorForNestedView(key) {
-            let el = false;
-
-            if (key in this._nestedViewDefs) {
-                if ('id' in this._nestedViewDefs[key]) {
-                    el = '#' + this._nestedViewDefs[key].id;
-                }
-                else {
-                    if ('el' in this._nestedViewDefs[key]) {
-                        el = this._nestedViewDefs[key].el;
-                    }
-                    else if ('selector' in this._nestedViewDefs[key]) {
-                        let currentEl = this.getSelector();
-
-                        if (currentEl) {
-                            el = currentEl + ' ' + this._nestedViewDefs[key].selector;
-                        }
-                    }
-                    else {
-                        let currentEl = this.getSelector();
-
-                        if (currentEl) {
-                            el = currentEl + ' [data-view="'+key+'"]';
-                        }
-                    }
-                }
-            }
-
-            return el;
-        }
-
-        /**
-         * Whether the view has a nested view.
-         *
-         * @param {string} key A view key.
-         * @return {boolean}
-         */
-        hasView(key) {
-            return key in this.nestedViews;
-        }
-
-        /**
-         * Get a nested view.
-         *
-         * @param {string} key A view key.
-         * @return {View|null}
-         */
-        getView(key) {
-            if (key in this.nestedViews) {
-                return this.nestedViews[key];
-            }
-
-            return null;
-        }
-
-        /**
-         * Assign a view instance as nested.
-         *
-         * @param {string} key A view key.
-         * @param {Bull.View} view A view.
-         * @param {string|null} [selector] A relative selector.
-         * @return {Promise<View>}
-         */
-        assignView(key, view, selector) {
-            this.clearView(key);
-
-            this._viewPromiseHash = this._viewPromiseHash || {};
-            let promise = null;
-
-            promise = this._viewPromiseHash[key] = new Promise(resolve => {
-                if (!this.isReady) {
-                    this.waitForView(key);
-                }
-
-                if (selector || !view.getSelector()) {
-                    selector = selector || `[data-view="${key}"]`;
-
-                    view.setSelector(this.getSelector() + ' ' + selector);
-                }
-
-                view._initialize({
-                    factory: this._factory,
-                    layouter: this._layouter,
-                    templator: this._templator,
-                    renderer: this._renderer,
-                    helper: this._helper,
-                    onReady: () => this._assignViewCallback(key, view, resolve, promise),
-                });
-            });
-
-            return promise;
-        }
-
-        /**
-         * Create a nested view. The important method.
-         *
-         * @param {string} key A view key.
-         * @param {string} viewName A view name/path.
-         * @param {Bull.View~Options} options View options. Custom options can be passed as well.
-         * @param {Function} [callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
-         * @param {boolean} [wait=true] Set false if no need a parent view to wait till nested view loaded.
-         * @return {Promise<View>}
-         */
-        createView(key, viewName, options, callback, wait) {
-            this.clearView(key);
-
-            this._viewPromiseHash = this._viewPromiseHash || {};
-
-            let promise = null;
-
-            promise = this._viewPromiseHash[key] = new Promise(resolve => {
-                wait = (typeof wait === 'undefined') ? true : wait;
-
-                if (wait) {
-                    this.waitForView(key);
-                }
-
-                options = options || {};
-
-                if (!options.el && options.selector) {
-                    options.el = this.getSelector() + ' ' + options.selector;
-                }
-
-                if (!options.el) {
-                    options.el = this.getSelector() + ` [data-view="${key}"]`;
-                }
-
-                this._factory.create(viewName, options, view => {
-                    this._assignViewCallback(
-                        key,
-                        view,
-                        resolve,
-                        promise,
-                        callback,
-                        options.setViewBeforeCallback
-                    );
-                });
-            });
-
-            return promise;
-        }
-
-        /**
-         * @param {string} key
-         * @param {Bull.View} view
-         * @param {function} resolve
-         * @param {Promise} promise
-         * @param {function} [callback]
-         * @param {boolean} [setViewBeforeCallback]
-         * @private
-         */
-        _assignViewCallback(
-            key,
-            view,
-            resolve,
-            promise,
-            callback,
-            setViewBeforeCallback
-        ) {
-            let previousView = this.getView(key);
-
-            if (previousView) {
-                previousView.cancelRender();
-            }
-
-            delete this._viewPromiseHash[key];
-
-            if (promise && promise._isToCancel) {
-                if (!view.isRemoved()) {
-                    view.remove();
-                }
-
-                return;
-            }
-
-            let isSet = false;
-
-            if (this._isRendered || setViewBeforeCallback) {
-                this.setView(key, view);
-
-                isSet = true;
-            }
-
-            if (typeof callback === 'function') {
-                callback.call(this, view);
-            }
-
-            resolve(view);
-
-            if (!this._isRendered && !setViewBeforeCallback && !isSet) {
-                this.setView(key, view);
-            }
-        }
-
-        /**
-         * Set a nested view.
-         *
-         * @param {string} key A view key.
-         * @param {Bull.View} view A view name/path.
-         * @param {string} [el] A full DOM selector for a view container.
-         */
-        setView(key, view, el) {
-            el = el || this._getSelectorForNestedView(key) || view.options.el || false;
-
-            if (el) {
-                if (this.isRendered()) {
-                    view.setElement(el);
-                } else {
-                    view.setElementInAdvance(el);
-                }
-            }
-
-            if (key in this.nestedViews) {
-                this.clearView(key);
-            }
-
-            this.nestedViews[key] = view;
-
-            view._parentView = this;
-            view._updatePath(this._path, key);
-
-            this._tryReady();
-        }
-
-        /**
-         * Clear a nested view. Initiates removal of the nested view.
-         *
-         * @param {string} key A view key.
-         */
-        clearView(key) {
-            if (key in this.nestedViews) {
-                this.nestedViews[key].remove();
-
-                delete this.nestedViews[key];
-            }
-
-            this._viewPromiseHash = this._viewPromiseHash || {};
-
-            let previousPromise = this._viewPromiseHash[key];
-
-            if (previousPromise) {
-                previousPromise._isToCancel = true;
-            }
-        }
-
-        /**
-         * Removes a nested view for cases when it's supposed that this view can be re-used in future.
-         *
-         * @param {string} key A view key.
-         */
-        unchainView(key) {
-            if (key in this.nestedViews) {
-                this.nestedViews[key]._parentView = null;
-                this.nestedViews[key].undelegateEvents();
-
-                delete this.nestedViews[key];
-            }
-        }
-
-        /**
-         * Get a parent view.
-         *
-         * @return {Bull.View}
-         */
-        getParentView() {
-            return this._parentView;
-        }
-
-        /**
-         * Has a parent view.
-         *
-         * @return {boolean}
-         */
-        hasParentView() {
-            return !!this._parentView;
-        }
-
-        /**
-         * Add a condition for the view getting ready.
-         *
-         * @param {(Function|boolean)} condition A condition.
-         */
-        addReadyCondition(condition) {
-            this._readyConditionList.push(condition);
-        }
-
-        /**
-         * Wait for a nested view.
-         *
-         * @protected
-         * @param {string} key A view key.
-         */
-        waitForView(key) {
-            this._waitViewList.push(key);
-        }
-
-        /**
-         * Makes the view to wait for a promise (if a Promise is passed as a parameter).
-         * Adds a wait condition if true is passed. Removes the wait condition if false.
-         *
-         * @protected
-         * @param {Promise|boolean} wait A wait-promise or true/false.
-         */
-        wait(wait) {
-            if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
-                this._waitPromiseCount++;
-
-                wait.then(() => {
-                    this._waitPromiseCount--;
-                    this._tryReady();
-                });
-
-                return;
-            }
-
-            if (typeof wait === 'function') {
-                this._waitPromiseCount++;
-
-                let promise = new Promise(resolve => {
-                    resolve(wait.call(this));
-                });
-
-                promise.then(() => {
-                    this._waitPromiseCount--;
-                    this._tryReady();
-                });
-
-                return promise;
-            }
-
-            if (wait) {
-                this._wait = true;
-
-                return;
-            }
-
-            this._wait = false;
-            this._tryReady();
-        }
-
-        /**
-         * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
-         *
-         * @public
-         * @param {boolean} [dontEmpty] Skips emptying an element container.
-         */
-        remove(dontEmpty) {
-            this.cancelRender();
-
-            for (let key in this.nestedViews) {
-                this.clearView(key);
-            }
-
-            this.trigger('remove');
-            this.onRemove();
-            this.off();
-
-            if (!dontEmpty) {
-                this.$el.empty();
-            }
-
-            this.stopListening();
-            this.undelegateEvents();
-
-            if (this.model) {
-                this.model.off(null, null, this);
-            }
-
-            if (this.collection) {
-                this.collection.off(null, null, this);
-            }
-
-            this._isRendered = false;
-            this._isFullyRendered = false;
-            this._isBeingRendered = false;
-            this._isRemoved = true;
-
-            return this;
-        }
-
-        /**
-         * Called on view removal.
-         *
-         * @protected
-         */
-        onRemove() {}
-
-        /** @private */
-        _setElement(el) {
-            if (typeof el === 'string') {
-                let parentView = this.getParentView();
-
-                if (
-                    parentView &&
-                    parentView.isRendered() &&
-                    parentView.$el &&
-                    parentView.$el.length &&
-                    parentView.getSelector() &&
-                    el.indexOf(parentView.getSelector()) === 0
-                ) {
-                    let subEl = el.substr(parentView.getSelector().length, el.length - 1);
-
-                    this.$el = $(subEl, parentView.$el).eq(0);
-                    this.el = this.$el[0];
-
+        for (let i = 0; i < this._readyConditionList.length; i++) {
+            if (typeof this._readyConditionList[i] === 'function') {
+                if (!this._readyConditionList[i]()) {
                     return;
                 }
             }
-
-            this.$el = $(el).eq(0);
-            this.el = this.$el[0];
+            else {
+                if (!this._readyConditionList) {
+                    return;
+                }
+            }
         }
 
-        /**
-         * Propagate an event to nested views.
-         *
-         * @public
-         * @param {...*} arguments
-         */
-        propagateEvent() {
-            this.trigger.apply(this, arguments);
+        this._makeReady();
+    }
 
-            for (let key in this.nestedViews) {
-                let view = this.nestedViews[key];
+    /** @private */
+    _makeReady() {
+        this.isReady = true;
+        this.trigger('ready');
 
-                view.propagateEvent.apply(view, arguments);
-            }
+        if (typeof this._onReady === 'function') {
+            this._onReady(this);
         }
     }
 
-    Bull.View = View;
+    /** @private */
+    _addDefinedNestedViewDefs(list) {
+        for (let name in this.views) {
+            let o = _.clone(this.views[name]);
 
-    _.extend(View.prototype, Bull.Events);
+            o.name = name;
 
-    const isEsClass = fn => {
-        return typeof fn === 'function' &&
-            Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable === false;
-    };
+            list.push(o);
 
-    Bull.View.extend = function (protoProps, staticProps) {
-        let parent = this;
-
-        let child;
-
-        if (isEsClass(parent)) {
-            let TemporaryHelperConstructor = function () {};
-
-            child = function () {
-                if (new.target) {
-                    let obj = Reflect.construct(parent, arguments, new.target);
-
-                    for (let prop of Object.getOwnPropertyNames(obj)) {
-                        if (typeof this[prop] !== 'undefined') {
-                            obj[prop] = this[prop];
-                        }
-                    }
-
-                    return obj;
-                }
-
-                return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
-            };
-
-            _.extend(child, parent, staticProps);
-
-            child.prototype = _.create(parent.prototype, protoProps);
-            child.prototype.constructor = child;
-            child.__super__ = parent.prototype;
-            child.prototype.__isEs = true;
-
-            TemporaryHelperConstructor.prototype = child.prototype;
-
-            return child;
+            this._nestedViewDefs[name] = o;
         }
 
-        child = function () {
-            if (parent.prototype.__isEs) {
-                return Reflect.construct(parent, arguments, new.target);
+        return list;
+    }
+
+    /** @private */
+    _getNestedViewsFromLayout() {
+        let nestedViewDefs = this._layouter
+            .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
+
+        if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
+            throw new Error("Bad layout. It should be an Array.");
+        }
+
+        let nestedViewDefsFiltered = [];
+
+        for (let i in nestedViewDefs) {
+            let key = nestedViewDefs[i].name;
+
+            this._nestedViewDefs[key] = nestedViewDefs[i];
+
+            if ('view' in nestedViewDefs[i] && nestedViewDefs[i].view === true) {
+                if (!('layout' in nestedViewDefs[i] || 'template' in nestedViewDefs[i])) {
+                    continue;
+                }
             }
 
-            return parent.apply(this, arguments);
+            nestedViewDefsFiltered.push(nestedViewDefs[i]);
+        }
+
+        return nestedViewDefsFiltered;
+    }
+
+    /** @private */
+    _loadNestedViews(callback) {
+        let nestedViewDefs = [];
+
+        if (this._layout != null) {
+            nestedViewDefs = this._getNestedViewsFromLayout();
+        }
+
+        this._addDefinedNestedViewDefs(nestedViewDefs);
+
+        let count = nestedViewDefs.length;
+        let loaded = 0;
+
+        let tryReady = function () {
+            if (loaded === count) {
+                callback();
+
+                return true;
+            }
+        };
+
+        tryReady();
+
+        nestedViewDefs.forEach((def, i) => {
+            let key = nestedViewDefs[i].name;
+            let viewName = this._factory.defaultViewName;
+
+            if ('view' in nestedViewDefs[i]) {
+                viewName = nestedViewDefs[i].view;
+            }
+
+            if (viewName === false) {
+                loaded++;
+
+                tryReady();
+
+                return;
+            }
+
+            let options = {};
+
+            if ('layout' in nestedViewDefs[i]) {
+                options.layout = nestedViewDefs[i].layout;
+            }
+
+            if ('template' in nestedViewDefs[i]) {
+                options.template = nestedViewDefs[i].template;
+            }
+
+            if ('el' in nestedViewDefs[i]) {
+                options.el = nestedViewDefs[i].el;
+            }
+
+            if ('options' in nestedViewDefs[i]) {
+                options = _.extend(options, nestedViewDefs[i].options);
+            }
+
+            if (this.model) {
+                options.model = this.model;
+            }
+
+            if (this.collection) {
+                options.collection = this.collection;
+            }
+
+            for (let k in this.optionsToPass) {
+                let name = this.optionsToPass[k];
+
+                options[name] = this.options[name];
+            }
+
+            this._factory.create(viewName, options, (view) => {
+                if ('notToRender' in nestedViewDefs[i]) {
+                    view.notToRender = nestedViewDefs[i].notToRender;
+                }
+
+                this.setView(key, view);
+
+                loaded++;
+
+                tryReady();
+            });
+        });
+    }
+
+    /** @private */
+    _getData() {
+        if (this.options.data) {
+            if (typeof this.options.data === 'function') {
+                return this.options.data();
+            }
+
+            return this.options.data;
+        }
+
+        if (typeof this.data === 'function') {
+            return this.data();
+        }
+
+        return this.data;
+    }
+
+    /** @private */
+    _getNestedViewsAsArray() {
+        let nestedViewsArray = [];
+
+        let i = 0;
+
+        for (let key in this.nestedViews) {
+            nestedViewsArray.push({
+                key: key,
+                view: this.nestedViews[key]
+            });
+
+            i++;
+        }
+
+        return nestedViewsArray;
+
+    }
+
+    /** @private */
+    _getNestedViewsHtmlList(callback) {
+        let data = {};
+        let nestedViewsArray = this._getNestedViewsAsArray();
+
+        let loaded = 0;
+        let count = nestedViewsArray.length;
+
+        let tryReady = () => {
+            if (loaded === count) {
+                callback(data);
+
+                return true;
+            }
+        };
+
+        tryReady();
+
+        nestedViewsArray.forEach((d, i) => {
+            let key = nestedViewsArray[i].key;
+            let view = nestedViewsArray[i].view;
+
+            if (!view.notToRender) {
+                view.getHtml((html) => {
+                    data[key] = html;
+
+                    loaded++;
+                    tryReady();
+                });
+
+                return;
+            }
+
+            loaded++;
+            tryReady();
+        });
+    }
+
+    /**
+     * Provides the ability to modify template data right before render.
+     *
+     * @param {Object} data Data.
+     */
+    handleDataBeforeRender(data) {}
+
+    /** @private */
+    _getHtml(callback) {
+        this._isBeingRendered = true;
+        this.trigger('render', this);
+
+        this._getNestedViewsHtmlList(nestedViewsHtmlList => {
+            let data = _.extend(this._getData() || {}, nestedViewsHtmlList);
+
+            if (this.collection || null) {
+                data.collection = this.collection;
+            }
+
+            if (this.model || null) {
+                data.model = this.model;
+            }
+
+            data.viewObject = this;
+
+            this.handleDataBeforeRender(data);
+
+            this._getTemplate(template => {
+                let html = this._renderer.render(template, data);
+
+                callback(html);
+            });
+        });
+    }
+
+    /** @private */
+    _getTemplateName() {
+        return this.template || null;
+    }
+
+    /** @private */
+    _getLayoutName() {
+        return this.layout || this.name || null;
+    }
+
+    /** @private */
+    _getLayoutData() {
+        return this.layoutData;
+    }
+
+    /** @private */
+    _getLayout() {
+        if (typeof this._layout === 'function') {
+            return this._layout();
+        }
+
+        return this._layout;
+    }
+
+    /** @private */
+    _getTemplate(callback) {
+        if (
+            this._templator &&
+            this._templator.compilable &&
+            this._templateCompiled !== null
+        ) {
+            callback(this._templateCompiled);
+
+            return;
+        }
+
+        let _template = this._template || null;
+
+        if (_template !== null) {
+            callback(_template);
+
+            return;
+        }
+
+        let templateName = this._getTemplateName();
+
+        if (
+            templateName &&
+            templateName in (this._preCompiledTemplates || {})
+        ) {
+            callback(this._preCompiledTemplates[templateName]);
+
+            return;
+        }
+
+        let noCache = false;
+        let layoutOptions = {};
+
+        if (!templateName) {
+            noCache = this.noCache;
+
+            let layoutName = this._getLayoutName();
+
+            if (!layoutName) {
+                noCache = true;
+            }
+            else {
+                if (layoutName) {
+                    templateName = 'built-' + layoutName;
+                }
+                else {
+                    templateName = null;
+                }
+            }
+
+            layoutOptions = {
+                name: layoutName,
+                data: this._getLayoutData(),
+                layout: this._getLayout(),
+            };
+        }
+
+        this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
+    }
+
+    /** @private */
+    _updatePath(parentPath, viewKey) {
+        this._path = parentPath + '/' + viewKey;
+
+        for (let key in this.nestedViews) {
+            this.nestedViews[key]._updatePath(this._path, key);
+        }
+    }
+
+    /** @private */
+    _getSelectorForNestedView(key) {
+        let el = false;
+
+        if (key in this._nestedViewDefs) {
+            if ('id' in this._nestedViewDefs[key]) {
+                el = '#' + this._nestedViewDefs[key].id;
+            }
+            else {
+                if ('el' in this._nestedViewDefs[key]) {
+                    el = this._nestedViewDefs[key].el;
+                }
+                else if ('selector' in this._nestedViewDefs[key]) {
+                    let currentEl = this.getSelector();
+
+                    if (currentEl) {
+                        el = currentEl + ' ' + this._nestedViewDefs[key].selector;
+                    }
+                }
+                else {
+                    let currentEl = this.getSelector();
+
+                    if (currentEl) {
+                        el = currentEl + ' [data-view="'+key+'"]';
+                    }
+                }
+            }
+        }
+
+        return el;
+    }
+
+    /**
+     * Whether the view has a nested view.
+     *
+     * @param {string} key A view key.
+     * @return {boolean}
+     */
+    hasView(key) {
+        return key in this.nestedViews;
+    }
+
+    /**
+     * Get a nested view.
+     *
+     * @param {string} key A view key.
+     * @return {View|null}
+     */
+    getView(key) {
+        if (key in this.nestedViews) {
+            return this.nestedViews[key];
+        }
+
+        return null;
+    }
+
+    /**
+     * Assign a view instance as nested.
+     *
+     * @param {string} key A view key.
+     * @param {Bull.View} view A view.
+     * @param {string|null} [selector] A relative selector.
+     * @return {Promise<View>}
+     */
+    assignView(key, view, selector) {
+        this.clearView(key);
+
+        this._viewPromiseHash = this._viewPromiseHash || {};
+        let promise = null;
+
+        promise = this._viewPromiseHash[key] = new Promise(resolve => {
+            if (!this.isReady) {
+                this.waitForView(key);
+            }
+
+            if (selector || !view.getSelector()) {
+                selector = selector || `[data-view="${key}"]`;
+
+                view.setSelector(this.getSelector() + ' ' + selector);
+            }
+
+            view._initialize({
+                factory: this._factory,
+                layouter: this._layouter,
+                templator: this._templator,
+                renderer: this._renderer,
+                helper: this._helper,
+                onReady: () => this._assignViewCallback(key, view, resolve, promise),
+            });
+        });
+
+        return promise;
+    }
+
+    /**
+     * Create a nested view. The important method.
+     *
+     * @param {string} key A view key.
+     * @param {string} viewName A view name/path.
+     * @param {Bull.View~Options} options View options. Custom options can be passed as well.
+     * @param {Function} [callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
+     * @param {boolean} [wait=true] Set false if no need a parent view to wait till nested view loaded.
+     * @return {Promise<View>}
+     */
+    createView(key, viewName, options, callback, wait) {
+        this.clearView(key);
+
+        this._viewPromiseHash = this._viewPromiseHash || {};
+
+        let promise = null;
+
+        promise = this._viewPromiseHash[key] = new Promise(resolve => {
+            wait = (typeof wait === 'undefined') ? true : wait;
+
+            if (wait) {
+                this.waitForView(key);
+            }
+
+            options = options || {};
+
+            if (!options.el && options.selector) {
+                options.el = this.getSelector() + ' ' + options.selector;
+            }
+
+            if (!options.el) {
+                options.el = this.getSelector() + ` [data-view="${key}"]`;
+            }
+
+            this._factory.create(viewName, options, view => {
+                this._assignViewCallback(
+                    key,
+                    view,
+                    resolve,
+                    promise,
+                    callback,
+                    options.setViewBeforeCallback
+                );
+            });
+        });
+
+        return promise;
+    }
+
+    /**
+     * @param {string} key
+     * @param {Bull.View} view
+     * @param {function} resolve
+     * @param {Promise} promise
+     * @param {function} [callback]
+     * @param {boolean} [setViewBeforeCallback]
+     * @private
+     */
+    _assignViewCallback(
+        key,
+        view,
+        resolve,
+        promise,
+        callback,
+        setViewBeforeCallback
+    ) {
+        let previousView = this.getView(key);
+
+        if (previousView) {
+            previousView.cancelRender();
+        }
+
+        delete this._viewPromiseHash[key];
+
+        if (promise && promise._isToCancel) {
+            if (!view.isRemoved()) {
+                view.remove();
+            }
+
+            return;
+        }
+
+        let isSet = false;
+
+        if (this._isRendered || setViewBeforeCallback) {
+            this.setView(key, view);
+
+            isSet = true;
+        }
+
+        if (typeof callback === 'function') {
+            callback.call(this, view);
+        }
+
+        resolve(view);
+
+        if (!this._isRendered && !setViewBeforeCallback && !isSet) {
+            this.setView(key, view);
+        }
+    }
+
+    /**
+     * Set a nested view.
+     *
+     * @param {string} key A view key.
+     * @param {Bull.View} view A view name/path.
+     * @param {string} [el] A full DOM selector for a view container.
+     */
+    setView(key, view, el) {
+        el = el || this._getSelectorForNestedView(key) || view.options.el || false;
+
+        if (el) {
+            if (this.isRendered()) {
+                view.setElement(el);
+            } else {
+                view.setElementInAdvance(el);
+            }
+        }
+
+        if (key in this.nestedViews) {
+            this.clearView(key);
+        }
+
+        this.nestedViews[key] = view;
+
+        view._parentView = this;
+        view._updatePath(this._path, key);
+
+        this._tryReady();
+    }
+
+    /**
+     * Clear a nested view. Initiates removal of the nested view.
+     *
+     * @param {string} key A view key.
+     */
+    clearView(key) {
+        if (key in this.nestedViews) {
+            this.nestedViews[key].remove();
+
+            delete this.nestedViews[key];
+        }
+
+        this._viewPromiseHash = this._viewPromiseHash || {};
+
+        let previousPromise = this._viewPromiseHash[key];
+
+        if (previousPromise) {
+            previousPromise._isToCancel = true;
+        }
+    }
+
+    /**
+     * Removes a nested view for cases when it's supposed that this view can be re-used in future.
+     *
+     * @param {string} key A view key.
+     */
+    unchainView(key) {
+        if (key in this.nestedViews) {
+            this.nestedViews[key]._parentView = null;
+            this.nestedViews[key].undelegateEvents();
+
+            delete this.nestedViews[key];
+        }
+    }
+
+    /**
+     * Get a parent view.
+     *
+     * @return {Bull.View}
+     */
+    getParentView() {
+        return this._parentView;
+    }
+
+    /**
+     * Has a parent view.
+     *
+     * @return {boolean}
+     */
+    hasParentView() {
+        return !!this._parentView;
+    }
+
+    /**
+     * Add a condition for the view getting ready.
+     *
+     * @param {(Function|boolean)} condition A condition.
+     */
+    addReadyCondition(condition) {
+        this._readyConditionList.push(condition);
+    }
+
+    /**
+     * Wait for a nested view.
+     *
+     * @protected
+     * @param {string} key A view key.
+     */
+    waitForView(key) {
+        this._waitViewList.push(key);
+    }
+
+    /**
+     * Makes the view to wait for a promise (if a Promise is passed as a parameter).
+     * Adds a wait condition if true is passed. Removes the wait condition if false.
+     *
+     * @protected
+     * @param {Promise|boolean} wait A wait-promise or true/false.
+     */
+    wait(wait) {
+        if (typeof wait === 'object' && (wait instanceof Promise || typeof wait.then === 'function')) {
+            this._waitPromiseCount++;
+
+            wait.then(() => {
+                this._waitPromiseCount--;
+                this._tryReady();
+            });
+
+            return;
+        }
+
+        if (typeof wait === 'function') {
+            this._waitPromiseCount++;
+
+            let promise = new Promise(resolve => {
+                resolve(wait.call(this));
+            });
+
+            promise.then(() => {
+                this._waitPromiseCount--;
+                this._tryReady();
+            });
+
+            return promise;
+        }
+
+        if (wait) {
+            this._wait = true;
+
+            return;
+        }
+
+        this._wait = false;
+        this._tryReady();
+    }
+
+    /**
+     * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
+     *
+     * @public
+     * @param {boolean} [dontEmpty] Skips emptying an element container.
+     */
+    remove(dontEmpty) {
+        this.cancelRender();
+
+        for (let key in this.nestedViews) {
+            this.clearView(key);
+        }
+
+        this.trigger('remove');
+        this.onRemove();
+        this.off();
+
+        if (!dontEmpty) {
+            this.$el.empty();
+        }
+
+        this.stopListening();
+        this.undelegateEvents();
+
+        if (this.model) {
+            this.model.off(null, null, this);
+        }
+
+        if (this.collection) {
+            this.collection.off(null, null, this);
+        }
+
+        this._isRendered = false;
+        this._isFullyRendered = false;
+        this._isBeingRendered = false;
+        this._isRemoved = true;
+
+        return this;
+    }
+
+    /**
+     * Called on view removal.
+     *
+     * @protected
+     */
+    onRemove() {}
+
+    /** @private */
+    _setElement(el) {
+        if (typeof el === 'string') {
+            let parentView = this.getParentView();
+
+            if (
+                parentView &&
+                parentView.isRendered() &&
+                parentView.$el &&
+                parentView.$el.length &&
+                parentView.getSelector() &&
+                el.indexOf(parentView.getSelector()) === 0
+            ) {
+                let subEl = el.substr(parentView.getSelector().length, el.length - 1);
+
+                this.$el = $(subEl, parentView.$el).eq(0);
+                this.el = this.$el[0];
+
+                return;
+            }
+        }
+
+        this.$el = $(el).eq(0);
+        this.el = this.$el[0];
+    }
+
+    /**
+     * Propagate an event to nested views.
+     *
+     * @public
+     * @param {...*} arguments
+     */
+    propagateEvent() {
+        this.trigger.apply(this, arguments);
+
+        for (let key in this.nestedViews) {
+            let view = this.nestedViews[key];
+
+            view.propagateEvent.apply(view, arguments);
+        }
+    }
+}
+
+_.extend(View.prototype, Events);
+
+const isEsClass = fn => {
+    return typeof fn === 'function' &&
+        Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable === false;
+};
+
+View.extend = function (protoProps, staticProps) {
+    let parent = this;
+
+    let child;
+
+    if (isEsClass(parent)) {
+        let TemporaryHelperConstructor = function () {};
+
+        child = function () {
+            if (new.target) {
+                let obj = Reflect.construct(parent, arguments, new.target);
+
+                for (let prop of Object.getOwnPropertyNames(obj)) {
+                    if (typeof this[prop] !== 'undefined') {
+                        obj[prop] = this[prop];
+                    }
+                }
+
+                return obj;
+            }
+
+            return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
         };
 
         _.extend(child, parent, staticProps);
@@ -1718,82 +1697,102 @@
         child.prototype = _.create(parent.prototype, protoProps);
         child.prototype.constructor = child;
         child.__super__ = parent.prototype;
+        child.prototype.__isEs = true;
+
+        TemporaryHelperConstructor.prototype = child.prototype;
 
         return child;
+    }
+
+    child = function () {
+        if (parent.prototype.__isEs) {
+            return Reflect.construct(parent, arguments, new.target);
+        }
+
+        return parent.apply(this, arguments);
     };
 
-    let viewOptions = [
-        'model',
-        'collection',
-        'el',
-        'id',
-        'events',
-    ];
+    _.extend(child, parent, staticProps);
 
-    let delegateEventSplitter = /^(\S+)\s*(.*)$/;
+    child.prototype = _.create(parent.prototype, protoProps);
+    child.prototype.constructor = child;
+    child.__super__ = parent.prototype;
 
-    /**
-     * Extend the class.
-     *
-     * @name extend
-     * @param {Object.<string, *>} proto Child prototype.
-     * @return this
-     * @static
-     * @memberof Bull.View
-     */
+    return child;
+};
 
-    /**
-     * A model.
-     *
-     * @name model
-     * @type {Bull.Model|null}
-     * @public
-     * @memberof Bull.View#
-     */
+let viewOptions = [
+    'model',
+    'collection',
+    'el',
+    'id',
+    'events',
+];
 
-    /**
-     * A collection.
-     *
-     * @name collection
-     * @type {Bull.Collection|null}
-     * @public
-     * @memberof Bull.View#
-     */
+let delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
-    /**
-     * An ID, unique among all views.
-     *
-     * @name cid
-     * @type {string}
-     * @public
-     * @memberof Bull.View#
-     */
+/**
+ * Extend the class.
+ *
+ * @name extend
+ * @param {Object.<string, *>} proto Child prototype.
+ * @return this
+ * @static
+ * @memberof Bull.View
+ */
 
-    /**
-     * A DOM element.
-     *
-     * @name $el
-     * @type {JQuery}
-     * @public
-     * @memberof Bull.View#
-     */
+/**
+ * A model.
+ *
+ * @name model
+ * @type {Bull.Model|null}
+ * @public
+ * @memberof Bull.View#
+ */
 
-    /**
-     * A DOM element.
-     *
-     * @name el
-     * @type {Element|null}
-     * @public
-     * @memberof Bull.View#
-     */
+/**
+ * A collection.
+ *
+ * @name collection
+ * @type {Bull.Collection|null}
+ * @public
+ * @memberof Bull.View#
+ */
 
-    /**
-     * Passed options.
-     *
-     * @name options
-     * @type {Object.<string, *>}
-     * @public
-     * @memberof Bull.View#
-     */
+/**
+ * An ID, unique among all views.
+ *
+ * @name cid
+ * @type {string}
+ * @public
+ * @memberof Bull.View#
+ */
 
-}).call(this, Bull, _, $);
+/**
+ * A DOM element.
+ *
+ * @name $el
+ * @type {JQuery}
+ * @public
+ * @memberof Bull.View#
+ */
+
+/**
+ * A DOM element.
+ *
+ * @name el
+ * @type {Element|null}
+ * @public
+ * @memberof Bull.View#
+ */
+
+/**
+ * Passed options.
+ *
+ * @name options
+ * @type {Object.<string, *>}
+ * @public
+ * @memberof Bull.View#
+ */
+
+export default View;

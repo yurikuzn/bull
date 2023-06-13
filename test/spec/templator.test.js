@@ -1,8 +1,10 @@
-var Bull = Bull || {};
 
-describe("Templator", function () {
+import Templator from "../../src/bull.templator.js";
+
+describe("Templator", () => {
 	var templator;
 	var layouter;
+	let loader;
 	
 	var defaultTemplate	= 'test';
 	var defaultLayout = {
@@ -10,8 +12,7 @@ describe("Templator", function () {
 		layout: {},
 	}
 	
-	beforeEach(function () {
-		
+	beforeEach(() => {
 		loader = {
 			load: {},
 		};
@@ -32,7 +33,7 @@ describe("Templator", function () {
 			callback(defaultLayout);
 		});		
 	
-		templator = new Bull.Templator({
+		templator = new Templator({
 			loader: loader,
 			layouter: layouter,
 		});

@@ -20,7 +20,7 @@
 					eval.call(thisObject, script);
 				},
 				error: function () {
-					console.error("Error occured while loading " + path);
+					console.error("Error occurred while loading " + path);
 				}
 			};
 		

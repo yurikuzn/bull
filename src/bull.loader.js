@@ -1,148 +1,147 @@
-(function (Bull, _) {
 
-    /**
-     * @class Bull.Loader
-     * @param options
-     */
-    Bull.Loader = function (options) {
-        options = options || {};
+/**
+ * @class Loader
+ * @param options
+ */
+const Loader = function (options) {
+    options = options || {};
 
-        this._paths = _.extend(this._paths, options.paths || {});
-        this._exts = _.extend(this._exts, options.exts || {});
-        this._normalize = _.extend(this._normalize, options.normalize || {});
-        this._isJson = _.extend(this._isJson, options.isJson || {});
+    this._paths = _.extend(this._paths, options.paths || {});
+    this._exts = _.extend(this._exts, options.exts || {});
+    this._normalize = _.extend(this._normalize, options.normalize || {});
+    this._isJson = _.extend(this._isJson, options.isJson || {});
 
-        this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
+    this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
 
-        this._externalPathFunction = options.path || null;
-    };
+    this._externalPathFunction = options.path || null;
+};
 
-    _.extend(Bull.Loader.prototype, /** @lends Bull.Loader.prototype */{
+_.extend(Loader.prototype, /** @lends Loader.prototype */{
 
-        _exts: {
-            layout: 'json',
-            template: 'tpl',
-            layoutTemplate: 'tpl',
+    _exts: {
+        layout: 'json',
+        template: 'tpl',
+        layoutTemplate: 'tpl',
+    },
+
+    _paths: {
+        layout: 'layouts',
+        template: 'templates',
+        layoutTemplate: 'templates/layouts',
+    },
+
+    _isJson: {
+        layout: true,
+    },
+
+    _externalLoaders: {
+        layout: null,
+        template: null,
+        layoutTemplate: null,
+    },
+
+    _externalPathFunction: null,
+
+    _normalize: {
+        layouts: function (name) {
+            return name;
         },
-
-        _paths: {
-            layout: 'layouts',
-            template: 'templates',
-            layoutTemplate: 'templates/layouts',
+        templates: function (name) {
+            return name;
         },
-
-        _isJson: {
-            layout: true,
+        layoutTemplates: function (name) {
+            return name;
         },
+    },
 
-        _externalLoaders: {
-            layout: null,
-            template: null,
-            layoutTemplate: null,
-        },
+    getFilePath: function (type, name) {
+        if (!(type in this._paths) || !(type in this._exts)) {
+            throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
+        }
 
-        _externalPathFunction: null,
+        let namePart = name;
 
-        _normalize: {
-            layouts: function (name) {
-                return name;
-            },
-            templates: function (name) {
-                return name;
-            },
-            layoutTemplates: function (name) {
-                return name;
-            },
-        },
+        if (type in this._normalize) {
+            namePart = this._normalize[type](name);
+        }
 
-        getFilePath: function (type, name) {
-            if (!(type in this._paths) || !(type in this._exts)) {
-                throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
+        let pathPart = this._paths[type];
+
+        if (pathPart.substr(-1) === '/') {
+            pathPart = pathPart.substr(0, pathPart.length - 1);
+        }
+
+        return pathPart + '/' + namePart + '.' + this._exts[type];
+    },
+
+    _callExternalLoader: function (type, name, callback) {
+        if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
+            if (typeof this._externalLoaders[type] === 'function') {
+                this._externalLoaders[type](name, callback);
+
+                return true;
             }
 
-            let namePart = name;
+            throw new Error("Loader for \"" + type + "\" in not a Function.");
+        }
 
-            if (type in this._normalize) {
-                namePart = this._normalize[type](name);
-            }
+        return null;
+    },
 
-            let pathPart = this._paths[type];
+    load: function (type, name, callback) {
+        let customCalled = this._callExternalLoader(type, name, callback);
 
-            if (pathPart.substr(-1) === '/') {
-                pathPart = pathPart.substr(0, pathPart.length - 1);
-            }
+        if (customCalled) {
+            return;
+        }
 
-            return pathPart + '/' + namePart + '.' + this._exts[type];
-        },
+        let response, filePath;
 
-        _callExternalLoader: function (type, name, callback) {
-            if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
-                if (typeof this._externalLoaders[type] === 'function') {
-                    this._externalLoaders[type](name, callback);
+        if (this._externalPathFunction != null) {
+            filePath = this._externalPathFunction.call(this, type, name);
+        } else {
+            filePath = this.getFilePath(type, name);
+        }
 
-                    return true;
-                }
+        filePath += '?_=' + new Date().getTime();
 
-                throw new Error("Loader for \"" + type + "\" in not a Function.");
-            }
+        let xhr = new XMLHttpRequest();
 
-            return null;
-        },
+        xhr.open('GET', filePath, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
-        load: function (type, name, callback) {
-            let customCalled = this._callExternalLoader(type, name, callback);
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+                response = xhr.responseText;
 
-            if (customCalled) {
-                return;
-            }
+                if (type in this._isJson) {
+                    if (this._isJson[type]) {
+                        let obj;
 
-            let response, filePath;
-
-            if (this._externalPathFunction != null) {
-                filePath = this._externalPathFunction.call(this, type, name);
-            } else {
-                filePath = this.getFilePath(type, name);
-            }
-
-            filePath += '?_=' + new Date().getTime();
-
-            let xhr = new XMLHttpRequest();
-
-            xhr.open('GET', filePath, true);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4) {
-                    response = xhr.responseText;
-
-                    if (type in this._isJson) {
-                        if (this._isJson[type]) {
-                            let obj;
-
-                            if (xhr.status == 404 || xhr.status == 403) {
-                                throw new Error("Could not load " + type + " \"" + name + "\".");
-                            }
-
-                            try {
-                                obj = JSON.parse(String(response));
-                            }
-                            catch (e) {
-                                throw new SyntaxError(
-                                    "Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
-                            }
-
-                            callback(obj);
-
-                            return;
+                        if (xhr.status == 404 || xhr.status == 403) {
+                            throw new Error("Could not load " + type + " \"" + name + "\".");
                         }
+
+                        try {
+                            obj = JSON.parse(String(response));
+                        }
+                        catch (e) {
+                            throw new SyntaxError(
+                                "Error while parsing " + type + " \"" + name + "\": (" + e.message + ").");
+                        }
+
+                        callback(obj);
+
+                        return;
                     }
-
-                    callback(response);
                 }
-            };
 
-            xhr.send(null);
-        },
-    });
+                callback(response);
+            }
+        };
 
-}).call(this, Bull, _);
+        xhr.send(null);
+    },
+});
+
+export default Loader;

@@ -1,40 +1,38 @@
-var Bull = Bull || {};
 
-BullTest.include('../src/bull.factory.js');
+import Factory from '../../src/bull.factory.js';
 
 describe("Factory", function () {
-	var factory;
-	
-	var loader = function () {};
-	var layouter = function () {};
-	var templator = function () {};
-	var renderer = function () {};
-	
-	var viewHash = {
+	let factory;
+
+	//let loader = function () {};
+	let layouter = function () {};
+	let templator = function () {};
+	let renderer = function () {};
+
+	/*let viewHash = {
 		viewTest: function (options) {
 			return true;
 		}
-	};
+	};*/
 	
-	beforeEach(function () {	
-	});
+	beforeEach(() => {	});
 	
-	afterEach(function () {		
-	});
+	afterEach(() => {});
 	
-	it ('should call custom viewLoader function (if defined) and create view', function () {	
-		var loader = {
+	it ('should call custom viewLoader function (if defined) and create view', function () {
+		let loader = {
 			load: {}
 		};
 
-		var viewLoader = {load: {}};
+		let viewLoader = {load: {}};
 
-		var viewClass = function (viewName, options) {	};
+		let viewClass = function (viewName, options) {};
+
 		spyOn(loader, 'load').and.returnValue(viewClass);
 		
 		spyOn(viewLoader, 'load').and.returnValue(viewClass);
 	
-		factory = new Bull.Factory({
+		factory = new Factory({
 			customLoader: loader,
 			customLayouter: layouter,
 			customTemplator: templator,

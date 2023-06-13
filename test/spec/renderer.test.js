@@ -1,21 +1,18 @@
-var Bull = Bull || {};
 
-BullTest.include('../src/bull.renderer.js');
+import Renderer from "../../src/bull.renderer.js";
 
-describe("Renderer", function () {
+describe("Renderer", () => {
 	var renderer;
 	
-	beforeEach(function () {
-		renderer = new Bull.Renderer();
+	beforeEach(() => {
+		renderer = new Renderer();
 	});
 	
-	it ('should be able to override render method', function () {
-		renderer = new Bull.Renderer({
-			method: function (template, data) {
-				return template + ':' + data;
-			}
+	it('should be able to override render method', () => {
+		renderer = new Renderer({
+			method: (template, data) => template + ':' + data
 		});
-		
+
 		var html = renderer.render('doomy','test');
 
 		expect(html).toBe('doomy:test');
