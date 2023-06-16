@@ -102,7 +102,7 @@ import Events from './bull.events.js';
  * @function trigger
  * @memberof Bull.Events
  * @param {string} event An event.
- * @param {...*} arguments
+ * @param {...*} arguments Arguments.
  */
 
 /**
@@ -175,16 +175,35 @@ import Events from './bull.events.js';
  * @mixes Bull.Events
  */
 class View {
+
     /**
      * @param {Object.<string, *>|null} [options]
      * @mixes Bull.Events
      */
     constructor(options) {
         this.cid = _.uniqueId('view');
-        _.extend(this, _.pick(options, viewOptions));
+
+        options = {...options};
+
+        if ('model' in options) {
+            this.model = options.model;
+        }
+
+        if ('collection' in options) {
+            this.collection = options.collection;
+        }
+
+        if ('el' in options) {
+            this.el = options.el;
+        }
+
+        if ('events' in options) {
+            this.events = options.events;
+        }
+
         /** @type {JQuery} */
         this.$el = $();
-        this.options = options || {};
+        this.options = options;
     }
 
     /**
@@ -396,8 +415,7 @@ class View {
         for (let key in events) {
             let method = events[key];
 
-            if (!_.isFunction(method)) {
-                /** @todo Revise. */
+            if (typeof method !== 'function') {
                 method = this[method];
             }
 
@@ -996,7 +1014,7 @@ class View {
             }
 
             if ('options' in nestedViewDefs[i]) {
-                options = _.extend(options, nestedViewDefs[i].options);
+                options = {...options, ...nestedViewDefs[i].options};
             }
 
             if (this.model) {
@@ -1114,7 +1132,7 @@ class View {
         this.trigger('render', this);
 
         this._getNestedViewsHtmlList(nestedViewsHtmlList => {
-            let data = _.extend(this._getData() || {}, nestedViewsHtmlList);
+            let data = {...this._getData(), ...nestedViewsHtmlList};
 
             if (this.collection || null) {
                 data.collection = this.collection;
@@ -1661,7 +1679,7 @@ class View {
     }
 }
 
-_.extend(View.prototype, Events);
+Object.assign(View.prototype, Events);
 
 const isEsClass = fn => {
     return typeof fn === 'function' &&
@@ -1720,14 +1738,6 @@ View.extend = function (protoProps, staticProps) {
 
     return child;
 };
-
-let viewOptions = [
-    'model',
-    'collection',
-    'el',
-    'id',
-    'events',
-];
 
 let delegateEventSplitter = /^(\S+)\s*(.*)$/;
 

@@ -1,34 +1,35 @@
 
 /**
- * @class Layouter
  * @alias Bull.Layouter
- * @param {{
- *   loader: Loader,
- * }|null} data
  */
-const Layouter = function (data) {
-    data = data || {};
+class Layouter {
 
     /**
-     * @type {Loader|null}
-     * @private
+     * @param {{
+     *   loader: Loader,
+     * }|null} data
      */
-    this._loader = data.loader || null;
+    constructor(data) {
+        data = data || {};
 
-    this._layouts = {};
-    this._cachedNestedViews = {};
-};
+        /**
+         * @type {Loader|null}
+         * @private
+         */
+        this._loader = data.loader || null;
 
-_.extend(Layouter.prototype, /** @lends Layouter.prototype */{
+        this._layouts = {};
+        this._cachedNestedViews = {};
+    }
 
-    _layouts: null,
-    _cachedNestedViews: null,
+    _layouts = null
+    _cachedNestedViews = null
 
-    addLayout: function (layoutName, layout) {
+    addLayout(layoutName, layout) {
         this._layouts[layoutName] = layout;
-    },
+    }
 
-    getLayout: function (layoutName, callback) {
+    getLayout(layoutName, callback) {
         if (layoutName in this._layouts) {
             callback(this._layouts[layoutName]);
 
@@ -40,23 +41,23 @@ _.extend(Layouter.prototype, /** @lends Layouter.prototype */{
 
             callback(layout);
         });
-    },
+    }
 
-    _getCachedNestedViews: function (layoutName) {
+    _getCachedNestedViews(layoutName) {
         if (layoutName in this._cachedNestedViews) {
             return this._cachedNestedViews[layoutName];
         }
 
         return false;
-    },
+    }
 
-    _cacheNestedViews: function (layoutName, nestedViews) {
+    _cacheNestedViews(layoutName, nestedViews) {
         if (!(layoutName in this._cachedNestedViews)) {
             this._cachedNestedViews[layoutName] = nestedViews;
         }
-    },
+    }
 
-    findNestedViews: function (layoutName, layoutDefs, noCache) {
+    findNestedViews(layoutName, layoutDefs, noCache) {
         if (!layoutName && !layoutDefs) {
             throw new Error("Can not find nested views. No layout data and name.");
         }
@@ -103,7 +104,16 @@ _.extend(Layouter.prototype, /** @lends Layouter.prototype */{
         let getDefsForNestedView = (defsInLayout) => {
             let defs = {};
 
-            let params = ['view', 'layout', 'notToRender', 'options', 'template', 'id', 'selector', 'el'];
+            let params = [
+                'view',
+                'layout',
+                'notToRender',
+                'options',
+                'template',
+                'id',
+                'selector',
+                'el',
+            ];
 
             for (let i in params) {
                 let param = params[i];
@@ -145,6 +155,6 @@ _.extend(Layouter.prototype, /** @lends Layouter.prototype */{
 
         return viewPathList;
     }
-});
+}
 
 export default Layouter;

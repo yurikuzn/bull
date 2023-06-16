@@ -1,48 +1,52 @@
 
-/**
- * @class Loader
- * @param options
- */
-const Loader = function (options) {
-    options = options || {};
+class Loader {
 
-    this._paths = _.extend(this._paths, options.paths || {});
-    this._exts = _.extend(this._exts, options.exts || {});
-    this._normalize = _.extend(this._normalize, options.normalize || {});
-    this._isJson = _.extend(this._isJson, options.isJson || {});
+    /**
+     * @param {{
+     *     paths?: Object.<string, string>,
+     *     exts?: Object.<string, string>,
+     *     normalize?: Object.<string, string>,
+     *     loaders?: Object.<string, function(*): void>,
+     *     path?: function(string, string): void,
+     *     isJson?: Object.<string, boolean>,
+     * }}options
+     */
+    constructor(options) {
+        options = {...options};
 
-    this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
+        this._paths = _.extend(this._paths, options.paths || {});
+        this._exts = _.extend(this._exts, options.exts || {});
+        this._normalize = _.extend(this._normalize, options.normalize || {});
+        this._isJson = _.extend(this._isJson, options.isJson || {});
+        this._externalLoaders = _.extend(this._externalLoaders, options.loaders || {});
+        this._externalPathFunction = options.path || null;
+    }
 
-    this._externalPathFunction = options.path || null;
-};
-
-_.extend(Loader.prototype, /** @lends Loader.prototype */{
-
-    _exts: {
+    _exts = {
         layout: 'json',
         template: 'tpl',
         layoutTemplate: 'tpl',
-    },
+    }
 
-    _paths: {
+    _paths = {
         layout: 'layouts',
         template: 'templates',
         layoutTemplate: 'templates/layouts',
-    },
+    }
 
-    _isJson: {
+    _isJson = {
         layout: true,
-    },
+    }
 
-    _externalLoaders: {
+    _externalLoaders = {
         layout: null,
         template: null,
         layoutTemplate: null,
-    },
+    }
 
-    _externalPathFunction: null,
+    _externalPathFunction = null
 
-    _normalize: {
+    _normalize = {
         layouts: function (name) {
             return name;
         },
@@ -52,9 +56,9 @@ _.extend(Loader.prototype, /** @lends Loader.prototype */{
         layoutTemplates: function (name) {
             return name;
         },
-    },
+    }
 
-    getFilePath: function (type, name) {
+    getFilePath(type, name) {
         if (!(type in this._paths) || !(type in this._exts)) {
             throw new TypeError("Unknown resource type \"" + type + "\" requested in Bull.Loader.");
         }
@@ -72,9 +76,9 @@ _.extend(Loader.prototype, /** @lends Loader.prototype */{
         }
 
         return pathPart + '/' + namePart + '.' + this._exts[type];
-    },
+    }
 
-    _callExternalLoader: function (type, name, callback) {
+    _callExternalLoader(type, name, callback) {
         if (type in this._externalLoaders && this._externalLoaders[type] !== null) {
             if (typeof this._externalLoaders[type] === 'function') {
                 this._externalLoaders[type](name, callback);
@@ -86,9 +90,9 @@ _.extend(Loader.prototype, /** @lends Loader.prototype */{
         }
 
         return null;
-    },
+    }
 
-    load: function (type, name, callback) {
+    load(type, name, callback) {
         let customCalled = this._callExternalLoader(type, name, callback);
 
         if (customCalled) {
@@ -118,7 +122,7 @@ _.extend(Loader.prototype, /** @lends Loader.prototype */{
                     if (this._isJson[type]) {
                         let obj;
 
-                        if (xhr.status == 404 || xhr.status == 403) {
+                        if (xhr.status === 404 || xhr.status === 403) {
                             throw new Error("Could not load " + type + " \"" + name + "\".");
                         }
 
@@ -141,7 +145,7 @@ _.extend(Loader.prototype, /** @lends Loader.prototype */{
         };
 
         xhr.send(null);
-    },
-});
+    }
+}
 
 export default Loader;

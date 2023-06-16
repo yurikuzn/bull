@@ -1,46 +1,47 @@
 
 /**
- * @class Templator
  * @alias Bull.Templator
- * @param {{
- *   loader: Loader,
- *   layouter: Layouter,
- * }|null} data
  */
-const Templator = function (data) {
-    data = data || {};
-
-    this._templates = {};
-    this._layoutTemplates = {};
+class Templator {
 
     /**
-     * @type {Loader|null}
-     * @private
+     * @param {{
+     *   loader: Loader,
+     *   layouter: Layouter,
+     * }|null} data
      */
-    this._loader = data.loader || null;
-    /**
-     * @type {Layouter|null}
-     * @private
-     */
-    this._layouter = data.layouter || null;
+    constructor(data) {
+        data = data || {};
 
-    if ('compilable' in data) {
-        this.compilable = data.compilable;
+        this._templates = {};
+        this._layoutTemplates = {};
+
+        /**
+         * @type {Loader|null}
+         * @private
+         */
+        this._loader = data.loader || null;
+        /**
+         * @type {Layouter|null}
+         * @private
+         */
+        this._layouter = data.layouter || null;
+
+        if ('compilable' in data) {
+            this.compilable = data.compilable;
+        }
     }
-};
 
-_.extend(Templator.prototype, /** @lends Templator.prototype */{
+    compilable = true
 
-    compilable: true,
+    _templates = null
+    _layoutTemplates = null
 
-    _templates: null,
-    _layoutTemplates: null,
-
-    addTemplate: function (name, template) {
+    addTemplate(name, template) {
         this._templates[name] = template;
-    },
+    }
 
-    getTemplate: function (name, layoutOptions, noCache, callback) {
+    getTemplate(name, layoutOptions, noCache, callback) {
         layoutOptions = layoutOptions || {};
 
         let template = null;
@@ -91,41 +92,40 @@ _.extend(Templator.prototype, /** @lends Templator.prototype */{
                 }
             }
         }
-    },
+    }
 
-    compileTemplate: function (template) {
+    compileTemplate(template) {
         if (typeof Handlebars !== 'undefined') {
             return Handlebars.compile(template);
         }
 
         return template;
-    },
+    }
 
-    _getCachedTemplate: function (templateName) {
+    _getCachedTemplate(templateName) {
         if (templateName in this._templates) {
             return this._templates[templateName];
         }
 
         return false;
-    },
+    }
 
-
-    _getCachedLayoutTemplate: function (layoutType) {
+    _getCachedLayoutTemplate(layoutType) {
         if (layoutType in this._layoutTemplates) {
             return this._layoutTemplates[layoutType];
         }
 
         return false;
-    },
+    }
 
-    _cacheLayoutTemplate: function (layoutType, layoutTemplate) {
+    _cacheLayoutTemplate(layoutType, layoutTemplate) {
         this._layoutTemplates[layoutType] = layoutTemplate;
-    },
+    }
 
-    _buildTemplate: function (layoutDefs, data, callback) {
+    _buildTemplate(layoutDefs, data, callback) {
         let layoutType = layoutDefs.type || 'default';
 
-        var proceed = (layoutTemplate) => {
+        const proceed = layoutTemplate => {
             let injection = _.extend(layoutDefs, data || {});
             let template = _.template(layoutTemplate, injection);
 
@@ -149,7 +149,7 @@ _.extend(Templator.prototype, /** @lends Templator.prototype */{
         }
 
         proceed(layoutTemplate);
-    },
-});
+    }
+}
 
 export default Templator;

@@ -5,6 +5,8 @@
  */
 
 /**
+ * An Events mixin.
+ *
  * @alias Bull.Events
  */
 const Events = {};
@@ -14,15 +16,10 @@ if ('Backbone' in window) {
     window.Backbone.Events = Events;
 }
 
-// Regular expression used to split event strings.
 const eventSplitter = /\s+/;
 
-// A private global variable to share between listeners and listenees.
 let _listening;
 
-// Iterates over the standard `event, callback` (as well as the fancy multiple
-// space-separated events `"change blur", callback` and jQuery-style event
-// maps `{event: callback}`).
 const eventsApi = (iteratee, events, name, callback, opts) => {
     let i = 0, names;
 
@@ -48,8 +45,13 @@ const eventsApi = (iteratee, events, name, callback, opts) => {
     return events;
 };
 
-// Bind an event to a `callback` function. Passing `"all"` will bind
-// the callback to all events fired.
+/**
+ * Subscribe to an event.
+ *
+ * @param {string} name An event.
+ * @param {Bull.Events~callback} callback A callback.
+ * @param {Object} [context] Deprecated.
+ */
 Events.on = function (name, callback, context) {
     this._events = eventsApi(onApi, this._events || {}, name, callback, {
         context: context,
@@ -69,28 +71,32 @@ Events.on = function (name, callback, context) {
     return this;
 };
 
-// Inversion-of-control versions of `on`. Tell *this* object to listen to
-// an event in another object... keeping track of what it's listening to
-// for easier unbinding later.
-Events.listenTo = function (obj, name, callback) {
-    if (!obj) {
+/**
+ * Subscribe to an event of other object.
+ *
+ * @param {Object} other What to listen.
+ * @param {string} name An event.
+ * @param {Bull.Events~callback} callback A callback.
+ */
+Events.listenTo = function (other, name, callback) {
+    if (!other) {
         return this;
     }
 
-    let id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    let id = other._listenId || (other._listenId = _.uniqueId('l'));
     let listeningTo = this._listeningTo || (this._listeningTo = {});
     let listening = _listening = listeningTo[id];
 
     // This object is not listening to any other events on `obj` yet.
-    // Setup the necessary references to track the listening callbacks.
+    // Set up the necessary references to track the listening callbacks.
     if (!listening) {
         this._listenId || (this._listenId = _.uniqueId('l'));
 
-        listening = _listening = listeningTo[id] = new Listening(this, obj);
+        listening = _listening = listeningTo[id] = new Listening(this, other);
     }
 
     // Bind callbacks on obj.
-    let error = tryCatchOn(obj, name, callback, this);
+    let error = tryCatchOn(other, name, callback, this);
     _listening = void 0;
 
     if (error) {
@@ -105,7 +111,6 @@ Events.listenTo = function (obj, name, callback) {
     return this;
 };
 
-// The reducing API that adds a callback to the `events` object.
 const onApi = (events, name, callback, options) => {
     if (callback) {
         let handlers = events[name] || (events[name] = []);
@@ -121,8 +126,6 @@ const onApi = (events, name, callback, options) => {
     return events;
 };
 
-// An try-catch guarded #on function, to prevent poisoning the global
-// `_listening` variable.
 const tryCatchOn = (obj, name, callback, context) => {
     try {
         obj.on(name, callback, context);
@@ -131,10 +134,15 @@ const tryCatchOn = (obj, name, callback, context) => {
     }
 };
 
-// Remove one or many callbacks. If `context` is null, removes all
-// callbacks with that function. If `callback` is null, removes all
-// callbacks for the event. If `name` is null, removes all bound
-// callbacks for all events.
+/**
+ * Unsubscribe from an event or all events.
+ *
+ * @function off
+ * @memberof Bull.Events
+ * @param {string} [name] From a specific event.
+ * @param {Bull.Events~callback} [callback] From a specific callback.
+ * @param {Object} [context] Deprecated.
+ */
 Events.off = function(name, callback, context) {
     if (!this._events) {
         return this;
@@ -148,16 +156,21 @@ Events.off = function(name, callback, context) {
     return this;
 };
 
-// Tell this object to stop listening to either specific events ... or
-// to every object it's currently listening to.
-Events.stopListening = function (obj, name, callback) {
+/**
+ * Stop listening to other object. No arguments will remove all listeners.
+ *
+ * @param {Object} [other] To remove listeners to a specific object.
+ * @param {string} [name] To remove listeners to a specific event.
+ * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
+ */
+Events.stopListening = function (other, name, callback) {
     let listeningTo = this._listeningTo;
 
     if (!listeningTo) {
         return this;
     }
 
-    let ids = obj ? [obj._listenId] : _.keys(listeningTo);
+    let ids = other ? [other._listenId] : _.keys(listeningTo);
 
     for (let i = 0; i < ids.length; i++) {
         let listening = listeningTo[ids[i]];
@@ -182,7 +195,6 @@ Events.stopListening = function (obj, name, callback) {
     return this;
 };
 
-// The reducing API that removes a callback from the `events` object.
 const offApi = (events, name, callback, options) => {
     if (!events) {
         return;
@@ -243,10 +255,13 @@ const offApi = (events, name, callback, options) => {
     return events;
 };
 
-// Bind an event to only be triggered a single time. After the first time
-// the callback is invoked, its listener will be removed. If multiple events
-// are passed in using the space-separated syntax, the handler will fire
-// once for each event, not once for a combination of all events.
+/**
+ * Subscribe to an event. Fired once.
+ *
+ * @param {string} name An event.
+ * @param {Bull.Events~callback} callback A callback.
+ * @param {Object} [context] Deprecated.
+ */
 Events.once = function (name, callback, context) {
     // Map the event into a `{event: once}` object.
     let events = eventsApi(onceMap, {}, name, callback, this.off.bind(this));
@@ -258,16 +273,20 @@ Events.once = function (name, callback, context) {
     return this.on(events, callback, context);
 };
 
-// Inversion-of-control versions of `once`.
-Events.listenToOnce = function (obj, name, callback) {
+/**
+ * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
+ *
+ * @param {Object} other What to listen.
+ * @param {string} name An event.
+ * @param {Bull.Events~callback} callback A callback.
+ */
+Events.listenToOnce = function (other, name, callback) {
     // Map the event into a `{event: once}` object.
-    let events = eventsApi(onceMap, {}, name, callback, this.stopListening.bind(this, obj));
+    let events = eventsApi(onceMap, {}, name, callback, this.stopListening.bind(this, other));
 
-    return this.listenTo(obj, events);
+    return this.listenTo(other, events);
 };
 
-// Reduces the event callbacks into a map of `{event: onceWrapper}`.
-// `offer` unbinds the `onceWrapper` after it has been called.
 let onceMap = function (map, name, callback, offer) {
     if (callback) {
         let once = map[name] = _.once(function() {
@@ -281,10 +300,12 @@ let onceMap = function (map, name, callback, offer) {
     return map;
 };
 
-// Trigger one or many events, firing all bound callbacks. Callbacks are
-// passed the same arguments as `trigger` is, apart from the event name
-// (unless you're listening on `"all"`, which will cause your callback to
-// receive the true name of the event as the first argument).
+/**
+ * Trigger an event.
+ *
+ * @param {string} name An event.
+ * @param {...*} arguments Arguments.
+ */
 Events.trigger = function(name) {
     if (!this._events) {
         return this;
@@ -302,7 +323,6 @@ Events.trigger = function(name) {
     return this;
 };
 
-// Handles triggering the appropriate event callbacks.
 const triggerApi = (objEvents, name, callback, args) => {
     if (objEvents) {
         let events = objEvents[name];
@@ -324,9 +344,6 @@ const triggerApi = (objEvents, name, callback, args) => {
     return objEvents;
 };
 
-// A difficult-to-believe, but optimized internal dispatch function for
-// triggering events. Tries to keep the usual cases speedy (most internal
-// Backbone events have 3 arguments).
 const triggerEvents = (events, args) => {
     let ev,
         i = -1,
@@ -344,8 +361,6 @@ const triggerEvents = (events, args) => {
     }
 };
 
-// A listening class that tracks and cleans up memory bindings
-// when all callbacks have been offed.
 const Listening = function(listener, obj) {
     this.id = listener._listenId;
     this.listener = listener;
@@ -357,10 +372,6 @@ const Listening = function(listener, obj) {
 
 Listening.prototype.on = Events.on;
 
-// Offs a callback (or several).
-// Uses an optimized counter if the listenee uses Backbone.Events.
-// Otherwise, falls back to manual tracking to support events
-// library interop.
 Listening.prototype.off = function (name, callback) {
     let cleanup;
 
@@ -383,7 +394,6 @@ Listening.prototype.off = function (name, callback) {
     }
 };
 
-// Cleans up memory bindings between the listener and the listenee.
 Listening.prototype.cleanup = function () {
     delete this.listener._listeningTo[this.obj._listenId];
 
@@ -391,9 +401,5 @@ Listening.prototype.cleanup = function () {
         delete this.obj._listeners[this.id];
     }
 };
-
-// Aliases for backwards compatibility.
-Events.bind = Events.on;
-Events.unbind = Events.off;
 
 export default Events;

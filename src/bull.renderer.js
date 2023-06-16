@@ -1,23 +1,22 @@
 
 /**
- * @class Renderer
  * @alias Bull.Renderer
  */
-const Renderer = function (options) {
-    options = options || {};
+class Renderer {
 
-    this._render = options.method || this._render;
-};
+    constructor(options) {
+        options = options || {};
 
-_.extend(Renderer.prototype, {
+        this._render = options.method || this._render;
+    }
 
-    _render: function (template, data) {
-        return template(data, {allowProtoPropertiesByDefault: true});
-    },
-
-    render: function (template, data) {
+    render(template, data) {
         return this._render.call(this, template, data);
-    },
-});
+    }
+
+    _render(template, data) {
+        return template(data, {allowProtoPropertiesByDefault: true});
+    }
+}
 
 export default Renderer;
