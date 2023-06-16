@@ -27,6 +27,10 @@ import Events from './bull.events.js';
  */
 
 /**
+ * @typedef {Object} Bull
+ */
+
+/**
  * A model.
  *
  * @typedef {Object} Bull~Model
