@@ -14,7 +14,7 @@ let root = window;
 
 /**
  * A view factory.
- * 
+ *
  * @alias Bull.Factory
  */
 class Factory {
@@ -27,12 +27,17 @@ class Factory {
      *   customLayouter?: Object,
      *   customTemplator?: Object,
      *   helper?: Object,
-     *   viewLoader?: viewLoader,
-     *   resources: Object.<string, *>,
-     *   rendering: Object.<string, *>,
-     *   layouting: Object.<string, *>,
-     *   templating: Object.<string, *>,
-     *   preCompiledTemplates: Object,
+     *   viewLoader?: function(string, function(Bull.View)),
+     *   resources?: {
+     *       loaders?: {
+     *           template?: function(string, function(string)),
+     *           layoutTemplate?: function(string, function(string)),
+     *       }
+     *   },
+     *   rendering?: Object.<string, *>,
+     *   layouting?: Object.<string, *>,
+     *   templating?: Object.<string, *>,
+     *   preCompiledTemplates?: Object.<string, function()>,
      * }|null} options Configuration options.
      * <ul>
      *  <li>defaultViewName: {String} Default name for views when it is not defined.</li>
