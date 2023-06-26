@@ -1,4 +1,6 @@
 
+import _ from 'underscore';
+
 /**
  * Credits to Backbone.js.
  * Copyright (c) 2010-2022 Jeremy Ashkenas, DocumentCloud

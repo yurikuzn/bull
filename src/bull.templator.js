@@ -1,4 +1,7 @@
 
+import _ from 'underscore';
+import Handlebars from 'handlebars';
+
 /**
  * @alias Bull.Templator
  */

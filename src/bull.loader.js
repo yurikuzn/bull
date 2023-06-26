@@ -1,4 +1,6 @@
 
+import _ from 'underscore';
+
 class Loader {
 
     /**

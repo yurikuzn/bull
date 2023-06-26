@@ -1,5 +1,8 @@
+// noinspection JSUnusedGlobalSymbols
 
 import Events from './bull.events.js';
+import $ from 'jquery';
+import _ from 'underscore';
 
 /**
  * View options passed to a view on creation.
@@ -205,7 +208,6 @@ class View {
             this.events = options.events;
         }
 
-        /** @type {JQuery} */
         this.$el = $();
         this.options = options;
     }
@@ -252,7 +254,7 @@ class View {
 
     /**
      * Not to render a view automatically when a view tree is built (ready).
-     * Afterwards it can be rendered manually.
+     * Afterward, it can be rendered manually.
      *
      * @type {boolean}
      * @protected
@@ -1420,6 +1422,7 @@ class View {
 
         delete this._viewPromiseHash[key];
 
+        // noinspection JSUnresolvedReference
         if (promise && promise._isToCancel) {
             if (!view.isRemoved()) {
                 view.remove();
@@ -1572,6 +1575,7 @@ class View {
             this._waitPromiseCount++;
 
             let promise = new Promise(resolve => {
+                // noinspection JSUnresolvedReference
                 resolve(wait.call(this));
             });
 
@@ -1653,7 +1657,7 @@ class View {
                 parentView.getSelector() &&
                 el.indexOf(parentView.getSelector()) === 0
             ) {
-                let subEl = el.substr(parentView.getSelector().length, el.length - 1);
+                let subEl = el.slice(parentView.getSelector().length);
 
                 this.$el = $(subEl, parentView.$el).eq(0);
                 this.el = this.$el[0];
@@ -1700,6 +1704,7 @@ View.extend = function (protoProps, staticProps) {
 
         child = function () {
             if (new.target) {
+                // noinspection JSCheckFunctionSignatures
                 let obj = Reflect.construct(parent, arguments, new.target);
 
                 for (let prop of Object.getOwnPropertyNames(obj)) {
@@ -1711,13 +1716,16 @@ View.extend = function (protoProps, staticProps) {
                 return obj;
             }
 
+            // noinspection JSCheckFunctionSignatures
             return Reflect.construct(parent, arguments, TemporaryHelperConstructor);
         };
 
         _.extend(child, parent, staticProps);
 
+        // noinspection JSUnresolvedReference
         child.prototype = _.create(parent.prototype, protoProps);
         child.prototype.constructor = child;
+        // noinspection JSUnresolvedReference
         child.__super__ = parent.prototype;
         child.prototype.__isEs = true;
 
@@ -1727,17 +1735,22 @@ View.extend = function (protoProps, staticProps) {
     }
 
     child = function () {
+        // noinspection JSUnresolvedReference
         if (parent.prototype.__isEs) {
+            // noinspection JSCheckFunctionSignatures
             return Reflect.construct(parent, arguments, new.target);
         }
 
+        // noinspection JSUnresolvedReference
         return parent.apply(this, arguments);
     };
 
     _.extend(child, parent, staticProps);
 
+    // noinspection JSUnresolvedReference
     child.prototype = _.create(parent.prototype, protoProps);
     child.prototype.constructor = child;
+    // noinspection JSUnresolvedReference
     child.__super__ = parent.prototype;
 
     return child;

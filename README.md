@@ -8,6 +8,12 @@ A front-end library developed for EspoCRM. See [docs](https://docs.espocrm.com/d
 * Layout engine
 * Events (from Backbone.js)
 
+## Building
+
+Bundles: `npm run prepare`
+
+Test specs: `npm run build-test`
+
 ## License
 
 Distributed under MIT license.

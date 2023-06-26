@@ -3,6 +3,7 @@ import Loader from './bull.loader.js';
 import Renderer from './bull.renderer.js';
 import Layouter from './bull.layouter.js';
 import Templator from './bull.templator.js';
+import _ from 'underscore';
 
 let root = window;
 
