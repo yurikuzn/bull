@@ -202,18 +202,18 @@ class View {
             this.collection = options.collection;
         }
 
-        let fullSelector = options.fullSelector || options.el;
-
-        if (fullSelector) {
-            this._elementSelector = /** @type {string} */fullSelector;
-        }
-
         if ('events' in options) {
             this.events = options.events;
         }
 
         this.$el = $();
         this.options = options;
+
+        let fullSelector = options.fullSelector || options.el;
+
+        if (fullSelector) {
+            this.setSelector(fullSelector);
+        }
     }
 
     /**
@@ -706,6 +706,9 @@ class View {
      */
     setSelector(selector) {
         this._elementSelector = selector;
+
+        // For backward compatibility.
+        this.options.el = selector;
     }
 
     /**
