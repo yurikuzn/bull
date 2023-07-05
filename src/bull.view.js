@@ -10,7 +10,8 @@ import _ from 'underscore';
  * @typedef {Object.<string, *>} Bull.View~Options
  *
  * @property {string} [selector] A DOM element selector relative to a parent view.
- * @property {string} [el] A full DOM element selector.
+ * @property {string} [fullSelector] A full DOM element selector.
+ * @property {string} [el] Deprecated. Use `fullSelector`. A full DOM element selector.
  * @property {string[]} [optionsToPass] Options to be automatically passed to child views
  *   of the created view.
  * @property {(function: Object)|Object} [data] Data that will be passed to a template or a function
@@ -21,7 +22,7 @@ import _ from 'underscore';
  * @property {Object} [layoutData] Internal layout data.
  * @property {boolean} [notToRender] Not to render on ready.
  * @property {boolean} [noCache] Disable layout cache.
- * @property {Object} [views] Child view definitions.
+ * @property {Object.<string, Bull.View~NestedViewItem>} [views] Child view definitions.
  * @property {string} [name] A view name.
  * @property {Bull.Model} [model] A model.
  * @property {Bull.Collection} [collection] A collection.
@@ -56,7 +57,8 @@ import _ from 'underscore';
  *
  * @property {string} view A view name/path.
  * @property {string} [selector] A DOM element selector relative to a parent view.
- * @property {string} [el] A full DOM element selector.
+ * @property {string} [fullSelector] A full DOM element selector.
+ * @property {string} [el] Deprecated. Use `fullSelector`. A full DOM element selector.
  */
 
 /**
@@ -200,8 +202,10 @@ class View {
             this.collection = options.collection;
         }
 
-        if ('el' in options) {
-            this.el = options.el;
+        let fullSelector = options.fullSelector || options.el;
+
+        if (fullSelector) {
+            this._elementSelector = /** @type {string} */fullSelector;
         }
 
         if ('events' in options) {
@@ -211,6 +215,19 @@ class View {
         this.$el = $();
         this.options = options;
     }
+
+    /**
+     * @type {string}
+     * @private
+     */
+    _elementSelector
+
+    /**
+     * A DOM element.
+     *
+     * @type {Element}
+     */
+    element
 
     /**
      * A template name/path.
@@ -574,8 +591,8 @@ class View {
             this._templateCompiled = this._templator.compileTemplate(this._template);
         }
 
-        if (this.options.el) {
-            this.setElementInAdvance(this.options.el);
+        if (this._elementSelector) {
+            this.setElementInAdvance(this._elementSelector);
         }
 
         let _layout = this._getLayout();
@@ -654,10 +671,10 @@ class View {
     /**
      * Set a view container element if it doesn't exist yet. It will call setElement after render.
      *
-     * @param {string} el A full DOM selector.
+     * @param {string} fullSelector A full DOM selector.
      * @protected
      */
-    setElementInAdvance(el) {
+    setElementInAdvance(fullSelector) {
         if (this._setElementInAdvancedInProcess) {
             return;
         }
@@ -665,7 +682,7 @@ class View {
         this._setElementInAdvancedInProcess = true;
 
         this.on('after:render-internal', () => {
-            this.setElement(el);
+            this.setElement(fullSelector);
 
             this._setElementInAdvancedInProcess = false;
         });
@@ -678,7 +695,7 @@ class View {
      * @return {string|null}
      */
     getSelector() {
-        return this.options.el || null;
+        return this._elementSelector || null
     }
 
     /**
@@ -688,7 +705,7 @@ class View {
      * @param {string} selector A selector.
      */
     setSelector(selector) {
-        this.options.el = selector;
+        this._elementSelector = selector;
     }
 
     /**
@@ -782,8 +799,8 @@ class View {
                     this.$el.html(html);
                 }
                 else {
-                    if (this.options.el) {
-                        this.setElement(this.options.el);
+                    if (this._elementSelector) {
+                        this.setElement(this._elementSelector);
                     }
 
                     this.$el.html(html);
@@ -1015,8 +1032,13 @@ class View {
                 options.template = nestedViewDefs[i].template;
             }
 
-            if ('el' in nestedViewDefs[i]) {
-                options.el = nestedViewDefs[i].el;
+            let fullSelector = nestedViewDefs[i].fullSelector || nestedViewDefs[i].el;
+
+            if (fullSelector) {
+                options.fullSelector = fullSelector;
+            }
+            else if ('selector' in nestedViewDefs[i]) {
+                options.selector = nestedViewDefs[i].selector;
             }
 
             if ('options' in nestedViewDefs[i]) {
@@ -1256,34 +1278,32 @@ class View {
 
     /** @private */
     _getSelectorForNestedView(key) {
-        let el = false;
-
-        if (key in this._nestedViewDefs) {
-            if ('id' in this._nestedViewDefs[key]) {
-                el = '#' + this._nestedViewDefs[key].id;
-            }
-            else {
-                if ('el' in this._nestedViewDefs[key]) {
-                    el = this._nestedViewDefs[key].el;
-                }
-                else if ('selector' in this._nestedViewDefs[key]) {
-                    let currentEl = this.getSelector();
-
-                    if (currentEl) {
-                        el = currentEl + ' ' + this._nestedViewDefs[key].selector;
-                    }
-                }
-                else {
-                    let currentEl = this.getSelector();
-
-                    if (currentEl) {
-                        el = currentEl + ' [data-view="'+key+'"]';
-                    }
-                }
-            }
+        if (!(key in this._nestedViewDefs)) {
+            return null;
         }
 
-        return el;
+        if ('id' in this._nestedViewDefs[key]) {
+            return '#' + this._nestedViewDefs[key].id;
+        }
+
+        let fullSelector = this._nestedViewDefs[key].fullSelector ||
+            this._nestedViewDefs[key].el;
+
+        if (fullSelector) {
+            return fullSelector;
+        }
+
+        let currentEl = this.getSelector();
+
+        if (!currentEl) {
+            return null;
+        }
+
+        if ('selector' in this._nestedViewDefs[key]) {
+            return currentEl + ' ' + this._nestedViewDefs[key].selector;
+        }
+
+        return currentEl + ' [data-view="' + key + '"]';
     }
 
     /**
@@ -1374,12 +1394,14 @@ class View {
 
             options = options || {};
 
-            if (!options.el && options.selector) {
-                options.el = this.getSelector() + ' ' + options.selector;
+            let fullSelector = options.fullSelector || options.el;
+
+            if (!fullSelector && options.selector) {
+                options.fullSelector = this.getSelector() + ' ' + options.selector;
             }
 
-            if (!options.el) {
-                options.el = this.getSelector() + ` [data-view="${key}"]`;
+            if (!fullSelector && !options.fullSelector) {
+                options.fullSelector = this.getSelector() + ` [data-view="${key}"]`;
             }
 
             this._factory.create(viewName, options, view => {
@@ -1455,17 +1477,15 @@ class View {
      *
      * @param {string} key A view key.
      * @param {Bull.View} view A view name/path.
-     * @param {string} [el] A full DOM selector for a view container.
+     * @param {string} [fullSelector] A full DOM selector for a view container.
      */
-    setView(key, view, el) {
-        el = el || this._getSelectorForNestedView(key) || view.options.el || false;
+    setView(key, view, fullSelector) {
+        fullSelector = fullSelector || this._getSelectorForNestedView(key) || view.getSelector();
 
-        if (el) {
-            if (this.isRendered()) {
-                view.setElement(el);
-            } else {
-                view.setElementInAdvance(el);
-            }
+        if (fullSelector) {
+            this.isRendered() ?
+                view.setElement(fullSelector) :
+                view.setElementInAdvance(fullSelector);
         }
 
         if (key in this.nestedViews) {
@@ -1645,8 +1665,19 @@ class View {
     onRemove() {}
 
     /** @private */
-    _setElement(el) {
-        if (typeof el === 'string') {
+    _setElement(fullSelector) {
+
+        const setElement = () => {
+            this.element = this.$el[0];
+
+            /**
+             * @todo Remove.
+             * @deprecated
+             */
+            this.el = this.element;
+        }
+
+        if (typeof fullSelector === 'string') {
             let parentView = this.getParentView();
 
             if (
@@ -1655,19 +1686,21 @@ class View {
                 parentView.$el &&
                 parentView.$el.length &&
                 parentView.getSelector() &&
-                el.indexOf(parentView.getSelector()) === 0
+                fullSelector.indexOf(parentView.getSelector()) === 0
             ) {
-                let subEl = el.slice(parentView.getSelector().length);
+                let subSelector = fullSelector.slice(parentView.getSelector().length);
 
-                this.$el = $(subEl, parentView.$el).eq(0);
-                this.el = this.$el[0];
+                this.$el = $(subSelector, parentView.$el).eq(0);
+
+                setElement();
 
                 return;
             }
         }
 
-        this.$el = $(el).eq(0);
-        this.el = this.$el[0];
+        this.$el = $(fullSelector).eq(0);
+
+        setElement();
     }
 
     /**
@@ -1800,15 +1833,6 @@ let delegateEventSplitter = /^(\S+)\s*(.*)$/;
  *
  * @name $el
  * @type {JQuery}
- * @public
- * @memberof Bull.View#
- */
-
-/**
- * A DOM element.
- *
- * @name el
- * @type {Element|null}
  * @public
  * @memberof Bull.View#
  */

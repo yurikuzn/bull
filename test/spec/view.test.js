@@ -93,12 +93,24 @@ describe('View', function () {
 
 		return view
 			.createView('test', 'test/view', {
-				el: 'parent-selector child-selector',
+				fullSelector: 'parent-selector child-selector',
 			})
 			.then(view => {
 				expect(view.getSelector()).toEqual('parent-selector child-selector');
 			});
 	});
+
+    it ('should set a child full selector legacy', () => {
+        view.setSelector('parent-selector');
+
+        return view
+            .createView('test', 'test/view', {
+                el: 'parent-selector child-selector',
+            })
+            .then(view => {
+                expect(view.getSelector()).toEqual('parent-selector child-selector');
+            });
+    });
 
 	it ('should trigger "remove" event on remove', () => {
 		let handler = jasmine.createSpy('handler');
@@ -208,6 +220,9 @@ describe('View', function () {
 				_updatePath: function () {},
 				_afterRender: function () {},
 				options: {},
+                getSelector: function () {
+                    return '';
+                },
 			});
 		});
 
@@ -258,6 +273,7 @@ describe('View', function () {
 				_updatePath: function () {},
 				_afterRender: function () {},
 				options: {},
+                getSelector: () => '',
 			});
 		});
 
