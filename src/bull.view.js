@@ -798,15 +798,18 @@ class View {
                     return;
                 }
 
-                if (this.$el.length) {
-                    this.$el.html(html);
+                if (!this.$el.length && this._elementSelector) {
+                    this.setElement(this._elementSelector);
                 }
-                else {
-                    if (this._elementSelector) {
-                        this.setElement(this._elementSelector);
-                    }
 
-                    this.$el.html(html);
+                this.$el.html(html);
+
+                if (!this.element) {
+                    let msg = this._elementSelector ?
+                        `Could not set element '${this._elementSelector}'.` :
+                        `Could not set element. No selector.`;
+
+                    console.warn(msg);
                 }
 
                 this._afterRender();
