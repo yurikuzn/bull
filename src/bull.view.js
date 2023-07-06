@@ -354,12 +354,6 @@ class View {
     _helper = null
 
     /**
-     * @private
-     * @deprecated
-     * @todo Remove.
-     */
-    factory = null
-    /**
      * @type {string|null}
      * @private
      */
@@ -478,7 +472,7 @@ class View {
          * @type {Bull.Factory}
          * @private
          */
-        this._factory = this.factory = data.factory;
+        this._factory = data.factory;
 
         /**
          * @type {Bull.Renderer}
@@ -1838,7 +1832,7 @@ let delegateEventSplitter = /^(\S+)\s*(.*)$/;
  * A DOM element.
  *
  * @name $el
- * @type {JQuery}
+ * @type {jQuery}
  * @public
  * @memberof Bull.View#
  */
