@@ -96,6 +96,17 @@ import _ from 'underscore';
  */
 
 /**
+ * A DOM event handler callback.
+ *
+ * @callback Bull.View~domEventHandlerCallback
+ * @param {Event} event An event.
+ */
+
+/**
+ * @typedef {'click'|'mousedown'|'keydown'|string} Bull.View~domEventType
+ */
+
+/**
  * @callback Bull.Events~callback
  *
  * @param {...*} arguments
@@ -254,7 +265,7 @@ class View {
     name = null
 
     /**
-     * DOM event listeners.
+     * DOM event listeners. Recommended to use `addHandler` method instead.
      *
      * @type {Bull.View.DomEvents}
      * @protected
@@ -449,6 +460,31 @@ class View {
     /** @private */
     _delegate(eventName, selector, listener) {
         this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+    }
+
+    /**
+     * Add a DOM event handler. To be called in `setup` method.
+     *
+     * @param {Bull.View~domEventType} type An event type.
+     * @param {string} selector A CSS selector.
+     * @param {Bull.View~domEventHandlerCallback|string} handler A handler.
+     */
+    addHandler(type, selector, handler) {
+        let key = type + ' ' + selector;
+
+        if (typeof handler === 'function') {
+            this.events[key] = (e) => handler(e.originalEvent);
+
+            return;
+        }
+
+        if (typeof this[handler] !== 'function') {
+            console.warn(`'Could not add event handler. No '${handler}' method.`)
+
+            return;
+        }
+
+        this.events[key] = (e) => this[handler](e.originalEvent);
     }
 
     /**

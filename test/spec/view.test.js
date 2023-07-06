@@ -689,4 +689,56 @@ describe('View', function () {
 			view1.trigger('test1');
 		})
 	});
+
+    it ('should process added handlers', () => {
+       class TestView extends View {
+
+           templateContent = `<a data-action="test"></a>`
+
+           setup() {
+               this.addHandler('mousedown', '[data-action="test"]', 'doTest');
+               this.addHandler('click', '[data-action="test"]', e => {
+                   this.clickedEvent = e;
+               });
+           }
+
+           doTest(event) {
+               this.event = event;
+           }
+       }
+
+       let view = new TestView({
+            fullSelector: '#test-div',
+       });
+
+       view._initialize({
+           templator: {},
+           renderer: {
+               render(template) {
+                   return template;
+               },
+           },
+       })
+
+       return new Promise((resolve, reject) => {
+           let $div = $('<div id="test-div">');
+
+           $('body').append($div);
+
+           view.render()
+               .then(() => {
+                   let link = view.element.querySelectorAll('[data-action="test"]')[0]
+
+                   link.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                   link.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+
+                   $div.remove()
+
+                   expect(view.clickedEvent.target.tagName).toBe('A');
+                   expect(view.event.target.tagName).toBe('A');
+
+                   resolve();
+               });
+       });
+    });
 });
