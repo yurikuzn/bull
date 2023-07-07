@@ -245,6 +245,14 @@ class View {
     _elementSelector
 
     /**
+     * Is component. Components does not require a DOM container defined by a parent view.
+     *
+     * @readonly
+     * @type {boolean}
+     */
+    isComponent = false
+
+    /**
      * A DOM element.
      *
      * @type {Element}
@@ -365,7 +373,10 @@ class View {
      */
     nestedViews = null
 
-    /** @private */
+    /**
+     * @private
+     * @type {Bull.Factory}
+     */
     _factory = null
 
     /**
@@ -838,11 +849,9 @@ class View {
                     return;
                 }
 
-                if (!this.$el.length && this._elementSelector) {
-                    this.setElement(this._elementSelector);
-                }
-
-                this.$el.html(html);
+                this.isComponent ?
+                    this._renderComponentInDom(html) :
+                    this._renderInDom(html);
 
                 if (!this.element) {
                     let msg = this._elementSelector ?
@@ -861,6 +870,50 @@ class View {
                 resolve(this);
             });
         });
+    }
+
+    /**
+     * @param {string} html
+     * @private
+     */
+    _renderComponentInDom(html) {
+        if (!this.element) {
+            if (!this._elementSelector) {
+                console.warn(`Can't render component. No DOM selector.`);
+
+                return;
+            }
+
+            this._setElement(this._elementSelector);
+        }
+
+        if (!this.element) {
+            console.warn(`Can't render component. No DOM element.`);
+
+            return;
+        }
+
+        let div = document.createElement('div');
+        div.innerHTML = html;
+        let element = div.children[0];
+
+        let parent = this.element.parentElement;
+
+        parent.replaceChild(this.element, element);
+
+        this.setElement(this._elementSelector);
+    }
+
+    /**
+     * @param {string} html
+     * @private
+     */
+    _renderInDom(html) {
+        if (!this.$el.length && this._elementSelector) {
+            this.setElement(this._elementSelector);
+        }
+
+        this.$el.html(html);
     }
 
     /**
@@ -1193,6 +1246,10 @@ class View {
             let view = item.view;
 
             if (view.notToRender) {
+                if (view.isComponent) {
+                    data[key] = this._createPlaceholderElement().outerHTML;
+                }
+
                 loaded++;
                 tryReady();
 
@@ -1241,7 +1298,24 @@ class View {
             this._getTemplate(template => {
                 let html = this._renderer.render(template, data);
 
-                callback(html);
+                if (!this.isComponent) {
+                    callback(html);
+
+                    return;
+                }
+
+                let root = (new DOMParser())
+                    .parseFromString(html, 'text/html')
+                    .body
+                    .children[0];
+
+                if (!root) {
+                    throw new Error(`Bad DOM. No root.`);
+                }
+
+                root.setAttribute('data-view-id', this.cid);
+
+                callback(root.outerHTML);
             });
         });
     }
@@ -1412,7 +1486,7 @@ class View {
      *
      * @param {string} key A view key.
      * @param {Bull.View} view A view.
-     * @param {string|null} [selector] A relative selector.
+     * @param {string} [selector] A relative selector.
      * @return {Promise<View>}
      */
     assignView(key, view, selector) {
@@ -1426,8 +1500,12 @@ class View {
                 this.waitForView(key);
             }
 
-            if (selector || !view.getSelector()) {
-                selector = selector || `[data-view="${key}"]`;
+            if (!selector && view.isComponent) {
+                selector = `[data-view-cid="${view.cid}"]`;
+            }
+
+            if (selector/* || !view.getSelector()*/) {
+                //selector = selector || `[data-view="${key}"]`;
 
                 view.setSelector(this.getSelector() + ' ' + selector);
             }
@@ -1477,11 +1555,15 @@ class View {
                 options.fullSelector = this.getSelector() + ' ' + options.selector;
             }
 
-            if (!fullSelector && !options.fullSelector) {
+            /*if (!fullSelector && !options.fullSelector) {
                 options.fullSelector = this.getSelector() + ` [data-view="${key}"]`;
-            }
+            }*/
 
             this._factory.create(viewName, options, view => {
+                if (view.isComponent && !options.fullSelector) {
+                    options.fullSelector = this.getSelector() + ` [data-view-cid="${view.cid}"]`;
+                }
+
                 this._assignViewCallback(
                     key,
                     view,
@@ -1695,6 +1777,29 @@ class View {
     }
 
     /**
+     * @private
+     * @return {Element}
+     */
+    _createPlaceholderElement() {
+        let span = document.createElement('span');
+
+        span.setAttribute('data-view-id', this.cid);
+
+        return span;
+    }
+
+    /** @private */
+    _replaceWithPlaceholderElement() {
+        if (!this.element) {
+            return;
+        }
+
+        let parent = this.element.parentElement;
+
+        parent.replaceChild(this.element, this._createPlaceholderElement())
+    }
+
+    /**
      * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
      *
      * @public
@@ -1712,7 +1817,9 @@ class View {
         this.off();
 
         if (!dontEmpty) {
-            this.$el.empty();
+            this.isComponent ?
+                this._replaceWithPlaceholderElement() :
+                this.$el.empty();
         }
 
         this.stopListening();
