@@ -519,8 +519,8 @@ class View {
      *   renderer: Bull.Renderer,
      *   templator: Bull.Templator,
      *   layouter: Bull.Layouter,
-     *   helper: Object,
-     *   onReady: function(): void,
+     *   helper?: Object,
+     *   onReady?: function(): void,
      *   preCompiledTemplates?: Object,
      * }} data
      * @internal
@@ -899,7 +899,7 @@ class View {
 
         let parent = this.element.parentElement;
 
-        parent.replaceChild(this.element, element);
+        parent.replaceChild(element, this.element);
 
         this.setElement(this._elementSelector);
     }
@@ -1313,7 +1313,7 @@ class View {
                     throw new Error(`Bad DOM. No root.`);
                 }
 
-                root.setAttribute('data-view-id', this.cid);
+                root.setAttribute('data-view-cid', this.cid);
 
                 callback(root.outerHTML);
             });
@@ -1783,7 +1783,7 @@ class View {
     _createPlaceholderElement() {
         let span = document.createElement('span');
 
-        span.setAttribute('data-view-id', this.cid);
+        span.setAttribute('data-view-cid', this.cid);
 
         return span;
     }
@@ -1796,7 +1796,7 @@ class View {
 
         let parent = this.element.parentElement;
 
-        parent.replaceChild(this.element, this._createPlaceholderElement())
+        parent.replaceChild(this._createPlaceholderElement(), this.element);
     }
 
     /**
@@ -1850,7 +1850,6 @@ class View {
 
     /** @private */
     _setElement(fullSelector) {
-
         const setElement = () => {
             this.element = this.$el[0];
 

@@ -10,6 +10,7 @@ describe('View', function () {
 	let renderer;
 	let layouter;
 	let factory;
+    let viewData;
 
 	beforeEach(() => {
 		renderer = {
@@ -47,6 +48,18 @@ describe('View', function () {
 			layouter: layouter,
 			factory: factory,
 		});
+
+        viewData = {
+            templator:  {
+                compileTemplate: template => {
+                    return Handlebars.compile(template);
+                },
+                compilable: true,
+            },
+            renderer: renderer,
+            factory: factory,
+            layouter: layouter,
+        };
 	});
 
 	it ('should assign view with child selector', () => {
@@ -718,9 +731,9 @@ describe('View', function () {
                    return template;
                },
            },
-       })
+       });
 
-       return new Promise((resolve, reject) => {
+       return new Promise(resolve => {
            let $div = $('<div id="test-div">');
 
            $('body').append($div);
@@ -740,5 +753,66 @@ describe('View', function () {
                    resolve();
                });
        });
+    });
+
+
+    it ('should render component', () => {
+        let $div = $('<div id="test-root">');
+
+        $('body').append($div);
+
+        class Component extends View {
+
+            isComponent = true
+
+            templateContent = `<button>test</button>`
+        }
+
+        class RootView extends View {
+
+            templateContent = `<div>{{{test}}}</div>`
+
+            setup() {
+                this.assignView('test', new Component());
+            }
+        }
+
+        let rootView = new RootView({
+            fullSelector: '#test-root',
+        });
+        rootView._initialize(viewData);
+
+        return new Promise(resolve => {
+            rootView.render()
+                .then(() => {
+                    expect($('#test-root div button').text()).toBe('test');
+
+                    let component = rootView.getView('test');
+
+                    component
+                        .reRender()
+                        .then(() => {
+                            expect($('#test-root div button').text()).toBe('test');
+
+                            expect(
+                                $(`#test-root div button[data-view-cid="${component.cid}"]`).text()
+                            ).toBe('test');
+
+                            rootView.clearView('test');
+
+                            expect(
+                                $(`#test-root div button[data-view-cid="${component.cid}"]`).length
+                            ).toBe(0);
+
+                            expect(
+                                $(`#test-root div span[data-view-cid="${component.cid}"]`).length
+                            ).toBe(1);
+
+                            //$div.remove();
+
+                            resolve();
+                        });
+                });
+        });
     });
 });
