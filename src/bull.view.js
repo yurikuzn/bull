@@ -1043,11 +1043,8 @@ class View {
      * @param {function()} callback
      */
     _loadNestedViews(callback) {
-        let nestedViewDefs = [];
-
-        if (this._layout != null) {
-            nestedViewDefs = this._getNestedViewDefsFromLayout();
-        }
+        let nestedViewDefs = this._layout != null ?
+            this._getNestedViewDefsFromLayout() : [];
 
         this._addDefinedNestedViewDefs(nestedViewDefs);
 
@@ -1062,17 +1059,16 @@ class View {
 
         tryReady();
 
-        nestedViewDefs.forEach((def, i) => {
-            let key = nestedViewDefs[i].name;
+        nestedViewDefs.forEach(/** Bull.View~nestedViewItemDefs */def => {
+            let key = def.name;
             let viewName = this._factory.defaultViewName;
 
-            if ('view' in nestedViewDefs[i]) {
-                viewName = nestedViewDefs[i].view;
+            if ('view' in def) {
+                viewName = def.view;
             }
 
             if (viewName === false) {
                 loaded++;
-
                 tryReady();
 
                 return;
@@ -1080,25 +1076,26 @@ class View {
 
             let options = {};
 
-            if ('layout' in nestedViewDefs[i]) {
-                options.layout = nestedViewDefs[i].layout;
+            if ('layout' in def) {
+                options.layout = def.layout;
             }
 
-            if ('template' in nestedViewDefs[i]) {
-                options.template = nestedViewDefs[i].template;
+            if ('template' in def) {
+                options.template = def.template;
             }
 
-            let fullSelector = nestedViewDefs[i].fullSelector || nestedViewDefs[i].el;
+            // noinspection JSUnresolvedReference
+            let fullSelector = def.fullSelector || /** @type {string} */def.el;
 
             if (fullSelector) {
                 options.fullSelector = fullSelector;
             }
-            else if ('selector' in nestedViewDefs[i]) {
-                options.selector = nestedViewDefs[i].selector;
+            else if ('selector' in def) {
+                options.selector = def.selector;
             }
 
-            if ('options' in nestedViewDefs[i]) {
-                options = {...options, ...nestedViewDefs[i].options};
+            if ('options' in def) {
+                options = {...options, ...def.options};
             }
 
             if (this.model) {
@@ -1115,15 +1112,14 @@ class View {
                 options[name] = this.options[name];
             }
 
-            this._factory.create(viewName, options, (view) => {
-                if ('notToRender' in nestedViewDefs[i]) {
-                    view.notToRender = nestedViewDefs[i].notToRender;
+            this._factory.create(viewName, options, view => {
+                if ('notToRender' in def) {
+                    view.notToRender = def.notToRender;
                 }
 
                 this.setView(key, view);
 
                 loaded++;
-
                 tryReady();
             });
         });
@@ -1179,10 +1175,10 @@ class View {
      */
     _getNestedViewsHtmlList(callback) {
         let data = {};
-        let nestedViewsArray = this._getNestedViewsAsArray();
+        let items = this._getNestedViewsAsArray();
 
         let loaded = 0;
-        let count = nestedViewsArray.length;
+        let count = items.length;
 
         let tryReady = () => {
             if (loaded === count) {
@@ -1192,9 +1188,9 @@ class View {
 
         tryReady();
 
-        nestedViewsArray.forEach((d, i) => {
-            let key = nestedViewsArray[i].key;
-            let view = nestedViewsArray[i].view;
+        items.forEach(item => {
+            let key = item.key;
+            let view = item.view;
 
             if (view.notToRender) {
                 loaded++;
