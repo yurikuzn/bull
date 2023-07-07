@@ -11,7 +11,6 @@ import _ from 'underscore';
  *
  * @property {string} [selector] A DOM element selector relative to a parent view.
  * @property {string} [fullSelector] A full DOM element selector.
- * @property {string} [el] Deprecated. Use `fullSelector`. A full DOM element selector.
  * @property {string[]} [optionsToPass] Options to be automatically passed to child views
  *   of the created view.
  * @property {(function: Object)|Object} [data] Data that will be passed to a template or a function
@@ -186,6 +185,18 @@ import _ from 'underscore';
  * DOM event listeners.
  *
  * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
+ */
+
+/**
+ * @typedef {Object} Bull.View~nestedViewItemDefs
+ * @property {string} name A name.
+ * @property {string|true} [view] A view.
+ * @property {string} [layout] A layout.
+ * @property {string} [template] A template.
+ * @property {boolean} [notToRender] Not to render.
+ * @property {string} [selector] A relative selector.
+ * @property {string} [fullSelector] A full selector.
+ * @property {Object.<string, *>} [options] Options.
  */
 
 /**
@@ -370,7 +381,7 @@ class View {
      */
     _template = null
     /**
-     * @type {Object}
+     * @type {Object.<string, Bull.View~nestedViewItemDefs>|null}
      * @private
      */
     _nestedViewDefs = null
@@ -651,12 +662,11 @@ class View {
 
             return;
         }
-        else {
-            if (this.views != null) {
-                loadNestedViews();
 
-                return;
-            }
+        if (this.views != null) {
+            loadNestedViews();
+
+            return;
         }
 
         this._nestedViewsFromLayoutLoaded = true;
@@ -812,7 +822,7 @@ class View {
     /**
      * Render the view.
      *
-     * @param {Function} [callback] Deprecated. Use promise.
+     * @param {function()} [callback] Deprecated. Use promise.
      * @return {Promise<this>}
      */
     render(callback) {
@@ -976,7 +986,10 @@ class View {
         }
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {Bull.View~nestedViewItemDefs[]} [list
+     */
     _addDefinedNestedViewDefs(list) {
         for (let name in this.views) {
             let o = _.clone(this.views[name]);
@@ -991,40 +1004,49 @@ class View {
         return list;
     }
 
-    /** @private */
-    _getNestedViewsFromLayout() {
-        let nestedViewDefs = this._layouter
-            .findNestedViews(this._getLayoutName(), this._getLayout() || null, this.noCache);
+    /**
+     * @private
+     * @return {Bull.View~nestedViewItemDefs[]}
+     */
+    _getNestedViewDefsFromLayout() {
+        let itemList = this._layouter.findNestedViews(
+            this._getLayoutName(),
+            this._getLayout() || null,
+            this.noCache
+        );
 
-        if (Object.prototype.toString.call(nestedViewDefs) !== '[object Array]') {
-            throw new Error("Bad layout. It should be an Array.");
+        if (Object.prototype.toString.call(itemList) !== '[object Array]') {
+            throw new Error("Bad layout. It should be an array.");
         }
 
         let nestedViewDefsFiltered = [];
 
-        for (let i in nestedViewDefs) {
-            let key = nestedViewDefs[i].name;
+        for (let item of itemList) {
+            let key = item.name;
 
-            this._nestedViewDefs[key] = nestedViewDefs[i];
+            this._nestedViewDefs[key] = item;
 
-            if ('view' in nestedViewDefs[i] && nestedViewDefs[i].view === true) {
-                if (!('layout' in nestedViewDefs[i] || 'template' in nestedViewDefs[i])) {
+            if ('view' in item && item.view === true) {
+                if (!('layout' in item || 'template' in item)) {
                     continue;
                 }
             }
 
-            nestedViewDefsFiltered.push(nestedViewDefs[i]);
+            nestedViewDefsFiltered.push(item);
         }
 
         return nestedViewDefsFiltered;
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {function()} callback
+     */
     _loadNestedViews(callback) {
         let nestedViewDefs = [];
 
         if (this._layout != null) {
-            nestedViewDefs = this._getNestedViewsFromLayout();
+            nestedViewDefs = this._getNestedViewDefsFromLayout();
         }
 
         this._addDefinedNestedViewDefs(nestedViewDefs);
@@ -1035,8 +1057,6 @@ class View {
         let tryReady = function () {
             if (loaded === count) {
                 callback();
-
-                return true;
             }
         };
 
@@ -1109,7 +1129,10 @@ class View {
         });
     }
 
-    /** @private */
+    /**
+     * @private
+     * @return {Object.<string, *>}
+     */
     _getData() {
         if (this.options.data) {
             if (typeof this.options.data === 'function') {
@@ -1126,7 +1149,13 @@ class View {
         return this.data;
     }
 
-    /** @private */
+    /**
+     * @private
+     * @return {{
+     *     key: string,
+     *     view: View,
+     * }[]}
+     */
     _getNestedViewsAsArray() {
         let nestedViewsArray = [];
 
@@ -1135,17 +1164,19 @@ class View {
         for (let key in this.nestedViews) {
             nestedViewsArray.push({
                 key: key,
-                view: this.nestedViews[key]
+                view: this.nestedViews[key],
             });
 
             i++;
         }
 
         return nestedViewsArray;
-
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {function(Object.<string, *>)} callback
+     */
     _getNestedViewsHtmlList(callback) {
         let data = {};
         let nestedViewsArray = this._getNestedViewsAsArray();
@@ -1156,8 +1187,6 @@ class View {
         let tryReady = () => {
             if (loaded === count) {
                 callback(data);
-
-                return true;
             }
         };
 
@@ -1167,30 +1196,33 @@ class View {
             let key = nestedViewsArray[i].key;
             let view = nestedViewsArray[i].view;
 
-            if (!view.notToRender) {
-                view.getHtml((html) => {
-                    data[key] = html;
-
-                    loaded++;
-                    tryReady();
-                });
+            if (view.notToRender) {
+                loaded++;
+                tryReady();
 
                 return;
             }
 
-            loaded++;
-            tryReady();
+            view.getHtml(html => {
+                data[key] = html;
+
+                loaded++;
+                tryReady();
+            });
         });
     }
 
     /**
      * Provides the ability to modify template data right before render.
      *
-     * @param {Object} data Data.
+     * @param {Object.<string, *>} data Data.
      */
     handleDataBeforeRender(data) {}
 
-    /** @private */
+    /**
+     * @private
+     * @param {function(string)} callback
+     */
     _getHtml(callback) {
         this._isBeingRendered = true;
         this.trigger('render', this);
@@ -1218,12 +1250,18 @@ class View {
         });
     }
 
-    /** @private */
+    /**
+     * @private
+     * @return {string|null}
+     */
     _getTemplateName() {
         return this.template || null;
     }
 
-    /** @private */
+    /**
+     * @private
+     * @return {string|null}
+     */
     _getLayoutName() {
         return this.layout || this.name || null;
     }
@@ -1242,7 +1280,10 @@ class View {
         return this._layout;
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {function(*)} callback
+     */
     _getTemplate(callback) {
         if (
             this._templator &&
@@ -1312,7 +1353,11 @@ class View {
         }
     }
 
-    /** @private */
+    /**
+     * @private
+     * @param {string} key
+     * @return {string|null}
+     */
     _getSelectorForNestedView(key) {
         if (!(key in this._nestedViewDefs)) {
             return null;

@@ -57,6 +57,12 @@ class Layouter {
         }
     }
 
+    /**
+     * @param {string} layoutName
+     * @param {Object} layoutDefs
+     * @param {boolean} noCache
+     * @return {Bull.View~nestedViewItemDefs[]}
+     */
     findNestedViews(layoutName, layoutDefs, noCache) {
         if (!layoutName && !layoutDefs) {
             throw new Error("Can not find nested views. No layout data and name.");
