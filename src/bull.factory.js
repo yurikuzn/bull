@@ -119,7 +119,7 @@ class Factory {
      *
      * @param {string} viewName A view name/path.
      * @param {Bull.View~Options} [options] Options.
-     * @param {Function<Bull.View>} [callback] Invoked once the view is ready.
+     * @param {function(Bull.View)} [callback] Invoked once the view is ready.
      */
     create(viewName, options, callback) {
         this._getViewClass(viewName, viewClass => {
