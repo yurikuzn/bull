@@ -490,7 +490,7 @@ class View {
         }
 
         if (typeof this[handler] !== 'function') {
-            console.warn(`'Could not add event handler. No '${handler}' method.`)
+            console.warn(`Could not add event handler. No '${handler}' method.`)
 
             return;
         }
