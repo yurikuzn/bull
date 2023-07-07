@@ -768,12 +768,21 @@ describe('View', function () {
             templateContent = `<button>test</button>`
         }
 
+        class ComponentHello extends View {
+
+            isComponent = true
+            notToRender = true
+
+            templateContent = `<a>hello</a>`
+        }
+
         class RootView extends View {
 
-            templateContent = `<div>{{{test}}}</div>`
+            templateContent = `<div>{{{test}}} {{{hello}}}</div>`
 
             setup() {
                 this.assignView('test', new Component());
+                this.assignView('hello', new ComponentHello());
             }
         }
 
@@ -788,18 +797,26 @@ describe('View', function () {
                     expect($('#test-root div button').text()).toBe('test');
 
                     let component = rootView.getView('test');
+                    let componentHello = rootView.getView('hello');
+
+                    // noinspection JSJQueryEfficiency
+                    expect(
+                        $(`#test-root div span[data-view-cid="${componentHello.cid}"]`).text()
+                    ).toBe('');
 
                     component
                         .reRender()
                         .then(() => {
                             expect($('#test-root div button').text()).toBe('test');
 
+                            // noinspection JSJQueryEfficiency
                             expect(
                                 $(`#test-root div button[data-view-cid="${component.cid}"]`).text()
                             ).toBe('test');
 
                             rootView.clearView('test');
 
+                            // noinspection JSJQueryEfficiency
                             expect(
                                 $(`#test-root div button[data-view-cid="${component.cid}"]`).length
                             ).toBe(0);
@@ -808,9 +825,18 @@ describe('View', function () {
                                 $(`#test-root div span[data-view-cid="${component.cid}"]`).length
                             ).toBe(1);
 
-                            //$div.remove();
+                            console.log(1);
 
-                            resolve();
+                            componentHello.render()
+                                .then(() => {
+                                    expect(
+                                        $(`#test-root div a[data-view-cid="${componentHello.cid}"]`).text()
+                                    ).toBe('hello');
+
+                                    resolve();
+
+                                    $div.remove();
+                                });
                         });
                 });
         });

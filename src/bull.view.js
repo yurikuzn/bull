@@ -239,6 +239,13 @@ class View {
     }
 
     /**
+     * An ID, unique among all views.
+     * @type {string}
+     * @public
+     */
+    cid
+
+    /**
      * @type {string}
      * @private
      */
@@ -1226,7 +1233,7 @@ class View {
      * @private
      * @param {function(Object.<string, *>)} callback
      */
-    _getNestedViewsHtmlList(callback) {
+    _getNestedViewsHtmlMap(callback) {
         let data = {};
         let items = this._getNestedViewsAsArray();
 
@@ -1247,7 +1254,7 @@ class View {
 
             if (view.notToRender) {
                 if (view.isComponent) {
-                    data[key] = this._createPlaceholderElement().outerHTML;
+                    data[key] = this._createPlaceholderElement(view.cid).outerHTML;
                 }
 
                 loaded++;
@@ -1280,8 +1287,8 @@ class View {
         this._isBeingRendered = true;
         this.trigger('render', this);
 
-        this._getNestedViewsHtmlList(nestedViewsHtmlList => {
-            let data = {...this._getData(), ...nestedViewsHtmlList};
+        this._getNestedViewsHtmlMap(htmlMap => {
+            let data = {...this._getData(), ...htmlMap};
 
             if (this.collection || null) {
                 data.collection = this.collection;
@@ -1778,12 +1785,13 @@ class View {
 
     /**
      * @private
+     * @param {string} [cid]
      * @return {Element}
      */
-    _createPlaceholderElement() {
+    _createPlaceholderElement(cid) {
         let span = document.createElement('span');
 
-        span.setAttribute('data-view-cid', this.cid);
+        span.setAttribute('data-view-cid', cid || this.cid);
 
         return span;
     }
@@ -2002,14 +2010,6 @@ let delegateEventSplitter = /^(\S+)\s*(.*)$/;
  * @memberof Bull.View#
  */
 
-/**
- * An ID, unique among all views.
- *
- * @name cid
- * @type {string}
- * @public
- * @memberof Bull.View#
- */
 
 /**
  * A DOM element.
