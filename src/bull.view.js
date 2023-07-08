@@ -208,13 +208,11 @@ import _ from 'underscore';
 class View {
 
     /**
-     * @param {Object.<string, *>|null} [options]
+     * @param {Object.<string, *>} [options]
      * @mixes Bull.Events
      */
-    constructor(options) {
+    constructor(options = {}) {
         this.cid = _.uniqueId('view');
-
-        options = {...options};
 
         if ('model' in options) {
             this.model = options.model;
@@ -239,10 +237,28 @@ class View {
     }
 
     /**
+     * An ID, unique among all views.
+     * @type {string}
+     * @public
+     */
+    cid
+
+    /**
      * @type {string}
      * @private
      */
     _elementSelector
+
+    /**
+     * Is component. Components does not require a DOM container defined by a parent view.
+     * Should have one root DOM element.
+     *
+     * An experimental feature.
+     *
+     * @readonly
+     * @type {boolean}
+     */
+    isComponent = false
 
     /**
      * A DOM element.
@@ -365,7 +381,10 @@ class View {
      */
     nestedViews = null
 
-    /** @private */
+    /**
+     * @private
+     * @type {Bull.Factory}
+     */
     _factory = null
 
     /**
@@ -508,8 +527,8 @@ class View {
      *   renderer: Bull.Renderer,
      *   templator: Bull.Templator,
      *   layouter: Bull.Layouter,
-     *   helper: Object,
-     *   onReady: function(): void,
+     *   helper?: Object,
+     *   onReady?: function(): void,
      *   preCompiledTemplates?: Object,
      * }} data
      * @internal
@@ -838,11 +857,9 @@ class View {
                     return;
                 }
 
-                if (!this.$el.length && this._elementSelector) {
-                    this.setElement(this._elementSelector);
-                }
-
-                this.$el.html(html);
+                this.isComponent ?
+                    this._renderComponentInDom(html) :
+                    this._renderInDom(html);
 
                 if (!this.element) {
                     let msg = this._elementSelector ?
@@ -861,6 +878,50 @@ class View {
                 resolve(this);
             });
         });
+    }
+
+    /**
+     * @param {string} html
+     * @private
+     */
+    _renderComponentInDom(html) {
+        if (!this.element) {
+            if (!this._elementSelector) {
+                console.warn(`Can't render component. No DOM selector.`);
+
+                return;
+            }
+
+            this._setElement(this._elementSelector);
+        }
+
+        if (!this.element) {
+            console.warn(`Can't render component. No DOM element.`);
+
+            return;
+        }
+
+        let div = document.createElement('div');
+        div.innerHTML = html;
+        let element = div.children[0];
+
+        let parent = this.element.parentElement;
+
+        parent.replaceChild(element, this.element);
+
+        this.setElement(this._elementSelector);
+    }
+
+    /**
+     * @param {string} html
+     * @private
+     */
+    _renderInDom(html) {
+        if (!this.$el.length && this._elementSelector) {
+            this.setElement(this._elementSelector);
+        }
+
+        this.$el.html(html);
     }
 
     /**
@@ -1173,7 +1234,7 @@ class View {
      * @private
      * @param {function(Object.<string, *>)} callback
      */
-    _getNestedViewsHtmlList(callback) {
+    _getNestedViewsHtmlMap(callback) {
         let data = {};
         let items = this._getNestedViewsAsArray();
 
@@ -1193,6 +1254,10 @@ class View {
             let view = item.view;
 
             if (view.notToRender) {
+                if (view.isComponent) {
+                    data[key] = this._createPlaceholderElement(view.cid).outerHTML;
+                }
+
                 loaded++;
                 tryReady();
 
@@ -1223,8 +1288,8 @@ class View {
         this._isBeingRendered = true;
         this.trigger('render', this);
 
-        this._getNestedViewsHtmlList(nestedViewsHtmlList => {
-            let data = {...this._getData(), ...nestedViewsHtmlList};
+        this._getNestedViewsHtmlMap(htmlMap => {
+            let data = {...this._getData(), ...htmlMap};
 
             if (this.collection || null) {
                 data.collection = this.collection;
@@ -1241,7 +1306,24 @@ class View {
             this._getTemplate(template => {
                 let html = this._renderer.render(template, data);
 
-                callback(html);
+                if (!this.isComponent) {
+                    callback(html);
+
+                    return;
+                }
+
+                let root = (new DOMParser())
+                    .parseFromString(html, 'text/html')
+                    .body
+                    .children[0];
+
+                if (!root) {
+                    throw new Error(`Bad DOM. No root.`);
+                }
+
+                root.setAttribute('data-view-cid', this.cid);
+
+                callback(root.outerHTML);
             });
         });
     }
@@ -1412,7 +1494,7 @@ class View {
      *
      * @param {string} key A view key.
      * @param {Bull.View} view A view.
-     * @param {string|null} [selector] A relative selector.
+     * @param {string} [selector] A relative selector.
      * @return {Promise<View>}
      */
     assignView(key, view, selector) {
@@ -1426,8 +1508,12 @@ class View {
                 this.waitForView(key);
             }
 
-            if (selector || !view.getSelector()) {
-                selector = selector || `[data-view="${key}"]`;
+            if (!selector && view.isComponent) {
+                selector = `[data-view-cid="${view.cid}"]`;
+            }
+
+            if (selector/* || !view.getSelector()*/) {
+                //selector = selector || `[data-view="${key}"]`;
 
                 view.setSelector(this.getSelector() + ' ' + selector);
             }
@@ -1477,11 +1563,15 @@ class View {
                 options.fullSelector = this.getSelector() + ' ' + options.selector;
             }
 
-            if (!fullSelector && !options.fullSelector) {
+            /*if (!fullSelector && !options.fullSelector) {
                 options.fullSelector = this.getSelector() + ` [data-view="${key}"]`;
-            }
+            }*/
 
             this._factory.create(viewName, options, view => {
+                if (view.isComponent && !options.fullSelector) {
+                    options.fullSelector = this.getSelector() + ` [data-view-cid="${view.cid}"]`;
+                }
+
                 this._assignViewCallback(
                     key,
                     view,
@@ -1695,6 +1785,30 @@ class View {
     }
 
     /**
+     * @private
+     * @param {string} [cid]
+     * @return {Element}
+     */
+    _createPlaceholderElement(cid) {
+        let span = document.createElement('span');
+
+        span.setAttribute('data-view-cid', cid || this.cid);
+
+        return span;
+    }
+
+    /** @private */
+    _replaceWithPlaceholderElement() {
+        if (!this.element) {
+            return;
+        }
+
+        let parent = this.element.parentElement;
+
+        parent.replaceChild(this._createPlaceholderElement(), this.element);
+    }
+
+    /**
      * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
      *
      * @public
@@ -1712,17 +1826,19 @@ class View {
         this.off();
 
         if (!dontEmpty) {
-            this.$el.empty();
+            this.isComponent ?
+                this._replaceWithPlaceholderElement() :
+                this.$el.empty();
         }
 
         this.stopListening();
         this.undelegateEvents();
 
-        if (this.model) {
+        if (this.model && typeof this.model.off === 'function') {
             this.model.off(null, null, this);
         }
 
-        if (this.collection) {
+        if (this.collection && typeof this.collection.off === 'function') {
             this.collection.off(null, null, this);
         }
 
@@ -1743,7 +1859,6 @@ class View {
 
     /** @private */
     _setElement(fullSelector) {
-
         const setElement = () => {
             this.element = this.$el[0];
 
@@ -1878,32 +1993,6 @@ let delegateEventSplitter = /^(\S+)\s*(.*)$/;
  * @memberof Bull.View
  */
 
-/**
- * A model.
- *
- * @name model
- * @type {Bull.Model|null}
- * @public
- * @memberof Bull.View#
- */
-
-/**
- * A collection.
- *
- * @name collection
- * @type {Bull.Collection|null}
- * @public
- * @memberof Bull.View#
- */
-
-/**
- * An ID, unique among all views.
- *
- * @name cid
- * @type {string}
- * @public
- * @memberof Bull.View#
- */
 
 /**
  * A DOM element.
