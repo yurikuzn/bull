@@ -222,10 +222,6 @@ class View {
             this.collection = options.collection;
         }
 
-        if ('events' in options) {
-            this.events = options.events;
-        }
-
         this.$el = $();
         this.options = options;
 
