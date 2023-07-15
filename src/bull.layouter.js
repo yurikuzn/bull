@@ -4,65 +4,19 @@
  */
 class Layouter {
 
-    constructor() {
-        this._layouts = {};
-        this._cachedNestedViews = {};
-    }
-
-    _layouts = null
-    _cachedNestedViews = null
-
-    addLayout(layoutName, layout) {
-        this._layouts[layoutName] = layout;
-    }
-
-    _getCachedNestedViews(layoutName) {
-        if (layoutName in this._cachedNestedViews) {
-            return this._cachedNestedViews[layoutName];
-        }
-
-        return false;
-    }
-
-    _cacheNestedViews(layoutName, nestedViews) {
-        if (!(layoutName in this._cachedNestedViews)) {
-            this._cachedNestedViews[layoutName] = nestedViews;
-        }
-    }
-
     /**
-     * @param {string} [layoutName]
      * @param {Object} layoutDefs
-     * @param {boolean} noCache
      * @return {Bull.View~nestedViewItemDefs[]}
      */
-    findNestedViews(layoutName, layoutDefs, noCache) {
-        if (!layoutName && !layoutDefs) {
+    findNestedViews(layoutDefs) {
+        if (!layoutDefs) {
             throw new Error("Can not find nested views. No layout data and name.");
-        }
-
-        if (layoutName && !noCache) {
-            let cached = this._getCachedNestedViews(layoutName);
-
-            if (cached) {
-                return cached;
-            }
-        }
-
-        if (typeof layoutDefs === 'undefined') {
-            if (layoutName in this._layouts) {
-                layoutDefs = this._layouts[layoutName];
-            }
-
-            if (!('layout' in layoutDefs)) {
-                throw new Error("Layout \"" + layoutName + "\"" + " is bad.");
-            }
         }
 
         let layout = layoutDefs.layout;
         let viewPathList = [];
 
-        let uniqName = (name, count) => {
+        const uniqName = (name, count) => {
             let modName = name;
 
             if (typeof count !== 'undefined') {
@@ -111,26 +65,25 @@ class Layouter {
 
         const seekForViews = (tree) => {
             for (let key in tree) {
-                if (tree[key] !== null && typeof tree[key] === 'object') {
-                    if ('view' in tree[key] || 'layout' in tree[key] || 'template' in tree[key]) {
-                        let def = getDefsForNestedView(tree[key]);
-
-                        if ('name' in def) {
-                            viewPathList.push(def);
-                        }
-                    }
-                    else {
-                        seekForViews(tree[key]);
-                    }
+                if (tree[key] == null || typeof tree[key] !== 'object') {
+                    continue;
                 }
+
+                if ('view' in tree[key] || 'layout' in tree[key] || 'template' in tree[key]) {
+                    let def = getDefsForNestedView(tree[key]);
+
+                    if ('name' in def) {
+                        viewPathList.push(def);
+                    }
+
+                    continue;
+                }
+
+                seekForViews(tree[key]);
             }
         };
 
         seekForViews(layout);
-
-        if (layoutName && !noCache) {
-            this._cacheNestedViews(layoutName, viewPathList);
-        }
 
         return viewPathList;
     }

@@ -20,7 +20,6 @@ import _ from 'underscore';
  * @property {Object} [layoutDefs] Internal layout defs.
  * @property {Object} [layoutData] Internal layout data.
  * @property {boolean} [notToRender] Not to render on ready.
- * @property {boolean} [noCache] Disable layout cache.
  * @property {Object.<string, Bull.View~NestedViewItem>} [views] Child view definitions.
  * @property {string} [name] A view name.
  * @property {Bull.Model} [model] A model.
@@ -280,28 +279,12 @@ class View {
     templateContent = null
 
     /**
-     * A name of the view. If a template is not defined it will be used to cache
-     * built template. Otherwise, they won't be cached.
-     *
-     * @type {string}
-     */
-    name
-
-    /**
      * DOM event listeners. Recommended to use `addHandler` method instead.
      *
      * @type {Bull.View.DomEvents}
      * @protected
      */
     events = null
-
-    /**
-     * Not to use cache for layouts. Use it if layouts are dynamic.
-     *
-     * @type {boolean}
-     * @protected
-     */
-    noCache = false
 
     /**
      * Not to render a view automatically when a view tree is built (ready).
@@ -573,12 +556,7 @@ class View {
          */
         this._preCompiledTemplates = data.preCompiledTemplates || {};
 
-        if ('noCache' in this.options) {
-            this.noCache = this.options.noCache;
-        }
-
         this.events = _.clone(this.events || {});
-        this.name = this.options.name || this.name;
         this.notToRender = ('notToRender' in this.options) ? this.options.notToRender : this.notToRender;
 
         this.nestedViews = {};
@@ -1048,11 +1026,7 @@ class View {
      * @return {Bull.View~nestedViewItemDefs[]}
      */
     _getNestedViewDefsFromLayout() {
-        let itemList = this._layouter.findNestedViews(
-            this.name,
-            this._layoutDefs || null,
-            this.noCache
-        );
+        let itemList = this._layouter.findNestedViews(this._layoutDefs);
 
         if (Object.prototype.toString.call(itemList) !== '[object Array]') {
             throw new Error("Bad layout. It should be an array.");
@@ -1353,26 +1327,16 @@ class View {
             return;
         }
 
-        let noCache = false;
         let layoutOptions = {};
 
         if (!templateName) {
-            noCache = this.noCache;
-
-            if (this.name) {
-                templateName = 'built-' + this.name;
-            }
-            else {
-                noCache = true;
-            }
-
             layoutOptions = {
                 data: this._getLayoutData(),
                 layout: this._layoutDefs,
             };
         }
 
-        this._templator.getTemplate(templateName, layoutOptions, noCache, callback);
+        this._templator.getTemplate(templateName, layoutOptions, callback);
     }
 
     /** @private */

@@ -39,22 +39,21 @@ class Templator {
     }
 
     /**
-     * @param {string} name
+     * @param {string} [name]
      * @param {{
      *     layout?: Object,
      *     data?: Object.<string, *>
-     * }} layoutOptions
-     * @param noCache
+     * }} [layoutOptions]
      * @param callback
      */
-    getTemplate(name, layoutOptions, noCache, callback) {
+    getTemplate(name, layoutOptions,  callback) {
         layoutOptions = layoutOptions || {};
 
         if (!layoutOptions.layout && !name) {
             throw new Error(`Can not get template. Not enough data passed.`);
         }
 
-        if (!noCache && name) {
+        if (name) {
             let template = this._getCachedTemplate(name);
 
             if (template) {

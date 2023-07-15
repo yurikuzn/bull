@@ -32,7 +32,7 @@ describe('Templator', () => {
 	});
 
 	it ('should load template if is not loaded', () => {
-		templator.getTemplate('test', null, false, () => {});
+		templator.getTemplate('test', null, () => {});
 
 		expect(loader.load.calls.first().args[0]).toBe('template');
 		expect(loader.load.calls.first().args[1]).toBe('test');
@@ -40,7 +40,7 @@ describe('Templator', () => {
 
 	it ('should not load template if loaded', () => {
 		templator.addTemplate('test', defaultTemplate);
-		templator.getTemplate('test', null, false, () => {});
+		templator.getTemplate('test', null, () => {});
 
 		expect(loader.load.calls.count()).toBe(0);
 	});
@@ -48,14 +48,14 @@ describe('Templator', () => {
 	it ('should build template with injected data into layout', () => {
 		spyOn(templator, '_buildTemplate').and.callThrough();
 
-		var template;
+		let template;
 
 		templator.compilable = false;
 		templator.getTemplate('test', {
 			name: 'someLayout',
 			data: {some: 'test'},
 			layout: {}
-		}, false, function (t) {
+		}, t => {
 			template = t;
 		});
 

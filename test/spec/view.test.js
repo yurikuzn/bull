@@ -14,31 +14,24 @@ describe('View', function () {
 
 	beforeEach(() => {
 		renderer = {
-			render: function (template, data) {
-				return template(data, {allowProtoPropertiesByDefault: true});
-			}
-		};
+			render: (template, data) => template(data, {allowProtoPropertiesByDefault: true})
+        };
 
 		templator = {
-			getTemplate: function (templateName, layoutOptions, noCache, callback) {
+			getTemplate: (templateName, layoutOptions, callback) => {
 				callback('test');
 			}
-		};
+        };
 
 		layouter = {
-			findNestedViews: function (layoutName, layout) {
-				return [];
-			},
-			getLayout: function (name, callback) {
-				callback([]);
-			},
+			findNestedViews: () => [],
 		};
 
 		factory = {
-			create: function (viewName, options, callback) {
+			create: (viewName, options, callback) => {
 				callback(new View(options));
 			}
-		};
+        };
 
 		view = new View();
 
@@ -170,7 +163,6 @@ describe('View', function () {
 		view.render();
 
 		expect(templator.getTemplate.calls.mostRecent().args[0]).toBe('SomeTemplate');
-		expect(templator.getTemplate.calls.mostRecent().args[2]).toBe(false);
 	});
 
 	it ('should set element for view that name is not defined for', () => {
@@ -227,7 +219,7 @@ describe('View', function () {
 			];
 		});
 
-		spyOn(factory, 'create').and.callFake(function (name, options, callback) {
+		spyOn(factory, 'create').and.callFake((name, options, callback) => {
 			callback({
 				notToRender: false,
 				_updatePath: function () {},
@@ -259,7 +251,7 @@ describe('View', function () {
 			layout: 'header',
 			some: 'test',
 		});
-		expect(layouter.findNestedViews).toHaveBeenCalledWith(undefined, layoutDefs, false);
+		expect(layouter.findNestedViews).toHaveBeenCalledWith(layoutDefs);
 		expect(factory.create.calls.count()).toEqual(2);
 		expect(view.getView('header')).toBeDefined();
 		expect(view.getView('footer')).toBeDefined();

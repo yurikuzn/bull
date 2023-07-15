@@ -9,7 +9,7 @@ describe("Layouter", () => {
 		type: 'default',
 		layout: {},
 	}
-	
+
 	beforeEach(() => {
 		loader = {
 			load: {},
@@ -18,14 +18,14 @@ describe("Layouter", () => {
 		spyOn(loader, 'load').and.callFake((type, name, callback) => {
 			callback(defaultLayout);
 		});
-	
+
 		layouter = new Layouter({
 			loader: loader,
 		});
 	});
-	
+
 	it ('should return proper nested views definitions from the layout', () => {
-		layouter.addLayout('test_1', {
+		let l1 = {
 			type: 'default',
 			layout: [
 				{
@@ -45,9 +45,9 @@ describe("Layouter", () => {
 					view: 'Footer',
 				},
 			]
-		});
-		
-		layouter.addLayout('test_2', {
+		}
+
+		let l2 = {
 			type: 'test-type',
 			layout: {
 				panels: [
@@ -67,9 +67,9 @@ describe("Layouter", () => {
 					},
 				],
 			}
-		});
-		
-		layouter.addLayout('test_3', {
+		};
+
+		let l3 = {
 			type: 'test-type',
 			layout: {
 				panels: [
@@ -97,9 +97,9 @@ describe("Layouter", () => {
 					},
 				],
 			}
-		});		
-		
-		var nestedViewList = layouter.findNestedViews('test_1');
+		}
+
+		let nestedViewList = layouter.findNestedViews(l1);
 
 		expect(nestedViewList).toEqual([
 			{
@@ -113,8 +113,8 @@ describe("Layouter", () => {
 				id : 'footer',
 			},
 		]);
-		
-		nestedViewList = layouter.findNestedViews('test_2');
+
+		nestedViewList = layouter.findNestedViews(l2);
 
 		expect(nestedViewList).toEqual([
 			{
@@ -129,8 +129,8 @@ describe("Layouter", () => {
 				layout: 'Status',
 			},
 		]);
-		
-		nestedViewList = layouter.findNestedViews('test_3');
+
+		nestedViewList = layouter.findNestedViews(l3);
 
 		expect(nestedViewList).toEqual([
 
@@ -150,7 +150,7 @@ describe("Layouter", () => {
 				layout: 'Graph',
 				options: {
 					some: 'test'
-				},				
+				},
 			},
 		]);
 	});
