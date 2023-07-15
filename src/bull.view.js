@@ -280,12 +280,12 @@ class View {
     templateContent = null
 
     /**
-     * A name of the view. If template name is not defined it will be used to cache
-     * built template and layout. Otherwise, they won't be cached. A name is unique.
+     * A name of the view. If a template is not defined it will be used to cache
+     * built template. Otherwise, they won't be cached.
      *
-     * @type {string|null}
+     * @type {string}
      */
-    name = null
+    name
 
     /**
      * DOM event listeners. Recommended to use `addHandler` method instead.
@@ -313,13 +313,13 @@ class View {
     notToRender = false
 
     /**
-     * Layout itself.
+     * Layout definitions.
      *
      * @type {Object|null}
      * @protected
      * @internal
      */
-    _layout = null
+    _layoutDefs = null
 
     /**
      * Layout data.
@@ -364,11 +364,6 @@ class View {
     optionsToPass = null
 
     /**
-     * @type {string|null}
-     * @private
-     */
-    layout = null
-    /**
      * Nested views.
      *
      * @type {Object.<string, View>}
@@ -400,11 +395,17 @@ class View {
      * @private
      */
     _nestedViewDefs = null
-    /** @private */
+    /**
+     * @type {Bull.Templator}
+     * @private
+     */
     _templator = null
     /** @private */
     _renderer = null
-    /** @private */
+    /**
+     * @type {Bull.Layouter}
+     * @private
+     */
     _layouter = null
     /** @private */
     _templateCompiled = null
@@ -622,15 +623,9 @@ class View {
         this.setupFinal();
 
         this.template = this.options.template || this.template;
-        /**
-         * @todo Revise.
-         * @type {string}
-         * @private
-         */
-        this.layout = this.options.layout;
 
         /** @private */
-        this._layout = this.options.layoutDefs || this.options._layout || this._layout;
+        this._layoutDefs = this.options.layoutDefs || this.options._layout
         /**
          * @private
          * @type {Object|null}
@@ -651,9 +646,7 @@ class View {
             this.setElementInAdvance(this._elementSelector);
         }
 
-        let _layout = this._getLayout();
-
-        let loadNestedViews = () => {
+        const loadNestedViews = () => {
             this._loadNestedViews(() => {
                 this._nestedViewsFromLayoutLoaded = true;
 
@@ -661,18 +654,7 @@ class View {
             });
         };
 
-        if (this.layout != null || _layout !== null) {
-            if (_layout === null) {
-                this._layouter.getLayout(this.layout, (_layout) => {
-                    /** @private */
-                    this._layout = _layout;
-
-                    loadNestedViews();
-                });
-
-                return;
-            }
-
+        if (this._layoutDefs !== null) {
             loadNestedViews();
 
             return;
@@ -1067,8 +1049,8 @@ class View {
      */
     _getNestedViewDefsFromLayout() {
         let itemList = this._layouter.findNestedViews(
-            this._getLayoutName(),
-            this._getLayout() || null,
+            this.name,
+            this._layoutDefs || null,
             this.noCache
         );
 
@@ -1100,7 +1082,7 @@ class View {
      * @param {function()} callback
      */
     _loadNestedViews(callback) {
-        let nestedViewDefs = this._layout != null ?
+        let nestedViewDefs = this._layoutDefs != null ?
             this._getNestedViewDefsFromLayout() : [];
 
         this._addDefinedNestedViewDefs(nestedViewDefs);
@@ -1332,26 +1314,9 @@ class View {
         return this.template || null;
     }
 
-    /**
-     * @private
-     * @return {string|null}
-     */
-    _getLayoutName() {
-        return this.layout || this.name || null;
-    }
-
     /** @private */
     _getLayoutData() {
         return this.layoutData;
-    }
-
-    /** @private */
-    _getLayout() {
-        if (typeof this._layout === 'function') {
-            return this._layout();
-        }
-
-        return this._layout;
     }
 
     /**
@@ -1394,24 +1359,16 @@ class View {
         if (!templateName) {
             noCache = this.noCache;
 
-            let layoutName = this._getLayoutName();
-
-            if (!layoutName) {
-                noCache = true;
+            if (this.name) {
+                templateName = 'built-' + this.name;
             }
             else {
-                if (layoutName) {
-                    templateName = 'built-' + layoutName;
-                }
-                else {
-                    templateName = null;
-                }
+                noCache = true;
             }
 
             layoutOptions = {
-                name: layoutName,
                 data: this._getLayoutData(),
-                layout: this._getLayout(),
+                layout: this._layoutDefs,
             };
         }
 

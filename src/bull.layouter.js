@@ -4,20 +4,7 @@
  */
 class Layouter {
 
-    /**
-     * @param {{
-     *   loader: Loader,
-     * }|null} data
-     */
-    constructor(data) {
-        data = data || {};
-
-        /**
-         * @type {Loader|null}
-         * @private
-         */
-        this._loader = data.loader || null;
-
+    constructor() {
         this._layouts = {};
         this._cachedNestedViews = {};
     }
@@ -27,20 +14,6 @@ class Layouter {
 
     addLayout(layoutName, layout) {
         this._layouts[layoutName] = layout;
-    }
-
-    getLayout(layoutName, callback) {
-        if (layoutName in this._layouts) {
-            callback(this._layouts[layoutName]);
-
-            return;
-        }
-
-        this._loader.load('layout', layoutName, layout => {
-            this.addLayout(layoutName, layout);
-
-            callback(layout);
-        });
     }
 
     _getCachedNestedViews(layoutName) {
@@ -58,7 +31,7 @@ class Layouter {
     }
 
     /**
-     * @param {string} layoutName
+     * @param {string} [layoutName]
      * @param {Object} layoutDefs
      * @param {boolean} noCache
      * @return {Bull.View~nestedViewItemDefs[]}
@@ -107,7 +80,7 @@ class Layouter {
             return modName;
         };
 
-        let getDefsForNestedView = (defsInLayout) => {
+        const getDefsForNestedView = (defsInLayout) => {
             let defs = {};
 
             let params = [
@@ -136,7 +109,7 @@ class Layouter {
             return defs;
         };
 
-        let seekForViews = (tree) => {
+        const seekForViews = (tree) => {
             for (let key in tree) {
                 if (tree[key] !== null && typeof tree[key] === 'object') {
                     if ('view' in tree[key] || 'layout' in tree[key] || 'template' in tree[key]) {

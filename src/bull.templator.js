@@ -9,8 +9,7 @@ class Templator {
 
     /**
      * @param {{
-     *   loader: Loader,
-     *   layouter: Layouter,
+     *   loader?: Loader,
      * }|null} data
      */
     constructor(data) {
@@ -24,11 +23,6 @@ class Templator {
          * @private
          */
         this._loader = data.loader || null;
-        /**
-         * @type {Layouter|null}
-         * @private
-         */
-        this._layouter = data.layouter || null;
 
         if ('compilable' in data) {
             this.compilable = data.compilable;
@@ -44,17 +38,24 @@ class Templator {
         this._templates[name] = template;
     }
 
+    /**
+     * @param {string} name
+     * @param {{
+     *     layout?: Object,
+     *     data?: Object.<string, *>
+     * }} layoutOptions
+     * @param noCache
+     * @param callback
+     */
     getTemplate(name, layoutOptions, noCache, callback) {
         layoutOptions = layoutOptions || {};
 
-        let template = null;
-
-        if (!layoutOptions.name && !layoutOptions.layout && !name) {
-            throw new Error("Can not get template. Not enough data passed.");
+        if (!layoutOptions.layout && !name) {
+            throw new Error(`Can not get template. Not enough data passed.`);
         }
 
         if (!noCache && name) {
-            template = this._getCachedTemplate(name);
+            let template = this._getCachedTemplate(name);
 
             if (template) {
                 callback(template);
@@ -62,8 +63,6 @@ class Templator {
                 return;
             }
         }
-
-        let layout = layoutOptions.layout || null;
 
         let then = (template) => {
             if (this.compilable) {
@@ -75,26 +74,13 @@ class Templator {
             callback(template);
         };
 
-        let proceedWithLayout = (layout) => {
-            if (layout == null) {
-                throw new Error("Could not get layout '" + layoutOptions.name + "'.");
-            }
+        if (layoutOptions.layout) {
+            this._buildTemplate(layoutOptions.layout, layoutOptions.data, then);
 
-            this._buildTemplate(layout, layoutOptions.data, then);
-        };
-
-        if (!template) {
-            if (!layoutOptions.name && !layoutOptions.layout) {
-                this._loader.load('template', name, then);
-            }
-            else {
-                if (!layout) {
-                    this._layouter.getLayout(layoutOptions.name, proceedWithLayout);
-                } else {
-                    proceedWithLayout(layout);
-                }
-            }
+            return;
         }
+
+        this._loader.load('template', name, then);
     }
 
     compileTemplate(template) {
@@ -141,17 +127,17 @@ class Templator {
 
         let layoutTemplate = this._getCachedLayoutTemplate(layoutType);
 
-        if (!layoutTemplate) {
-            this._loader.load('layoutTemplate', layoutType, (layoutTemplate) => {
-                this._cacheLayoutTemplate(layoutType, layoutTemplate);
-
-                proceed(layoutTemplate);
-            });
+        if (layoutTemplate) {
+            proceed(layoutTemplate);
 
             return;
         }
 
-        proceed(layoutTemplate);
+        this._loader.load('layoutTemplate', layoutType, layoutTemplate => {
+            this._cacheLayoutTemplate(layoutType, layoutTemplate);
+
+            proceed(layoutTemplate);
+        });
     }
 }
 

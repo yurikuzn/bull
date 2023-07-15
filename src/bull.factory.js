@@ -35,9 +35,6 @@ class Factory {
      *           layoutTemplate?: function(string, function(string)),
      *       }
      *   },
-     *   rendering?: Object.<string, *>,
-     *   layouting?: Object.<string, *>,
-     *   templating?: Object.<string, *>,
      *   preCompiledTemplates?: Object.<string, function()>,
      * }|null} options Configuration options.
      * <ul>
@@ -49,20 +46,13 @@ class Factory {
      *  <li>resources: {Object} Resources loading options: paths, exts, loaders. Example: <br>
      *    <i>{
      *      paths: { // Custom paths for resource files.
-     *        layout: 'resources/layouts',
      *        templates: 'resources/templates',
      *        layoutTemplate: 'resources/templates/layouts',
      *      },
      *      exts: { // Custom extensions of resource files.
-     *        layout: 'json',
      *        templates: 'tpl',
      *      },
-     *      loaders: { // Custom resources loading functions. Define it if some type of resources needs to be loaded
-     *                 // via REST rather than from file.
-     *        layout: function (layoutName, callback) {
-     *          callback(layoutManager.getLayout(layoutName));
-     *        }
-     *      },
+     *      loaders: {}, // Custom resources loading functions. Define it if some type of resources needs to be loaded
      *      path: function (type, name) {} // Custom path function. Should return path to the needed resource.
      *    }</i>
      *  </li>
@@ -78,16 +68,9 @@ class Factory {
         this.defaultViewName = options.defaultViewName || this.defaultViewName;
 
         this._loader = options.customLoader || new Loader(options.resources || {});
-        this._renderer = options.customRenderer || new Renderer(options.rendering || {});
-        this._layouter = options.customLayouter ||
-            new Layouter(_.extend(options.layouting || {}, {
-                loader: this._loader,
-            }));
-        this._templator = options.customTemplator ||
-            new Templator(_.extend(options.templating || {}, {
-                loader: this._loader,
-                layouter: this._layouter,
-            }));
+        this._renderer = options.customRenderer || new Renderer();
+        this._layouter = options.customLayouter || new Layouter();
+        this._templator = options.customTemplator || new Templator({loader: this._loader});
 
         this._helper = options.helper || null;
 

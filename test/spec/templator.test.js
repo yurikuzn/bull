@@ -1,23 +1,19 @@
 
-import Templator from "../../src/bull.templator.js";
+import Templator from '../../src/bull.templator.js';
 
-describe("Templator", () => {
-	var templator;
-	var layouter;
+describe('Templator', () => {
+    let templator;
+    let layouter;
 	let loader;
-	
-	var defaultTemplate	= 'test';
-	var defaultLayout = {
-		type: 'default',
-		layout: {},
-	}
-	
+
+	let defaultTemplate	= 'test';
+
 	beforeEach(() => {
 		loader = {
 			load: {},
 		};
 
-		spyOn(loader, 'load').and.callFake(function (type, name, callback) {
+		spyOn(loader, 'load').and.callFake((type, name, callback) => {
 			if (type === 'template') {
 				callback(defaultTemplate)
 			}
@@ -25,56 +21,31 @@ describe("Templator", () => {
 				callback("<%= (typeof some !== 'undefined') ? some : '' %>");
 			}
 		});
-		
-		layouter = {
-			getLayout: function () {},
-		};
-		spyOn(layouter, 'getLayout').and.callFake(function (name, callback) {
-			callback(defaultLayout);
-		});		
-	
+
+		layouter = {};
+
 		templator = new Templator({
 			loader: loader,
 			layouter: layouter,
 		});
-		
+
 	});
-	
-	it ('shoud load template if is not loaded', function () {
-		templator.getTemplate('test', null, false, function () {});
+
+	it ('should load template if is not loaded', () => {
+		templator.getTemplate('test', null, false, () => {});
 
 		expect(loader.load.calls.first().args[0]).toBe('template');
 		expect(loader.load.calls.first().args[1]).toBe('test');
 	});
-	
-	it ('shoud not load template if loaded', function () {
+
+	it ('should not load template if loaded', () => {
 		templator.addTemplate('test', defaultTemplate);
-		templator.getTemplate('test', null, false, function () {});
+		templator.getTemplate('test', null, false, () => {});
 
 		expect(loader.load.calls.count()).toBe(0);
 	});
-	
-	it ('shoud not load template but load "layout template" to build template if layout is defined', function () {
-		templator.getTemplate('test', {name: 'someLayout'}, false, function () {});
 
-		expect(loader.load.calls.first().args[0]).toBe('layoutTemplate');
-		expect(loader.load.calls.first().args[1]).toBe('default');
-	});
-	
-	it ('shoud load layout (if defined) to build it', function () {
-		templator.getTemplate('test', {name: 'someLayout', data: null, layout: null}, false, function () {});
-
-		expect(layouter.getLayout.calls.first().args[0]).toBe('someLayout');
-	});
-	
-	it ('shoud not load layout if passed', function () {
-		var layout = {some: 'test'};
-		templator.getTemplate('test', {name: JSON.stringify(layout), layout: layout}, false, function () {});
-
-		expect(layouter.getLayout.calls.count()).toBe(0);
-	});
-	
-	it ('shoud build template with injected data into layout', function () {
+	it ('should build template with injected data into layout', () => {
 		spyOn(templator, '_buildTemplate').and.callThrough();
 
 		var template;
@@ -91,5 +62,5 @@ describe("Templator", () => {
 		expect(templator._buildTemplate.calls.first().args[0].some).toBe('test');
 		expect(templator._buildTemplate.calls.first().args[1].some).toBe('test');
 		expect(template).toBe('test');
-	});	
+	});
 });

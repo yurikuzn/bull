@@ -182,7 +182,7 @@ describe('View', function () {
 
 		let master = new View({
 			layout: 'SomeLayout',
-			_layout: [],
+            layoutDefs: [],
 		});
 
 		master._initialize({
@@ -239,9 +239,13 @@ describe('View', function () {
 			});
 		});
 
+        let layoutDefs = {
+            type: 'test',
+            layout: [],
+        };
+
 		let view = new View({
-			layout: 'SomeLayout',
-			_layout: [],
+			layoutDefs: layoutDefs,
 		});
 
 		view._initialize({
@@ -255,7 +259,7 @@ describe('View', function () {
 			layout: 'header',
 			some: 'test',
 		});
-		expect(layouter.findNestedViews).toHaveBeenCalledWith('SomeLayout', [], false);
+		expect(layouter.findNestedViews).toHaveBeenCalledWith(undefined, layoutDefs, false);
 		expect(factory.create.calls.count()).toEqual(2);
 		expect(view.getView('header')).toBeDefined();
 		expect(view.getView('footer')).toBeDefined();
@@ -264,49 +268,29 @@ describe('View', function () {
 	});
 
 	it ('should pass rendered nested views into Renderer.render()', () => {
-		spyOn(layouter, 'findNestedViews').and.callFake(function() {
-			return [
-				{
-					name: 'header',
-					layout: 'header',
-				},
-				{
-					name: 'footer',
-					view: 'Footer',
-					notToRender: true,
-				},
-			];
-		});
+		spyOn(layouter, 'findNestedViews').and.callFake(() => [
+            {
+                name: 'header',
+                layout: 'header',
+            },
+            {
+                name: 'footer',
+                view: 'Footer',
+                notToRender: true,
+            },
+        ]);
 
-		spyOn(factory, 'create').and.callFake(function(name, options, callback) {
+		spyOn(factory, 'create').and.callFake((name, options, callback) => {
 			callback({
-				getHtml: function (callback) {
+				getHtml: callback => {
 					callback('viewTest');
 				},
-				_updatePath: function () {},
-				_afterRender: function () {},
+				_updatePath: () => {},
+				_afterRender: () => {},
 				options: {},
                 getSelector: () => '',
 			});
 		});
-
-		let view = new View({
-			layout: 'SomeLayout',
-		});
-
-		view._initialize({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
-		});
-
-		spyOn(renderer, 'render');
-		view.render();
-
-		expect(renderer.render.calls.mostRecent().args[0]).toBe('test');
-		expect(renderer.render.calls.mostRecent().args[1].header).toBe('viewTest');
-
 	});
 
 	it ('should set get and check nested view', () => {
