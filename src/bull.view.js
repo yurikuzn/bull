@@ -189,8 +189,7 @@ import _ from 'underscore';
 /**
  * @typedef {Object} Bull.View~nestedViewItemDefs
  * @property {string} name A name.
- * @property {string|true} [view] A view.
- * @property {string} [layout] A layout.
+ * @property {string|Bull.View|boolean} [view] A view.
  * @property {string} [template] A template.
  * @property {boolean} [notToRender] Not to render.
  * @property {string} [selector] A relative selector.
@@ -1029,7 +1028,7 @@ class View {
         let itemList = this._layouter.findNestedViews(this._layoutDefs);
 
         if (Object.prototype.toString.call(itemList) !== '[object Array]') {
-            throw new Error("Bad layout. It should be an array.");
+            throw new Error(`Bad layout. It should be an array.`);
         }
 
         let nestedViewDefsFiltered = [];
@@ -1040,7 +1039,7 @@ class View {
             this._nestedViewDefs[key] = item;
 
             if ('view' in item && item.view === true) {
-                if (!('layout' in item || 'template' in item)) {
+                if (!('template' in item)) {
                     continue;
                 }
             }
@@ -1064,7 +1063,7 @@ class View {
         let count = nestedViewDefs.length;
         let loaded = 0;
 
-        let tryReady = function () {
+        const tryReady = () => {
             if (loaded === count) {
                 callback();
             }
@@ -1075,9 +1074,15 @@ class View {
         nestedViewDefs.forEach(/** Bull.View~nestedViewItemDefs */def => {
             let key = def.name;
             let viewName = this._factory.defaultViewName;
+            let view;
 
             if ('view' in def) {
-                viewName = def.view;
+                if (def.view != null && typeof def.view === 'object') {
+                    view = def.view;
+                }
+                else {
+                    viewName = def.view;
+                }
             }
 
             if (viewName === false) {
@@ -1087,11 +1092,17 @@ class View {
                 return;
             }
 
-            let options = {};
+            if (typeof view === 'object') {
+                this.assignView(key, view, def.selector)
+                    .then(() => {
+                        loaded++;
+                        tryReady();
+                    });
 
-            if ('layout' in def) {
-                options.layout = def.layout;
+                return;
             }
+
+            let options = {};
 
             if ('template' in def) {
                 options.template = def.template;

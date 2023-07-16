@@ -1,5 +1,6 @@
 
 import View from '../../src/bull.view.js';
+import BullView from "../../src/bull.view.js";
 
 describe('View', function () {
 	/**
@@ -202,7 +203,7 @@ describe('View', function () {
 			return [
 				{
 					name: 'header',
-					layout: 'header',
+					template: 'header',
 					options: {
 						some: 'test',
 					},
@@ -216,19 +217,20 @@ describe('View', function () {
 					view: 'Footer',
 					notToRender: true,
 				},
+                {
+                    name: 'instance',
+                    view: new BullView({}),
+                    selector: '.instance',
+                }
 			];
 		});
 
 		spyOn(factory, 'create').and.callFake((name, options, callback) => {
-			callback({
-				notToRender: false,
-				_updatePath: function () {},
-				_afterRender: function () {},
-				options: {},
-                getSelector: function () {
-                    return '';
-                },
-			});
+            let view = new BullView({
+                notToRender: false,
+            });
+
+            callback(view);
 		});
 
         let layoutDefs = {
@@ -238,25 +240,35 @@ describe('View', function () {
 
 		let view = new View({
 			layoutDefs: layoutDefs,
+            fullSelector: 'test',
 		});
 
-		view._initialize({
-			renderer: renderer,
-			templator: templator,
-			layouter: layouter,
-			factory: factory,
-		});
+        return new Promise(resolve => {
+            view._initialize({
+                renderer: renderer,
+                templator: templator,
+                layouter: layouter,
+                factory: factory,
+                onReady: () => {
+                    expect(view.getView('instance')).toBeDefined();
+                    expect(view.getView('instance').getSelector()).toBe('test .instance');
 
-		expect(factory.create.calls.first().args[1]).toEqual({
-			layout: 'header',
-			some: 'test',
-		});
-		expect(layouter.findNestedViews).toHaveBeenCalledWith(layoutDefs);
-		expect(factory.create.calls.count()).toEqual(2);
-		expect(view.getView('header')).toBeDefined();
-		expect(view.getView('footer')).toBeDefined();
-		expect(view.getView('header').notToRender).toBe(false);
-		expect(view.getView('footer').notToRender).toBe(true);
+                    resolve();
+                },
+            });
+
+            expect(factory.create.calls.first().args[1]).toEqual({
+                template: 'header',
+                some: 'test',
+            });
+
+            expect(layouter.findNestedViews).toHaveBeenCalledWith(layoutDefs);
+            expect(factory.create.calls.count()).toEqual(2);
+            expect(view.getView('header')).toBeDefined();
+            expect(view.getView('footer')).toBeDefined();
+            expect(view.getView('header').notToRender).toBe(false);
+            expect(view.getView('footer').notToRender).toBe(true);
+        })
 	});
 
 	it ('should pass rendered nested views into Renderer.render()', () => {
