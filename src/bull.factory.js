@@ -3,7 +3,6 @@ import Loader from './bull.loader.js';
 import Renderer from './bull.renderer.js';
 import Layouter from './bull.layouter.js';
 import Templator from './bull.templator.js';
-import _ from 'underscore';
 
 let root = window;
 
@@ -110,17 +109,27 @@ class Factory {
                 throw new Error(`A view class '${viewName}' not found.`);
             }
 
-            let view = new viewClass(options || {});
+            const view = new viewClass(options || {});
 
-            view._initialize({
-                factory: this,
-                layouter: this._layouter,
-                templator: this._templator,
-                renderer: this._renderer,
-                helper: this._helper,
-                preCompiledTemplates: this._preCompiledTemplates,
-                onReady: callback,
-            });
+            this.prepare(view, callback);
+        });
+    }
+
+    /**
+     * Prepare a view instance.
+     *
+     * @param {Bull.View} view A view.
+     * @param {function(Bull.View)} [callback] Invoked once the view is ready.
+     */
+    prepare(view, callback) {
+        view._initialize({
+            factory: this,
+            layouter: this._layouter,
+            templator: this._templator,
+            renderer: this._renderer,
+            helper: this._helper,
+            preCompiledTemplates: this._preCompiledTemplates,
+            onReady: callback,
         });
     }
 

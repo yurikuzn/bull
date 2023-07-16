@@ -507,7 +507,7 @@ class View {
      *   templator: Bull.Templator,
      *   layouter: Bull.Layouter,
      *   helper?: Object,
-     *   onReady?: function(): void,
+     *   onReady?: function(Bull.View): void,
      *   preCompiledTemplates?: Object,
      * }} data
      * @internal
