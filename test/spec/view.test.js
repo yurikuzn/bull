@@ -842,4 +842,14 @@ describe('View', function () {
                 });
         });
     });
+
+    it ('getViewKey should return a view key', () => {
+        view.setSelector('parent-selector');
+
+        return view
+            .createView('test', 'test/view', {})
+            .then(childView => {
+                expect(view.getViewKey(childView)).toEqual('test');
+            });
+    });
 });

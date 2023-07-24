@@ -1418,6 +1418,22 @@ class View {
     }
 
     /**
+     * Get a nested view key by a view instance.
+     *
+     * @param {View} view A view.
+     * @return {string|null}
+     */
+    getViewKey(view) {
+        for (let key in this.nestedViews) {
+            if (view === this.nestedViews[key]) {
+                return key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Assign a view instance as nested.
      *
      * @param {string} key A view key.
@@ -1837,6 +1853,28 @@ class View {
 
             view.propagateEvent.apply(view, arguments);
         }
+    }
+
+    /**
+     * Set a template. Experimental.
+     *
+     * @protected
+     * @param {string} [template]
+     */
+    setTemplate(template) {
+        this.template = template;
+
+        this._templateCompiled = null;
+    }
+
+    /**
+     * Set template content. Experimental.
+     *
+     * @protected
+     * @param {string} templateContent
+     */
+    setTemplateContent(templateContent) {
+        this._templateCompiled = this._templator.compileTemplate(templateContent);
     }
 }
 
