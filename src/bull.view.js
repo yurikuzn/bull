@@ -98,6 +98,7 @@ import _ from 'underscore';
  *
  * @callback Bull.View~domEventHandlerCallback
  * @param {Event} event An event.
+ * @param {HTMLElement} A target element.
  */
 
 /**
@@ -482,7 +483,7 @@ class View {
         let key = type + ' ' + selector;
 
         if (typeof handler === 'function') {
-            this.events[key] = (e) => handler(e.originalEvent);
+            this.events[key] = (e) => handler(e.originalEvent, e.currentTarget);
 
             return;
         }
@@ -493,7 +494,7 @@ class View {
             return;
         }
 
-        this.events[key] = (e) => this[handler](e.originalEvent);
+        this.events[key] = (e) => this[handler](e.originalEvent, e.currentTarget);
     }
 
     /**
