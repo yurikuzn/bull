@@ -1508,13 +1508,11 @@ class View {
                 options.fullSelector = this.getSelector() + ' ' + options.selector;
             }
 
-            /*if (!fullSelector && !options.fullSelector) {
-                options.fullSelector = this.getSelector() + ` [data-view="${key}"]`;
-            }*/
-
             this._factory.create(viewName, options, view => {
                 if (view.isComponent && !options.fullSelector) {
-                    options.fullSelector = this.getSelector() + ` [data-view-cid="${view.cid}"]`;
+                    const fullSelector = `${this.getSelector()} [data-view-cid="${view.cid}"]`;
+
+                    view.setSelector(fullSelector);
                 }
 
                 this._assignViewCallback(
