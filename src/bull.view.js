@@ -258,7 +258,7 @@ class View {
     /**
      * A DOM element.
      *
-     * @type {Element}
+     * @type {HTMLElement}
      */
     element
 
@@ -1730,7 +1730,7 @@ class View {
     /**
      * @private
      * @param {string} [cid]
-     * @return {Element}
+     * @return {HTMLElement}
      */
     _createPlaceholderElement(cid) {
         let span = document.createElement('span');
