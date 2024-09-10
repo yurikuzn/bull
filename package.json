@@ -15,7 +15,7 @@
     "prepare": "npm run build-umd && npm run build-esm"
   },
   "repository": "https://github.com/yurikuzn/bull",
-  "author": "Yuri Kuznersov & EspoCRM team",
+  "author": "Yurii Kuznietsov & EspoCRM team",
   "license": "MIT",
   "devDependencies": {
     "handlebars": "^4.7.7",
