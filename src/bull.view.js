@@ -1055,7 +1055,7 @@ class View {
 
     /**
      * @private
-     * @param {Bull.View~nestedViewItemDefs[]} [list
+     * @param {Bull.View~nestedViewItemDefs[]} [list]
      */
     _addDefinedNestedViewDefs(list) {
         for (let name in this.views) {
