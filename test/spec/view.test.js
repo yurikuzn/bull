@@ -852,4 +852,41 @@ describe('View', function () {
                 expect(view.getViewKey(childView)).toEqual('test');
             });
     });
+
+    it ('should re-render', async () => {
+        let $div = $('<div id="test-root">');
+        $('body').append($div);
+
+        class TestView extends View {
+            templateContent = `<div class="sub">{{{sub}}}</div>`
+        }
+
+        class SubView extends View {
+            templateContent = `1`
+        }
+
+        const view = new TestView({
+            fullSelector: '#test-root',
+        });
+        view._initialize(viewData);
+
+        const subView = new SubView();
+
+        await view.assignView('sub', subView, '.sub');
+
+        await view.reRender(true);
+
+        expect(view.element.querySelector('.sub').textContent).toEqual('1');
+
+        await view.reRender();
+
+        expect(view.element.querySelector('.sub').textContent).toEqual('1');
+
+        const viewToCheck = await view.reRender({keep: ['sub']});
+
+        expect(viewToCheck).toBe(view);
+        expect(view.element.querySelector('.sub').textContent).toEqual('');
+
+        $div.remove();
+    });
 });

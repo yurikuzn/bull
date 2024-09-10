@@ -881,13 +881,57 @@ class View {
     }
 
     /**
+     * @typedef {Object} Bull.View~reRenderOptions
+     * @property {boolean} [force] To render if was not re-render.
+     * @property {string[]} [keep] Views not to be re-rendered. View keys.
+     * @since 1.2.15
+     */
+
+    /**
      * Re-render the view.
      *
-     * @param {boolean} [force=false] To render if was not rendered.
+     * @param {Bull.View~reRenderOptions|true} [options] Options.
      * @return {Promise<this>}
      */
-    reRender(force) {
+    reRender(options = {}) {
+        if (typeof options !== 'object') {
+            options = {force: options};
+        }
+
+        const keptViews = {};
+        const hasKeep = options.keep && options.keep.length;
+
+        if ((this.isRendered() || this.isBeingRendered()) && hasKeep) {
+            for (const key of options.keep) {
+                keptViews[key] = this.getView(key);
+
+                if (!keptViews[key]) {
+                    continue;
+                }
+
+                this.unchainView(key);
+            }
+        }
+
+        const restoreViews = () => {
+            for (const key of options.keep) {
+                if (!keptViews[key]) {
+                    continue;
+                }
+
+                this.setView(key, keptViews[key]);
+            }
+        };
+
         if (this.isRendered()) {
+            if (hasKeep) {
+                return this.render().then(() => {
+                    restoreViews();
+
+                    return this;
+                });
+            }
+
             return this.render();
         }
 
@@ -895,13 +939,19 @@ class View {
             return new Promise((resolve, reject) => {
                 this.once('after:render', () => {
                     this.render()
-                        .then(() => resolve(this))
+                        .then(() => {
+                            if (hasKeep) {
+                                restoreViews();
+                            }
+
+                            resolve(this);
+                        })
                         .catch(reject);
                 });
             });
         }
 
-        if (force) {
+        if (options.force) {
             return this.render();
         }
 
