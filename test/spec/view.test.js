@@ -653,8 +653,9 @@ describe('View', function () {
 		let view2 = new View();
 
 		return new Promise((resolve, reject) => {
-			view1.listenToOnce(view2, 'test1', () => {
-				expect(true).toBe(true);
+			view1.listenToOnce(view2, 'test1', (a1, a2) => {
+                expect(a1).toBe(1);
+                expect(a2).toBe(2);
 
 				resolve();
 			});
@@ -666,7 +667,7 @@ describe('View', function () {
 			view1.stopListening(view2, 'test2');
 
 			view2.trigger('test2');
-			view2.trigger('test1');
+			view2.trigger('test1', 1, 2);
 		})
 	});
 

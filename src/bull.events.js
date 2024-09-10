@@ -306,9 +306,9 @@ let onceMap = function (map, name, callback, offer) {
  * Trigger an event.
  *
  * @param {string} name An event.
- * @param {...*} arguments Arguments.
+ * @param {...*} parameters Arguments.
  */
-Events.trigger = function(name) {
+Events.trigger = function(name, ...parameters) {
     if (!this._events) {
         return this;
     }

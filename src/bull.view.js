@@ -108,7 +108,7 @@ import _ from 'underscore';
 /**
  * @callback Bull.Events~callback
  *
- * @param {...*} arguments
+ * @param {...*} parameters
  */
 
 /**
@@ -121,7 +121,7 @@ import _ from 'underscore';
  * @function trigger
  * @memberof Bull.Events
  * @param {string} event An event.
- * @param {...*} arguments Arguments.
+ * @param {...*} parameters Arguments.
  */
 
 /**
@@ -202,13 +202,11 @@ import _ from 'underscore';
  * A view.
  *
  * @alias Bull.View
- * @mixes Bull.Events
  */
 class View {
 
     /**
      * @param {Object.<string, *>} [options]
-     * @mixes Bull.Events
      */
     constructor(options = {}) {
         this.cid = _.uniqueId('view');
@@ -1892,9 +1890,9 @@ class View {
      * Propagate an event to nested views.
      *
      * @public
-     * @param {...*} arguments
+     * @param {...*} parameters
      */
-    propagateEvent() {
+    propagateEvent(...parameters) {
         this.trigger.apply(this, arguments);
 
         for (let key in this.nestedViews) {
@@ -1925,9 +1923,85 @@ class View {
     setTemplateContent(templateContent) {
         this._templateCompiled = this._templator.compileTemplate(templateContent);
     }
+
+    /**
+     * Subscribe to an event.
+     *
+     * @param {string} name An event.
+     * @param {Bull.Events~callback} callback A callback.
+     * @param {Object} [context] Deprecated.
+     */
+    on(name, callback, context) {
+        return Events.on.call(this, name, callback, context);
+    }
+
+    /**
+     * Subscribe to an event. Fired once.
+     *
+     * @param {string} name An event.
+     * @param {Bull.Events~callback} callback A callback.
+     * @param {Object} [context] Deprecated.
+     */
+    once(name, callback, context) {
+        return Events.once.call(this, name, callback, context);
+    }
+
+    /**
+     * Unsubscribe from an event or all events.
+     *
+     * @param {string} [name] From a specific event.
+     * @param {Bull.Events~callback} [callback] From a specific callback.
+     * @param {Object} [context] Deprecated.
+     */
+    off(name, callback, context) {
+        return Events.off.call(this, name, callback, context);
+    }
+
+    /**
+     * Subscribe to an event of other object.
+     *
+     * @param {Object} other What to listen.
+     * @param {string} name An event.
+     * @param {Bull.Events~callback} callback A callback.
+     */
+    listenTo(other, name, callback) {
+        return Events.listenTo.call(this, other, name, callback);
+    }
+
+    /**
+     * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
+     *
+     * @param {Object} other What to listen.
+     * @param {string} name An event.
+     * @param {Bull.Events~callback} callback A callback.
+     */
+    listenToOnce(other, name, callback) {
+        return Events.listenToOnce.call(this, other, name, callback);
+    }
+
+    /**
+     * Stop listening to other object. No arguments will remove all listeners.
+     *
+     * @param {Object} [other] To remove listeners to a specific object.
+     * @param {string} [name] To remove listeners to a specific event.
+     * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
+     */
+    stopListening(other, name, callback) {
+        return Events.stopListening.call(this, other, name, callback);
+    }
+
+    /**
+     * Trigger an event.
+     *
+     * @param {string} name An event.
+     * @param {...*} parameters Arguments.
+     */
+    trigger(name, ...parameters) {
+        return Events.trigger.call(this, name, ...parameters);
+    }
 }
 
-Object.assign(View.prototype, Events);
+//Object.assign(View.prototype, Events);
 
 const isEsClass = fn => {
     return typeof fn === 'function' &&
