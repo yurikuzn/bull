@@ -1293,6 +1293,14 @@ class View {
     handleDataBeforeRender(data) {}
 
     /**
+     * Called each time before render. Should be extended as async.
+     *
+     * @protected
+     * @return {Promise|undefined}
+     */
+    prepareRender() {}
+
+    /**
      * @private
      * @param {function(string)} callback
      */
@@ -1300,44 +1308,61 @@ class View {
         this._isBeingRendered = true;
         this.trigger('render', this);
 
-        this._getNestedViewsHtmlMap(htmlMap => {
-            let data = {...this._getData(), ...htmlMap};
+        // Promise is avoided when not necessary to preserve execution flow.
+        // Render can be processed synchronously when all data is ready.
+        // Maybe in future this should be changed to process always asynchronously
+        // but this would require extensive testing.
 
-            if (this.collection || null) {
-                data.collection = this.collection;
-            }
+        const preparePromise = this.prepareRender();
 
-            if (this.model || null) {
-                data.model = this.model;
-            }
+        const proceed = () => {
+            this._getNestedViewsHtmlMap(htmlMap => {
+                let data = {...this._getData(), ...htmlMap};
 
-            data.viewObject = this;
-
-            this.handleDataBeforeRender(data);
-
-            this._getTemplate(template => {
-                let html = this._renderer.render(template, data);
-
-                if (!this.isComponent) {
-                    callback(html);
-
-                    return;
+                if (this.collection || null) {
+                    data.collection = this.collection;
                 }
 
-                let root = (new DOMParser())
-                    .parseFromString(html, 'text/html')
-                    .body
-                    .children[0];
-
-                if (!root) {
-                    throw new Error(`Bad DOM. No root.`);
+                if (this.model || null) {
+                    data.model = this.model;
                 }
 
-                root.setAttribute('data-view-cid', this.cid);
+                data.viewObject = this;
 
-                callback(root.outerHTML);
+                this.handleDataBeforeRender(data);
+
+                this._getTemplate(template => {
+                    let html = this._renderer.render(template, data);
+
+                    if (!this.isComponent) {
+                        callback(html);
+
+                        return;
+                    }
+
+                    let root = (new DOMParser())
+                        .parseFromString(html, 'text/html')
+                        .body
+                        .children[0];
+
+                    if (!root) {
+                        throw new Error(`Bad DOM. No root.`);
+                    }
+
+                    root.setAttribute('data-view-cid', this.cid);
+
+                    callback(root.outerHTML);
+                });
             });
-        });
+        };
+
+        if (preparePromise) {
+            preparePromise.then(() => proceed());
+
+            return;
+        }
+
+        proceed();
     }
 
     /**

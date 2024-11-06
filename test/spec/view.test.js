@@ -890,4 +890,43 @@ describe('View', function () {
 
         $div.remove();
     });
+
+    it ('should prepare render', async () => {
+
+        let $div = $('<div id="test-root">');
+        $('body').append($div);
+
+        class TestView extends View {
+            templateContent = `<div class="sub">{{{sub}}}</div>`
+
+            async prepareRender() {
+                const subView = new SubView();
+
+                const promise = new Promise(resolve => {
+                    setTimeout(() => resolve(), 1);
+                });
+
+                return Promise.all([
+                    promise,
+                    this.assignView('sub', subView, '.sub'),
+                ]);
+            }
+        }
+
+        class SubView extends View {
+            templateContent = `1`
+        }
+
+        const testView = new TestView({
+            fullSelector: '#test-root',
+        });
+
+        testView._initialize(viewData);
+
+        await testView.render();
+
+        expect(testView.element.querySelector('.sub').textContent).toEqual('1');
+
+        $div.remove();
+    });
 });
