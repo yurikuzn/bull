@@ -53,17 +53,35 @@ class Templator {
             throw new Error(`Can not get template. Not enough data passed.`);
         }
 
-        if (name) {
-            let template = this._getCachedTemplate(name);
-
-            if (template) {
-                callback(template);
-
-                return;
+        /**
+         * @return {boolean}
+         */
+        const tryCache = () => {
+            if (!name || layoutOptions.layout) {
+                return false;
             }
+
+            const template = this._getCachedTemplate(name);
+
+            if (!template) {
+                return false;
+            }
+
+            callback(template);
+
+            return true;
+        }
+
+        if (tryCache()) {
+            return;
         }
 
         let then = (template) => {
+            if (tryCache()) {
+                // Prevents re-compiling when the same template was requested multiple times in parallel.
+                return;
+            }
+
             if (this.compilable) {
                 template = this.compileTemplate(template);
             }
