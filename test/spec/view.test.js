@@ -132,7 +132,7 @@ describe('View', function () {
 		spyOn(renderer, 'render');
 
 		view.render();
-		view.getHtml(function () {});
+		view._getHtml(function () {});
 
 		expect(renderer.render).toHaveBeenCalled();
 		expect(renderer.render.calls.count()).toEqual(2);
@@ -597,7 +597,7 @@ describe('View', function () {
 		});
 
 		return new Promise(resolve => {
-			view.getHtml(html => {
+			view._getHtml(html => {
 				expect(html).toBe('hello test');
 
 				resolve();

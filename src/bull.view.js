@@ -765,16 +765,6 @@ class View {
     }
 
     /**
-     * Get HTML of view but don't render it.
-     *
-     * @public
-     * @param {Bull.View~getHtmlCallback} callback A callback with an HTML.
-     */
-    getHtml(callback) {
-        this._getHtml(callback);
-    }
-
-    /**
      * Cancel rendering.
      */
     cancelRender() {
@@ -1276,7 +1266,7 @@ class View {
                 return;
             }
 
-            view.getHtml(html => {
+            view._getHtml(html => {
                 data[key] = html;
 
                 loaded++;
@@ -1301,8 +1291,11 @@ class View {
     prepareRender() {}
 
     /**
-     * @private
-     * @param {function(string)} callback
+     * Get HTML of view but don't render it.
+     *
+     * @protected
+     * @param {Bull.View~getHtmlCallback} callback A callback with an HTML.
+     * @internal
      */
     _getHtml(callback) {
         this._isBeingRendered = true;
