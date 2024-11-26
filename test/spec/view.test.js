@@ -73,7 +73,7 @@ describe('View', function () {
 	it ('should assign view with selector pre-set', () => {
 		view.setSelector('parent-selector');
 
-		let childView = new View();
+		const childView = new View();
 		childView.setSelector('parent-selector child-selector');
 
 		return view
@@ -120,7 +120,7 @@ describe('View', function () {
     });
 
 	it ('should trigger "remove" event on remove', () => {
-		let handler = jasmine.createSpy('handler');
+		const handler = jasmine.createSpy('handler');
 
 		view.on('remove', handler)
 		view.remove();
@@ -132,7 +132,7 @@ describe('View', function () {
 		spyOn(renderer, 'render');
 
 		view.render();
-		view._getHtml(function () {});
+		view._getPreparedElement(function () {});
 
 		expect(renderer.render).toHaveBeenCalled();
 		expect(renderer.render.calls.count()).toEqual(2);
@@ -286,7 +286,7 @@ describe('View', function () {
 
 		spyOn(factory, 'create').and.callFake((name, options, callback) => {
 			callback({
-				getHtml: callback => {
+                _getPreparedElement: callback => {
 					callback('viewTest');
 				},
 				_updatePath: () => {},
@@ -575,7 +575,7 @@ describe('View', function () {
 	});
 
 	it ('should use pre-compiled template', () => {
-		let ViewB = class extends View {
+		const ViewB = class extends View {
 			template = 'test/template';
 
 			data = function () {
@@ -585,7 +585,7 @@ describe('View', function () {
 			};
 		}
 
-		let view = new ViewB({});
+		const view = new ViewB({});
 
 		view._initialize({
 			renderer: renderer,
@@ -597,8 +597,8 @@ describe('View', function () {
 		});
 
 		return new Promise(resolve => {
-			view._getHtml(html => {
-				expect(html).toBe('hello test');
+			view._getPreparedElement(element => {
+				expect(element.content.childNodes[0].textContent).toBe('hello test');
 
 				resolve();
 			});
@@ -709,7 +709,7 @@ describe('View', function () {
            }
        }
 
-       let view = new TestView({
+       const view = new TestView({
             fullSelector: '#test-div',
        });
 
@@ -723,13 +723,13 @@ describe('View', function () {
        });
 
        return new Promise(resolve => {
-           let $div = $('<div id="test-div">');
+           const $div = $('<div id="test-div">');
 
            $('body').append($div);
 
            view.render()
                .then(() => {
-                   let link = view.element.querySelectorAll('[data-action="test"]')[0]
+                   const link = view.element.querySelectorAll('[data-action="test"]')[0]
 
                    link.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
                    link.dispatchEvent(new MouseEvent('click', {bubbles: true}));
@@ -746,7 +746,7 @@ describe('View', function () {
 
 
     it ('should render component', () => {
-        let $div = $('<div id="test-root">');
+        const $div = $('<div id="test-root">');
 
         $('body').append($div);
 
@@ -786,7 +786,7 @@ describe('View', function () {
             }
         }
 
-        let rootView = new RootView({
+        const rootView = new RootView({
             fullSelector: '#test-root',
         });
         rootView._initialize(viewData);
@@ -796,10 +796,10 @@ describe('View', function () {
                 .then(() => {
                     expect($('#test-root div button').text()).toBe('test');
 
-                    let component = rootView.getView('test');
-                    let componentHello = rootView.getView('hello');
+                    const component = rootView.getView('test');
+                    const componentHello = rootView.getView('hello');
 
-                    let $hello = $(`#test-root div span[data-view-cid="${componentHello.cid}"]`);
+                    const $hello = $(`#test-root div template[data-view-cid="${componentHello.cid}"]`);
 
                     expect($hello.text()).toBe('');
                     expect($hello.length).toBe(1);
@@ -826,7 +826,7 @@ describe('View', function () {
                             ).toBe(0);
 
                             expect(
-                                $(`#test-root div span[data-view-cid="${component.cid}"]`).length
+                                $(`#test-root div template[data-view-cid="${component.cid}"]`).length
                             ).toBe(1);
 
                             componentHello.render()
@@ -866,9 +866,7 @@ describe('View', function () {
             templateContent = `1`
         }
 
-        const view = new TestView({
-            fullSelector: '#test-root',
-        });
+        const view = new TestView({fullSelector: '#test-root'});
         view._initialize(viewData);
 
         const subView = new SubView();
@@ -892,8 +890,7 @@ describe('View', function () {
     });
 
     it ('should prepare render', async () => {
-
-        let $div = $('<div id="test-root">');
+        const $div = $('<div id="test-root">');
         $('body').append($div);
 
         class TestView extends View {
@@ -926,6 +923,51 @@ describe('View', function () {
         await testView.render();
 
         expect(testView.element.querySelector('.sub').textContent).toEqual('1');
+
+        $div.remove();
+    });
+
+    it ('should render table', async () => {
+        const $div = $('<div id="test-root">');
+        $('body').append($div);
+
+        class RowView extends View {
+            templateContent = `
+                <td>1</td><td>2</td>
+            `
+        }
+
+        class TableView extends View {
+            templateContent = `
+                <table>
+                    <tbody>
+                        <tr>{{{row}}}</tr>
+                    </tbody>
+                </table>
+            `
+
+            setup() {
+                const rowView = new RowView();
+
+                this.assignView('row', rowView);
+            }
+        }
+
+        const tableView = new TableView({
+            fullSelector: '#test-root',
+        });
+
+        tableView._initialize(viewData);
+
+        await tableView.render();
+
+        const rowCid = tableView.getView('row').cid;
+
+        const row = tableView.element.querySelector(`tr[data-view-cid="${rowCid}"]`);
+
+        expect(row).toBeTruthy();
+
+        expect(tableView.getView('row').getSelector()).toBe(`#test-root [data-view-cid="${rowCid}"]`);
 
         $div.remove();
     });
