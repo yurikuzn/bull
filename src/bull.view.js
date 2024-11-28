@@ -1407,19 +1407,15 @@ class View {
                         }
                     }
 
+                    if (!this.isComponent) {
+                        callback(templateElement);
+
+                        return;
+                    }
+
                     const root = document.createElement('template');
 
-                    if (this.isComponent) {
-                        root.content.appendChild(templateContent.childNodes[0]);
-                    } else {
-                        root.content.append(...templateContent.childNodes);
-                    }
-
-                    if (!root) {
-                       throw new Error(`Bad DOM. No root.`);
-                    }
-
-                    //this._setElementInternal(root);
+                    root.content.appendChild(templateContent.childNodes[0]);
 
                     callback(root);
                 });
