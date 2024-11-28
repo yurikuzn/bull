@@ -809,8 +809,6 @@ class View {
         this._isRendered = false;
         this._isFullyRendered = false;
 
-        //const previousElement = this.element;
-
         return new Promise(resolve => {
             this._getPreparedElement(templateElement => {
                 if (this._isRenderCanceled) {
@@ -819,8 +817,6 @@ class View {
 
                     return;
                 }
-
-                //this._setElementInternal(previousElement);
 
                 this.isComponent ?
                     this._renderComponentInDom(templateElement) :
@@ -1327,7 +1323,7 @@ class View {
     prepareRender() {}
 
     /**
-     * @protected
+     * @public
      * @param {Bull.View~getPreparedElementCallback} callback.
      * @internal
      */

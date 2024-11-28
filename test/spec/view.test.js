@@ -971,4 +971,83 @@ describe('View', function () {
 
         $div.remove();
     });
+
+    it ('should set cid for containers', async () => {
+        class Child1View extends View {
+            templateContent = `<div>1</div>`
+        }
+
+        class Child2View extends View {
+            templateContent = `<div>2</div>`
+
+            isComponent = true
+        }
+
+        class ParentView extends View {
+            templateContent = `
+                <div>{{{child1}}}</div>
+                {{{child2}}}
+            `
+
+            setup() {
+                this.assignView('child1', new Child1View({}));
+                this.assignView('child2', new Child2View({}));
+            }
+        }
+
+        const parent = new ParentView();
+
+        parent._initialize(viewData);
+
+        await parent.render();
+
+        /** @type {HTMLTemplateElement} */
+        const template = await (new Promise(resolve => {
+            parent._getPreparedElement(template => resolve(template));
+        }));
+
+        const child1 = parent.getView('child1');
+        const child2 = parent.getView('child2');
+
+        expect(template.content.querySelector(`[data-view-cid="${child1.cid}"]`)).toBeTruthy();
+        expect(template.content.querySelector(`[data-view-cid="${child2.cid}"]`)).toBeTruthy();
+    });
+
+    it ('should set cid for not rendered containers', async () => {
+        class Child1View extends View {
+            templateContent = `<div>1</div>`
+        }
+
+        class Child2View extends View {
+            templateContent = `<div>2</div>`
+
+            isComponent = true
+        }
+
+        class ParentView extends View {
+            templateContent = `
+                <div>{{{child1}}}</div>
+                {{{child2}}}
+            `
+
+            setup() {
+                this.assignView('child1', new Child1View({notToRender: true}));
+                this.assignView('child2', new Child2View({notToRender: true}));
+            }
+        }
+
+        const parent = new ParentView();
+
+        parent._initialize(viewData);
+
+        const template = await (new Promise(resolve => {
+            parent._getPreparedElement(template => resolve(template));
+        }));
+
+        const child1 = parent.getView('child1');
+        const child2 = parent.getView('child2');
+
+        expect(template.content.querySelector(`[data-view-cid="${child1.cid}"]`)).toBeTruthy();
+        expect(template.content.querySelector(`[data-view-cid="${child2.cid}"]`)).toBeTruthy();
+    });
 });
