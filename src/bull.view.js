@@ -906,6 +906,11 @@ class View {
      */
 
     /**
+     * @private
+     */
+    _keepElementOnRender = false
+
+    /**
      * Re-render the view.
      *
      * @param {Bull.View~reRenderOptions|true} [options] Options.
@@ -916,40 +921,21 @@ class View {
             options = {force: options};
         }
 
-        const keptViews = {};
         const hasKeep = options.keep && options.keep.length;
 
-        if ((this.isRendered() || this.isBeingRendered()) && hasKeep) {
+        if (hasKeep && (this.isRendered() || this.isBeingRendered())) {
             for (const key of options.keep) {
-                keptViews[key] = this.getView(key);
+                const subView = this.getView(key);
 
-                if (!keptViews[key]) {
+                if (!subView) {
                     continue;
                 }
 
-                this.unchainView(key);
+                subView._keepElementOnRender = true;
             }
         }
 
-        const restoreViews = () => {
-            for (const key of options.keep) {
-                if (!keptViews[key]) {
-                    continue;
-                }
-
-                this.setView(key, keptViews[key]);
-            }
-        };
-
         if (this.isRendered()) {
-            if (hasKeep) {
-                return this.render().then(() => {
-                    restoreViews();
-
-                    return this;
-                });
-            }
-
             return this.render();
         }
 
@@ -957,13 +943,7 @@ class View {
             return new Promise((resolve, reject) => {
                 this.once('after:render', () => {
                     this.render()
-                        .then(() => {
-                            if (hasKeep) {
-                                restoreViews();
-                            }
-
-                            resolve(this);
-                        })
+                        .then(() => resolve(this))
                         .catch(reject);
                 });
             });
@@ -1283,11 +1263,22 @@ class View {
             const key = item.key;
             const view = item.view;
 
-            if (view.notToRender) {
+            if (view.notToRender || view._keepElementOnRender) {
+                const templateElement = this._createPlaceholderElement(view.cid);
                 data[key] = {
-                    element: this._createPlaceholderElement(view.cid),
+                    element: templateElement,
                     view: view,
                 };
+
+                if (view._keepElementOnRender && view.element) {
+                    if (view.isComponent) {
+                        templateElement.content.appendChild(view.element);
+                    } else {
+                        templateElement.content.append(...view.element.childNodes);
+                    }
+
+                    view._keepElementOnRender = false; // ?
+                }
 
                 loaded++;
                 tryReady();

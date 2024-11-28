@@ -863,7 +863,7 @@ describe('View', function () {
         }
 
         class SubView extends View {
-            templateContent = `1`
+            templateContent = `<span class="one">1</span>`
         }
 
         const view = new TestView({fullSelector: '#test-root'});
@@ -881,10 +881,14 @@ describe('View', function () {
 
         expect(view.element.querySelector('.sub').textContent).toEqual('1');
 
+        const one = view.element.querySelector('.one');
+
         const viewToCheck = await view.reRender({keep: ['sub']});
 
         expect(viewToCheck).toBe(view);
-        expect(view.element.querySelector('.sub').textContent).toEqual('');
+        expect(view.element.querySelector('.sub').textContent).toEqual('1');
+
+        expect(view.element.querySelector('.one')).toBe(one);
 
         $div.remove();
     });
