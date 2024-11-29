@@ -709,19 +709,22 @@ class View {
     node() {
         this._vNode = this.content();
 
-        return this._vNode;
+        this._vNode.data = this._vNode.data || {};
 
-        const parentView = this.getParentView();
+        if (this._vNode.sel) {
+            if (!this._vNode.data.dataset) {
+                this._vNode.data.dataset = {};
+            }
 
-
-        if (!parentView) {
-            return this._vNode;
+            this._vNode.data.dataset.viewCid = this.cid;
         }
 
-        this._vNode.data = this._vNode.data || {};
+        return this._vNode;
+
         this._vNode.data.hook = this._vNode.data.hook || {};
 
         this._vNode.data.hook.create = (e, vNode) => {
+            console.log(vNode);
             let element;
 
             if (!(vNode.elm instanceof DocumentFragment)) {
@@ -959,14 +962,22 @@ class View {
     _visitSubViewsAfterPatch() {
         for (const view of Object.values(this.nestedViews)) {
             if (view.useVirtualDom) {
+                /** @type {HTMLElement|DocumentFragment|null} */
                 let element = view._vNode.elm;
+
+                //console.log(element);
 
                 if (element instanceof DocumentFragment) {
                     element = element.parent;
                 }
 
                 view._setElementInternal(element);
+
+                if (element && !element.dataset.viewCid) {
+                    element.setAttribute('data-view-cid', view.cid);
+                }
             }
+            // @todo Set data-view-cid for non-virtual-dom children.
 
             view._visitSubViewsAfterPatch();
         }
