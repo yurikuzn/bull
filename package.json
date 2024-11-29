@@ -9,18 +9,22 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-test": "npx rollup test/entry.js --format umd --file dist/test.umd.js --external jquery,handlebars,underscore --globals jquery:$,handlebars:Handlebard,underscore:_",
-    "build-umd": "npx rollup src/bullbone.js --format umd --file dist/bullbone.umd.js --name bullbone --amd.id bullbone --external jquery,handlebars,underscore --globals jquery:$,handlebars:Handlebard,underscore:_",
-    "build-esm": "npx rollup src/bullbone.js --format esm --file dist/bullbone.js --external jquery,handlebars,underscore",
+    "build-test": "npx rollup test/entry.js --format umd --file dist/test.umd.js --external jquery,handlebars,underscore --globals jquery:$,handlebars:Handlebard,underscore:_ --config rollup.config.mjs",
+    "build-umd": "npx rollup src/bullbone.js --format umd --file dist/bullbone.umd.js --name bullbone --amd.id bullbone --external jquery,handlebars,underscore --globals jquery:$,handlebars:Handlebard,underscore:_ --config rollup.config.mjs",
+    "build-esm": "npx rollup src/bullbone.js --format esm --file dist/bullbone.js --external jquery,handlebars,underscore --config rollup.config.mjs",
     "prepare": "npm run build-umd && npm run build-esm"
   },
   "repository": "https://github.com/yurikuzn/bull",
   "author": "Yurii Kuznietsov & EspoCRM team",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "handlebars": "^4.7.7",
     "jquery": "^3.6.0",
     "rollup": "^4.22.4",
     "underscore": "^1.13.4"
+  },
+  "dependencies": {
+    "snabbdom": "^3.6.2"
   }
 }

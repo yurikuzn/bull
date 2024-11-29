@@ -3,6 +3,9 @@
 import Events from './bull.events.js';
 import $ from 'jquery';
 import _ from 'underscore';
+import {h, init, datasetModule} from 'snabbdom';
+
+const patch = init([datasetModule]);
 
 /**
  * View options passed to a view on creation.
@@ -82,7 +85,7 @@ import _ from 'underscore';
  *
  * @callback Bull.View~getPreparedElementCallback
  *
- * @param {HTMLTemplateElement} element An element.
+ * @param {HTMLTemplateElement|import('snabbdom').VNode} element An element.
  */
 
 /**
@@ -261,6 +264,14 @@ class View {
     isComponent = false
 
     /**
+     * Use virtual dom.
+     *
+     * @readonly
+     * @type {boolean}
+     */
+    useVirtualDom = false
+
+    /**
      * A DOM element.
      *
      * @type {HTMLElement}
@@ -299,6 +310,12 @@ class View {
      * @protected
      */
     notToRender = false
+
+    /**
+     * @type {import('snabbdom').VNode|undefined}
+     * @private
+     */
+    _vNode
 
     /**
      * Layout definitions.
@@ -672,6 +689,15 @@ class View {
     }
 
     /**
+     * A view content.
+     *
+     * @return {import('snabbdom').VNode|undefined}
+     */
+    content() {
+        return undefined;
+    }
+
+    /**
      * Initialize the view. Is invoked before #setup.
      *
      * @protected
@@ -810,7 +836,7 @@ class View {
         this._isFullyRendered = false;
 
         return new Promise(resolve => {
-            this._getPreparedElement(templateElement => {
+            this._getPreparedElement(element => {
                 if (this._isRenderCanceled) {
                     this._isRenderCanceled = false;
                     this._isBeingRendered = false;
@@ -818,9 +844,13 @@ class View {
                     return;
                 }
 
-                this.isComponent ?
-                    this._renderComponentInDom(templateElement) :
-                    this._renderInDom(templateElement);
+                if (this.useVirtualDom) {
+                    this._patchVNode(element);
+                } else if (this.isComponent) {
+                    this._renderComponentInDom(element);
+                } else {
+                    this._renderInDom(element);
+                }
 
                 if (!this.element) {
                     const message = this._elementSelector ?
@@ -839,6 +869,32 @@ class View {
                 resolve(this);
             });
         });
+    }
+
+    /**
+     * @param {import('snabbdom').VNode} vNode
+     * @private
+     */
+    _patchVNode(vNode) {
+        if (!this.element && this._elementSelector) {
+            this._setElement(this._elementSelector);
+        }
+
+        if (!this.element) {
+            return;
+        }
+
+        if (!vNode.data.dataset) {
+            vNode.data.dataset = {};
+        }
+
+        vNode.data.dataset.viewCid = this.cid;
+
+        console.log(vNode);
+
+        const target = this._vNode || this.element;
+
+        this._vNode = patch(target, vNode);
     }
 
     /**
@@ -1331,6 +1387,14 @@ class View {
 
         const proceed = () => {
             this._getNestedViewsMap(nestedMap => {
+                if (this.useVirtualDom) {
+                    const vNode = this.content() || h(`!`);
+
+                    callback(vNode);
+
+                    return;
+                }
+
                 const data = {...this._getData()};
 
                 for (const [key, item] of Object.entries(nestedMap)) {
@@ -1928,6 +1992,7 @@ class View {
         this._isFullyRendered = false;
         this._isBeingRendered = false;
         this._isRemoved = true;
+        this._vNode = undefined;
 
         return this;
     }

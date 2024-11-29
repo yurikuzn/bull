@@ -1,6 +1,7 @@
 
 import View from '../../src/bull.view.js';
 import BullView from "../../src/bull.view.js";
+import {h} from "../../src/bullbone.js";
 
 describe('View', function () {
 	/**
@@ -1053,5 +1054,42 @@ describe('View', function () {
 
         expect(template.content.querySelector(`[data-view-cid="${child1.cid}"]`)).toBeTruthy();
         expect(template.content.querySelector(`[data-view-cid="${child2.cid}"]`)).toBeTruthy();
+    });
+
+    it('should patch', async () => {
+        const container = document.createElement('remplate');
+        container.id = 'test-root'
+
+        document.body.append(container);
+
+        class ParentView extends View {
+            useVirtualDom = true
+
+            content() {
+                return h(
+                    `div`,
+                    {
+                        props: {
+                            className: 'test',
+                        },
+                    },
+                    [
+                        h('span')
+                    ]
+                );
+            }
+        }
+
+        const parent = new ParentView({fullSelector: '#test-root'});
+
+        parent._initialize(viewData);
+
+        await parent.render();
+
+        console.log(document.body);
+
+        return;
+
+        container.remove();
     });
 });
