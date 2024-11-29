@@ -702,6 +702,43 @@ class View {
     }
 
     /**
+     * To be called in the content method of a parent view to get the child content.
+     *
+     * @return {import('snabbdom').VNode|undefined}
+     */
+    node() {
+        this._vNode = this.content();
+
+        return this._vNode;
+
+        const parentView = this.getParentView();
+
+
+        if (!parentView) {
+            return this._vNode;
+        }
+
+        this._vNode.data = this._vNode.data || {};
+        this._vNode.data.hook = this._vNode.data.hook || {};
+
+        this._vNode.data.hook.create = (e, vNode) => {
+            let element;
+
+            if (!(vNode.elm instanceof DocumentFragment)) {
+                element = vNode.elm;
+            } else {
+                //element = this.element.querySelector(`[data-view-cid="${this.cid}"]`)
+
+                console.log(vNode);
+            }
+
+            this._setElementInternal(element);
+        };
+
+        return this._vNode;
+    }
+
+    /**
      * Initialize the view. Is invoked before #setup.
      *
      * @protected
@@ -888,7 +925,6 @@ class View {
             return;
         }
 
-
         if (vNode.sel) {
             if (!vNode.data.dataset) {
                 vNode.data.dataset = {};
@@ -910,7 +946,30 @@ class View {
             this.element.setAttribute('data-view-cid', this.cid);
         }
 
-        this._vNode = patch(target, vNode);
+        patch(target, vNode);
+
+        this._vNode = vNode;
+
+        this._visitSubViewsAfterPatch();
+    }
+
+    /**
+     * @internal
+     */
+    _visitSubViewsAfterPatch() {
+        for (const view of Object.values(this.nestedViews)) {
+            if (view.useVirtualDom) {
+                let element = view._vNode.elm;
+
+                if (element instanceof DocumentFragment) {
+                    element = element.parent;
+                }
+
+                view._setElementInternal(element);
+            }
+
+            view._visitSubViewsAfterPatch();
+        }
     }
 
     /**

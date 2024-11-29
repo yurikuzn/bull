@@ -1062,8 +1062,41 @@ describe('View', function () {
 
         document.body.append(container);
 
+        class ChildView1 extends View {
+            useVirtualDom = true
+
+            value = 'c3'
+
+            content() {
+                return fragment([
+                    h('span', {}, this.value),
+                ]);
+            }
+        }
+
+        class ChildView2 extends View {
+            useVirtualDom = true
+
+            value = 'c4'
+
+            content() {
+                return h('span#span-4', {}, this.value);
+            }
+        }
+
         class ParentView extends View {
             useVirtualDom = true
+
+            value1 = '1'
+            value2 = '2'
+
+            setup() {
+                this.child1 = new ChildView1();
+                this.assignView('child1', this.child1);
+
+                this.child2 = new ChildView2();
+                this.assignView('child2', this.child2);
+            }
 
             content() {
                 return fragment([
@@ -1075,7 +1108,10 @@ describe('View', function () {
                             },
                         },
                         [
-                            h('span')
+                            h('span#span-1', {}, this.value1.toString()),
+                            h('span#span-2', {}, this.value2.toString()),
+                            h('span#span-3', {}, [this.child1.node()]),
+                            this.child2.node(),
                         ]
                     )
                 ]);
@@ -1088,14 +1124,44 @@ describe('View', function () {
 
         await parent.render();
 
-        console.log(document.body);
+        const span1 = parent.element.querySelector('#span-1');
+
+        expect(span1).toBeInstanceOf(HTMLSpanElement);
+
+        parent.value2 = '2a';
+
+        await parent.reRender();
+
+        expect(parent.element.querySelector('#span-1')).toBe(span1);
+
+        const span2 = parent.element.querySelector('#span-2');
+        const span3 = parent.element.querySelector('#span-3');
+        const span4 = parent.element.querySelector('#span-4');
+
+        const span3Span = span3.childNodes[0];
+
+        expect(span2.textContent).toBe('2a');
+
+        parent.child1.value += 'm';
+        parent.child2.value += 'm';
+
+        await parent.child1.reRender();
+        await parent.child2.reRender();
+
+        expect(parent.element.querySelector('#span-3 > span')).toBe(span3Span);
+        expect(parent.element.querySelector('#span-4')).toBe(span4);
+
+        expect(span3.childNodes[0].textContent).toBe(parent.child1.value);
+        expect(span4.textContent).toBe(parent.child2.value);
+
+        console.log(container);
 
         return;
 
         container.remove();
     });
 
-    it('should patch', async () => {
+    it('should patch component', async () => {
         const container = document.createElement('template');
         container.id = 'test-root'
 
@@ -1125,9 +1191,7 @@ describe('View', function () {
 
         await parent.render();
 
-        console.log(document.body);
-
-        return;
+        console.log(document.body.innerHTML);
 
         container.remove();
     });
