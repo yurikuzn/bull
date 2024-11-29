@@ -1,7 +1,7 @@
 
 import View from '../../src/bull.view.js';
 import BullView from "../../src/bull.view.js";
-import {h} from "../../src/bullbone.js";
+import {h, fragment} from 'snabbdom';
 
 describe('View', function () {
 	/**
@@ -1056,8 +1056,47 @@ describe('View', function () {
         expect(template.content.querySelector(`[data-view-cid="${child2.cid}"]`)).toBeTruthy();
     });
 
+    it('should patch fragment', async () => {
+        const container = document.createElement('div');
+        container.id = 'test-root'
+
+        document.body.append(container);
+
+        class ParentView extends View {
+            useVirtualDom = true
+
+            content() {
+                return fragment([
+                    h(
+                        `div`,
+                        {
+                            props: {
+                                className: 'test',
+                            },
+                        },
+                        [
+                            h('span')
+                        ]
+                    )
+                ]);
+            }
+        }
+
+        const parent = new ParentView({fullSelector: '#test-root'});
+
+        parent._initialize(viewData);
+
+        await parent.render();
+
+        console.log(document.body);
+
+        return;
+
+        container.remove();
+    });
+
     it('should patch', async () => {
-        const container = document.createElement('remplate');
+        const container = document.createElement('template');
         container.id = 'test-root'
 
         document.body.append(container);

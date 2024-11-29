@@ -5,7 +5,11 @@ import $ from 'jquery';
 import _ from 'underscore';
 import {h, init, datasetModule} from 'snabbdom';
 
-const patch = init([datasetModule]);
+const patch = init(
+    [datasetModule],
+    undefined,
+    {experimental: {fragments: true}}
+);
 
 /**
  * View options passed to a view on creation.
@@ -884,15 +888,25 @@ class View {
             return;
         }
 
-        if (!vNode.data.dataset) {
-            vNode.data.dataset = {};
+
+        if (vNode.sel) {
+            if (!vNode.data.dataset) {
+                vNode.data.dataset = {};
+            }
+
+            vNode.data.dataset.viewCid = this.cid;
         }
 
-        vNode.data.dataset.viewCid = this.cid;
+        let target = this._vNode || this.element;
 
-        console.log(vNode);
+        if (!vNode.sel && !this._vNode) {
+            const template = document.createElement('template');
+            this.element.append(template);
 
-        const target = this._vNode || this.element;
+            target = template;
+
+            this.element.setAttribute('data-view-cid', this.cid);
+        }
 
         this._vNode = patch(target, vNode);
     }
