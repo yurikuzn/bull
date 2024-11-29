@@ -904,7 +904,9 @@ class View {
             this.element.append(template);
 
             target = template;
+        }
 
+        if (!vNode.sel) {
             this.element.setAttribute('data-view-cid', this.cid);
         }
 
