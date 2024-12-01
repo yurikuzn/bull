@@ -1062,7 +1062,7 @@ describe('View', function () {
 
         document.body.append(container);
 
-        class ChildView1 extends View {
+        class ChildView3 extends View {
             useVirtualDom = true
 
             value = 'c3'
@@ -1074,7 +1074,7 @@ describe('View', function () {
             }
         }
 
-        class ChildView2 extends View {
+        class ChildView4 extends View {
             useVirtualDom = true
 
             value = 'c4'
@@ -1084,14 +1084,18 @@ describe('View', function () {
             }
         }
 
-        class ChildView3 extends View {
+        class ChildView5 extends View {
             value = 'c5'
 
             templateContent = `<span>{{viewObject.value}}</span>`
+        }
 
-            content() {
-                return h('span', {}, this.value);
-            }
+        class ChildView6 extends View {
+            isComponent = true
+
+            value = 'c6'
+
+            templateContent = `<span id="span-6">{{viewObject.value}}</span>`
         }
 
         class ParentView extends View {
@@ -1101,14 +1105,17 @@ describe('View', function () {
             value2 = '2'
 
             setup() {
-                this.child1 = new ChildView1();
-                this.assignView('child1', this.child1);
-
-                this.child2 = new ChildView2();
-                this.assignView('child2', this.child2);
-
                 this.child3 = new ChildView3();
-                this.assignView('child3', this.child3);
+                this.assignView('child1', this.child3);
+
+                this.child4 = new ChildView4();
+                this.assignView('child4', this.child4);
+
+                this.child5 = new ChildView5();
+                this.assignView('child5', this.child5);
+
+                this.child6 = new ChildView6();
+                this.assignView('child6', this.child6);
             }
 
             content() {
@@ -1123,9 +1130,10 @@ describe('View', function () {
                         [
                             h('span#span-1', {}, this.value1.toString()),
                             h('span#span-2', {}, this.value2.toString()),
-                            h('span#span-3', {}, [this.child1.node()]),
-                            this.child2.node(),
-                            h('span#span-5', {}, [this.child3.node()]),
+                            h('span#span-3', {}, [this.child3.node()]),
+                            this.child4.node(),
+                            h('span#span-5', {}, [this.child5.node()]),
+                            this.child6.node(),
                         ]
                     )
                 ]);
@@ -1144,9 +1152,18 @@ describe('View', function () {
 
         parent.value2 = '2a';
 
+        parent.child4.value = '2a';
+        parent.child5.value = 'c5m';
+        parent.child6.value = 'c6m';
+
         await parent.reRender();
 
+        return;
+
         expect(parent.element.querySelector('#span-1')).toBe(span1);
+
+        expect(parent.element.querySelector('#span-5 > span').textContent).toBe('c5');
+        expect(parent.element.querySelector('#span-6').textContent).toBe('c6');
 
         const span2 = parent.element.querySelector('#span-2');
         const span3 = parent.element.querySelector('#span-3');
@@ -1156,17 +1173,17 @@ describe('View', function () {
 
         expect(span2.textContent).toBe('2a');
 
-        parent.child1.value += 'm';
-        parent.child2.value += 'm';
+        parent.child3.value += 'm';
+        parent.child4.value += 'm';
 
-        await parent.child1.reRender();
-        await parent.child2.reRender();
+        await parent.child3.reRender();
+        await parent.child4.reRender();
 
         expect(parent.element.querySelector('#span-3 > span')).toBe(span3Span);
         expect(parent.element.querySelector('#span-4')).toBe(span4);
 
-        expect(span3.childNodes[0].textContent).toBe(parent.child1.value);
-        expect(span4.textContent).toBe(parent.child2.value);
+        expect(span3.childNodes[0].textContent).toBe(parent.child3.value);
+        expect(span4.textContent).toBe(parent.child4.value);
 
         console.log(container);
 

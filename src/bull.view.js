@@ -702,14 +702,51 @@ class View {
     }
 
     /**
+     * @type {import('snabbdom').VNode|undefined}
+     * @private
+     */
+    _memoryVnode
+
+    /**
+     * @type {number}
+     * @private
+     * @todo Remove?
+     */
+    _reRenderNumber = 0
+
+    /**
      * To be called in the content method of a parent view to get the child content.
      *
      * @return {import('snabbdom').VNode|undefined}
      */
     node() {
         if (!this.useVirtualDom) {
+            //this._reRenderNumber++;
+
+            if (this._memoryVnode) {
+                //this._memoryVnode.key = `${this.cid}_${this._reRenderNumber}`;
+
+                this._memoryVnode.data.hook.prepatch = (oldVNode, vNode) => {
+                    console.log(oldVNode);
+
+                    const nodes = this._preparedElement.content.childNodes;
+
+                    const first = nodes[0];
+
+                    if (this.isComponent) {
+
+                    }
+                }
+
+                // The same VNode instance to prevent patching.
+                return this._memoryVnode;
+            }
+
+            // Using the template instead of a fragment for non-component views to make use of hooks.
+
             return h('template', {
                 dataset: {viewCid: this.cid},
+                //key: `${this.cid}_${this._reRenderNumber}`,
                 hook: {
                     insert: (vNode) => {
                         const template = vNode.elm;
@@ -718,7 +755,45 @@ class View {
                             throw new Error("Bad template element.");
                         }
 
-                        template.replaceWith(...this._preparedElement.content.childNodes);
+                        const nodes = this._preparedElement.content.childNodes;
+
+                        const first = nodes[0];
+
+                        if (this.isComponent) {
+                            if (!first) {
+                                return;
+                            }
+
+                            vNode.elm = first;
+
+                            template.replaceWith(first);
+                        } else {
+                            const fragment = this._preparedElement.content;
+
+                            template.replaceWith(fragment);
+
+                            // Snabbdom relies on the custom property 'parent'.
+                            // Not sure whether it's actually needed.
+                            fragment.parent = first.parentElement;
+
+                            vNode.elm = fragment;
+                            vNode.sel = undefined;
+                            vNode.children = [];
+                        }
+
+                        this._memoryVnode = vNode;
+
+                        if (this.isComponent) {
+                            vNode.elm = first;
+
+                            if (first instanceof HTMLElement) {
+                                first.dataset.viewCid = this.cid;
+                            }
+                        } else {
+                            if (first.parentElement) {
+                                first.parentElement.dataset.viewCid = this.cid;
+                            }
+                        }
                     },
                 }
             });
@@ -735,25 +810,6 @@ class View {
 
             this._vNode.data.dataset.viewCid = this.cid;
         }
-
-        return this._vNode;
-
-        this._vNode.data.hook = this._vNode.data.hook || {};
-
-        this._vNode.data.hook.create = (e, vNode) => {
-            console.log(vNode);
-            let element;
-
-            if (!(vNode.elm instanceof DocumentFragment)) {
-                element = vNode.elm;
-            } else {
-                //element = this.element.querySelector(`[data-view-cid="${this.cid}"]`)
-
-                console.log(vNode);
-            }
-
-            this._setElementInternal(element);
-        };
 
         return this._vNode;
     }
