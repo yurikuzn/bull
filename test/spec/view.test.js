@@ -1084,6 +1084,16 @@ describe('View', function () {
             }
         }
 
+        class ChildView3 extends View {
+            value = 'c5'
+
+            templateContent = `<span>{{viewObject.value}}</span>`
+
+            content() {
+                return h('span', {}, this.value);
+            }
+        }
+
         class ParentView extends View {
             useVirtualDom = true
 
@@ -1096,6 +1106,9 @@ describe('View', function () {
 
                 this.child2 = new ChildView2();
                 this.assignView('child2', this.child2);
+
+                this.child3 = new ChildView3();
+                this.assignView('child3', this.child3);
             }
 
             content() {
@@ -1112,6 +1125,7 @@ describe('View', function () {
                             h('span#span-2', {}, this.value2.toString()),
                             h('span#span-3', {}, [this.child1.node()]),
                             this.child2.node(),
+                            h('span#span-5', {}, [this.child3.node()]),
                         ]
                     )
                 ]);

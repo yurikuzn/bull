@@ -707,6 +707,23 @@ class View {
      * @return {import('snabbdom').VNode|undefined}
      */
     node() {
+        if (!this.useVirtualDom) {
+            return h('template', {
+                dataset: {viewCid: this.cid},
+                hook: {
+                    insert: (vNode) => {
+                        const template = vNode.elm;
+
+                        if (!(template instanceof HTMLTemplateElement)) {
+                            throw new Error("Bad template element.");
+                        }
+
+                        template.replaceWith(...this._preparedElement.content.childNodes);
+                    },
+                }
+            });
+        }
+
         this._vNode = this.content();
 
         this._vNode.data = this._vNode.data || {};
@@ -960,15 +977,15 @@ class View {
      * @internal
      */
     _visitSubViewsAfterPatch() {
+        // @todo Check performance.
         for (const view of Object.values(this.nestedViews)) {
             if (view.useVirtualDom) {
                 /** @type {HTMLElement|DocumentFragment|null} */
                 let element = view._vNode.elm;
 
-                //console.log(element);
-
-                if (element instanceof DocumentFragment) {
-                    element = element.parent;
+                if (element instanceof DocumentFragment && ('parent' in element)) {
+                    // The 'parent' is not in the DOM API, it's added by Snabbdom.
+                    element = element.parent || null;
                 }
 
                 view._setElementInternal(element);
@@ -1383,6 +1400,12 @@ class View {
     }
 
     /**
+     * @type {HTMLTemplateElement}
+     * @private
+     */
+    _preparedElement
+
+    /**
      * @private
      * @param {function(Object.<string, {element: HTMLTemplateElement, view: Bull.View}>)} callback
      */
@@ -1405,8 +1428,11 @@ class View {
             const key = item.key;
             const view = item.view;
 
+            view._preparedElement = undefined;
+
             if (view.notToRender || view._keepElementOnRender) {
                 const templateElement = this._createPlaceholderElement(view.cid);
+
                 data[key] = {
                     element: templateElement,
                     view: view,
@@ -1433,6 +1459,8 @@ class View {
                     element: element,
                     view: view,
                 };
+
+                view._preparedElement = element;
 
                 loaded++;
                 tryReady();
@@ -1474,7 +1502,7 @@ class View {
         const proceed = () => {
             this._getNestedViewsMap(nestedMap => {
                 if (this.useVirtualDom) {
-                    const vNode = this.content() || h(`!`);
+                    const vNode = this.content() || h('!');
 
                     callback(vNode);
 
