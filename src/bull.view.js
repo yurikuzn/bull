@@ -726,17 +726,41 @@ class View {
             if (this._memoryVnode) {
                 //this._memoryVnode.key = `${this.cid}_${this._reRenderNumber}`;
 
-                this._memoryVnode.data.hook.prepatch = (oldVNode, vNode) => {
-                    console.log(oldVNode);
-
+                this._memoryVnode.data.hook.prepatch = (oldVNode) => {
                     const nodes = this._preparedElement.content.childNodes;
 
                     const first = nodes[0];
 
                     if (this.isComponent) {
+                        const element = oldVNode.elm;
 
+                        if (!(first instanceof HTMLElement)) {
+                            return;
+                        }
+
+                        first.dataset.viewCid = this.cid;
+
+                        if (element instanceof HTMLElement) {
+                            element.replaceWith(first);
+                        }
+                    } else {
+                        const element = oldVNode.elm;
+
+                        const parent = ('parent' in element) ? element.parent : null;
+
+                        if (element instanceof DocumentFragment && parent instanceof HTMLElement) {
+                            parent.childNodes.forEach(it => it.remove());
+                        }
+
+                        const fragment = this._preparedElement.content;
+
+                        if (parent instanceof HTMLElement) {
+                            parent.append(fragment)
+                        }
+
+                        fragment.parent = parent;
                     }
-                }
+                };
 
                 // The same VNode instance to prevent patching.
                 return this._memoryVnode;
