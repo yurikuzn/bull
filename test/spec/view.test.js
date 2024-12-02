@@ -1098,10 +1098,25 @@ describe('View', function () {
             templateContent = `<div id="span-6">{{viewObject.value}}</div>`
         }
 
+        class ChildView7 extends View {
+            value = 'c7'
+
+            templateContent = `<div>{{viewObject.value}}</div>`
+        }
+
+        class ChildView8 extends View {
+            isComponent = true
+
+            value = 'c8'
+
+            templateContent = `<div id="span-8">{{viewObject.value}}</div>`
+        }
+
         class ParentView extends View {
             useVirtualDom = true
 
             a = true
+            b = true
 
             value1 = '1'
             value2 = '2'
@@ -1118,6 +1133,12 @@ describe('View', function () {
 
                 this.child6 = new ChildView6();
                 this.assignView('child6', this.child6);
+
+                this.child7 = new ChildView7();
+                this.assignView('child7', this.child7);
+
+                this.child8 = new ChildView8();
+                this.assignView('child8', this.child8);
             }
 
             content() {
@@ -1137,6 +1158,10 @@ describe('View', function () {
                             ...(this.a ? [
                                 h('div#span-5', {}, [this.child5.node()]),
                                 this.child6.node(),
+                            ] : []),
+                            ...(this.b ? [
+                                h('div#span-7', {}, [this.child7.node()]),
+                                this.child8.node(),
                             ] : []),
                         ],
                     )
@@ -1160,12 +1185,17 @@ describe('View', function () {
         parent.child5.value = 'c5m';
         parent.child6.value = 'c6m';
 
+        parent.b = false;
+
         await parent.reRender();
 
         expect(parent.element.querySelector('#span-1')).toBe(span1);
 
         expect(parent.element.querySelector('#span-5 > div').textContent).toBe('c5m');
         expect(parent.element.querySelector('#span-6').textContent).toBe('c6m');
+
+        expect(parent.element.querySelector('#span-7 > div')).toBeNull();
+        expect(parent.element.querySelector('#span-8')).toBeNull();
 
         const span2 = parent.element.querySelector('#span-2');
         const span3 = parent.element.querySelector('#span-3');
@@ -1194,15 +1224,15 @@ describe('View', function () {
         expect(parent.element.querySelector('#span-6').textContent).toBe('c6m');
 
         parent.a = false;
+        parent.b = true;
 
         await parent.reRender();
 
         expect(parent.element.querySelector('#span-5 > div')).toBeNull();
         expect(parent.element.querySelector('#span-6')).toBeNull();
 
-        // @todo Test remove node after first render.
-
-        //console.log(container);
+        expect(parent.element.querySelector('#span-7 > div').textContent).toBe('c7');
+        expect(parent.element.querySelector('#span-8').textContent).toBe('c8');
 
         return;
 

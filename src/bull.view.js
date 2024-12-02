@@ -791,6 +791,7 @@ class View {
 
         return h('template', {
             dataset: {viewCid: this.cid},
+            key: this.cid,
             hook: {
                 insert: (vNode) => {
                     const template = vNode.elm;
@@ -812,7 +813,9 @@ class View {
 
                         template.replaceWith(first);
 
-                        this._setElementInternal(first);
+                        if (first instanceof HTMLElement) {
+                            this._setElementInternal(first);
+                        }
                     } else {
                         const fragment = this._preparedElement.content;
 
