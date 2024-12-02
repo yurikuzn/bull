@@ -1036,9 +1036,10 @@ class View {
 
     /**
      * @param {import('snabbdom').VNode} vNode
-     * @private
+     * @param {boolean} [fromNotVirtualDom]
+     * @internal
      */
-    _patchVNode(vNode) {
+    _patchVNode(vNode, fromNotVirtualDom = false) {
         if (!this.element && this._elementSelector) {
             this._setElement(this._elementSelector);
         }
@@ -1057,7 +1058,7 @@ class View {
 
         let target = this._vNode || this.element;
 
-        if (!vNode.sel && !this._vNode) {
+        if (!vNode.sel && !this._vNode && !fromNotVirtualDom) {
             const template = document.createElement('template');
             this.element.append(template);
 
@@ -1067,6 +1068,8 @@ class View {
         if (!vNode.sel) {
             this.element.setAttribute('data-view-cid', this.cid);
         }
+
+        console.log(target, vNode);
 
         patch(target, vNode);
 
@@ -1508,8 +1511,14 @@ class View {
     _preparedElement
 
     /**
+     * @typedef {Record} Bull~nestedItem
+     * @property {HTMLTemplateElement|import('snabbdom').VNode} element A template or VNode.
+     * @property {Bull.View} view A view.
+     */
+
+    /**
      * @private
-     * @param {function(Object.<string, {element: HTMLTemplateElement, view: Bull.View}>)} callback
+     * @param {function(Object.<string, Bull~nestedItem>)} callback
      */
     _getNestedViewsMap(callback) {
         const data = {};
@@ -1649,29 +1658,7 @@ class View {
                             continue;
                         }
 
-                        if (item.view.isComponent) {
-                            let newElement = placeholder;
-
-                            if (element.content.children.length) {
-                                newElement = element.content.children[0];
-
-                                placeholder.replaceWith(newElement);
-                            }
-
-                            item.view._setElementInternal(newElement);
-
-                            newElement.setAttribute('data-view-cid', item.view.cid);
-                        } else {
-                            const parent = placeholder.parentElement;
-
-                            placeholder.replaceWith(...element.content.childNodes);
-
-                            item.view._setElementInternal(parent || undefined);
-
-                            if (parent) {
-                                parent.setAttribute('data-view-cid', item.view.cid);
-                            }
-                        }
+                        this._prepareNestedElementInPlaceholder(item, placeholder, element);
                     }
 
                     if (!this.isComponent) {
@@ -1696,6 +1683,73 @@ class View {
         }
 
         proceed();
+    }
+
+    /**
+     * @private
+     * @param {Bull~nestedItem} item
+     * @param {HTMLTemplateElement} placeholder
+     * @param {HTMLTemplateElement} element
+     */
+    _prepareNestedElementInPlaceholder(item, placeholder, element) {
+        if (item.view.useVirtualDom) {
+            const vNode = /** @type {import('snabbdom').VNode} */item.element;
+            const view = item.view;
+
+            if (vNode.sel) {
+                if (!vNode.data.dataset) {
+                    vNode.data.dataset = {};
+                }
+
+                vNode.data.dataset.viewCid = item.view.cid;
+            }
+
+            this.once('after:render-internal', () => {
+                const container = this.element.querySelector(`[data-view-cid="${view.cid}"]`);
+
+                if (!container) {
+                    return;
+                }
+
+                view._vNode = undefined;
+
+                view._patchVNode(vNode, true);
+
+                if (!vNode.sel && vNode.elm && ('parent' in vNode.elm)) {
+                    const parent = /** @type {HTMLElement} */vNode.elm.parent;
+
+                    parent.dataset.viewCid = view.cid;
+                }
+            });
+
+            return;
+        }
+
+        if (item.view.isComponent) {
+            let newElement = placeholder;
+
+            if (element.content.children.length) {
+                newElement = element.content.children[0];
+
+                placeholder.replaceWith(newElement);
+            }
+
+            item.view._setElementInternal(newElement);
+
+            newElement.setAttribute('data-view-cid', item.view.cid);
+
+            return;
+        }
+
+        const parent = placeholder.parentElement;
+
+        placeholder.replaceWith(...element.content.childNodes);
+
+        item.view._setElementInternal(parent || undefined);
+
+        if (parent) {
+            parent.setAttribute('data-view-cid', item.view.cid);
+        }
     }
 
     /**

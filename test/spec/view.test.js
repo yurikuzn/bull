@@ -1056,7 +1056,7 @@ describe('View', function () {
         expect(template.content.querySelector(`[data-view-cid="${child2.cid}"]`)).toBeTruthy();
     });
 
-    it('should patch fragment', async () => {
+    it('should patch', async () => {
         const container = document.createElement('div');
         container.id = 'test-root'
 
@@ -1234,32 +1234,57 @@ describe('View', function () {
         expect(parent.element.querySelector('#span-7 > div').textContent).toBe('c7');
         expect(parent.element.querySelector('#span-8').textContent).toBe('c8');
 
-        return;
-
         container.remove();
+
+        // @todo Test fragment view with only text.
+        // @todo Test fragment as a top-level view.
     });
 
-    it('should patch component', async () => {
-        const container = document.createElement('template');
+    it('should support virtual dom in template views', async () => {
+        const container = document.createElement('div');
         container.id = 'test-root'
 
         document.body.append(container);
 
-        class ParentView extends View {
+        class Child1View extends View {
             useVirtualDom = true
 
+            value = 'c1'
+
             content() {
-                return h(
-                    `div`,
-                    {
-                        props: {
-                            className: 'test',
-                        },
-                    },
-                    [
-                        h('span')
-                    ]
-                );
+                return fragment([
+                    h('span', {}, this.value),
+                ]);
+            }
+
+            // @todo Sub-views.
+        }
+
+        class Child2View extends View {
+            useVirtualDom = true
+
+            value = 'c2'
+
+            content() {
+                return h('div', {}, this.value);
+            }
+
+            // @todo Sub-views.
+        }
+
+        class ParentView extends View {
+
+            templateContent = `
+                <div id="span-1">{{{child1}}}</div>
+                {{{child2}}}
+            `
+
+            setup() {
+                this.child1 = new Child1View();
+                this.child2 = new Child2View();
+
+                this.assignView('child1', this.child1);
+                this.assignView('child2', this.child2);
             }
         }
 
@@ -1269,8 +1294,8 @@ describe('View', function () {
 
         await parent.render();
 
-        console.log(document.body.innerHTML);
+        // @todo Re-render, remove/add sub-views.
 
-        container.remove();
+        //container.remove();
     });
 });
