@@ -1069,7 +1069,7 @@ describe('View', function () {
 
             content() {
                 return fragment([
-                    h('span', {}, this.value),
+                    h('div', {}, this.value),
                 ]);
             }
         }
@@ -1080,14 +1080,14 @@ describe('View', function () {
             value = 'c4'
 
             content() {
-                return h('span#span-4', {}, this.value);
+                return h('div#span-4', {}, this.value);
             }
         }
 
         class ChildView5 extends View {
             value = 'c5'
 
-            templateContent = `<span>{{viewObject.value}}</span>`
+            templateContent = `<div>{{viewObject.value}}</div>`
         }
 
         class ChildView6 extends View {
@@ -1095,7 +1095,7 @@ describe('View', function () {
 
             value = 'c6'
 
-            templateContent = `<span id="span-6">{{viewObject.value}}</span>`
+            templateContent = `<div id="span-6">{{viewObject.value}}</div>`
         }
 
         class ParentView extends View {
@@ -1130,12 +1130,12 @@ describe('View', function () {
                             },
                         },
                         [
-                            h('span#span-1', {}, this.value1.toString()),
-                            h('span#span-2', {}, this.value2.toString()),
-                            h('span#span-3', {}, [this.child3.node()]),
+                            h('div#span-1', {}, this.value1.toString()),
+                            h('div#span-2', {}, this.value2.toString()),
+                            h('div#span-3', {}, [this.child3.node()]),
                             this.child4.node(),
                             ...(this.a ? [
-                                h('span#span-5', {}, [this.child5.node()]),
+                                h('div#span-5', {}, [this.child5.node()]),
                                 this.child6.node(),
                             ] : []),
                         ],
@@ -1152,11 +1152,11 @@ describe('View', function () {
 
         const span1 = parent.element.querySelector('#span-1');
 
-        expect(span1).toBeInstanceOf(HTMLSpanElement);
+        expect(span1).toBeInstanceOf(HTMLDivElement);
 
         parent.value2 = '2a';
 
-        parent.child4.value = '2a';
+        parent.child4.value = 'c4a';
         parent.child5.value = 'c5m';
         parent.child6.value = 'c6m';
 
@@ -1164,12 +1164,8 @@ describe('View', function () {
 
         expect(parent.element.querySelector('#span-1')).toBe(span1);
 
-        expect(parent.element.querySelector('#span-5 > span').textContent).toBe('c5m');
+        expect(parent.element.querySelector('#span-5 > div').textContent).toBe('c5m');
         expect(parent.element.querySelector('#span-6').textContent).toBe('c6m');
-
-        // Todo test conditional non-virtual-dom child.
-
-        //return;
 
         const span2 = parent.element.querySelector('#span-2');
         const span3 = parent.element.querySelector('#span-3');
@@ -1188,16 +1184,23 @@ describe('View', function () {
         await parent.child5.reRender();
         await parent.child6.reRender();
 
-        expect(parent.element.querySelector('#span-3 > span')).toBe(span3Span);
+        expect(parent.element.querySelector('#span-3 > div')).toBe(span3Span);
         expect(parent.element.querySelector('#span-4')).toBe(span4);
 
         expect(span3.childNodes[0].textContent).toBe(parent.child3.value);
         expect(span4.textContent).toBe(parent.child4.value);
 
-        expect(parent.element.querySelector('#span-5 > span').textContent).toBe('c5m');
+        expect(parent.element.querySelector('#span-5 > div').textContent).toBe('c5m');
         expect(parent.element.querySelector('#span-6').textContent).toBe('c6m');
 
         parent.a = false;
+
+        await parent.reRender();
+
+        expect(parent.element.querySelector('#span-5 > div')).toBeNull();
+        expect(parent.element.querySelector('#span-6')).toBeNull();
+
+        // @todo Test remove node after first render.
 
         //console.log(container);
 

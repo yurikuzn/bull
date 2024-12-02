@@ -753,6 +753,8 @@ class View {
 
                     first.dataset.viewCid = this.cid;
 
+                    this._memoryVnode.elm = first;
+
                     if (element instanceof HTMLElement) {
                         element.replaceWith(first);
 
@@ -774,6 +776,8 @@ class View {
 
                         this._setElementInternal(parent);
                     }
+
+                    this._memoryVnode.elm = fragment;
 
                     fragment.parent = parent;
                 }
@@ -827,8 +831,6 @@ class View {
                         }
                     }
 
-                    this._memoryVnode = vNode;
-
                     if (this.isComponent) {
                         vNode.elm = first;
 
@@ -840,6 +842,12 @@ class View {
                             first.parentElement.dataset.viewCid = this.cid;
                         }
                     }
+
+                    this._memoryVnode = vNode;
+
+                    this._memoryVnode.data.hook.destroy = () => {
+                        this._memoryVnode = undefined;
+                    };
                 },
             }
         });
@@ -1006,6 +1014,10 @@ class View {
                         `Could not set element. No selector.`;
 
                     console.warn(message);
+                }
+
+                if (!this.useVirtualDom && this._memoryVnode && this.isComponent) {
+                    this._memoryVnode.elm = this.element;
                 }
 
                 this._afterRender();
