@@ -1101,6 +1101,8 @@ describe('View', function () {
         class ParentView extends View {
             useVirtualDom = true
 
+            a = true
+
             value1 = '1'
             value2 = '2'
 
@@ -1132,9 +1134,11 @@ describe('View', function () {
                             h('span#span-2', {}, this.value2.toString()),
                             h('span#span-3', {}, [this.child3.node()]),
                             this.child4.node(),
-                            h('span#span-5', {}, [this.child5.node()]),
-                            this.child6.node(),
-                        ]
+                            ...(this.a ? [
+                                h('span#span-5', {}, [this.child5.node()]),
+                                this.child6.node(),
+                            ] : []),
+                        ],
                     )
                 ]);
             }
@@ -1158,12 +1162,14 @@ describe('View', function () {
 
         await parent.reRender();
 
-        return;
-
         expect(parent.element.querySelector('#span-1')).toBe(span1);
 
-        expect(parent.element.querySelector('#span-5 > span').textContent).toBe('c5');
-        expect(parent.element.querySelector('#span-6').textContent).toBe('c6');
+        expect(parent.element.querySelector('#span-5 > span').textContent).toBe('c5m');
+        expect(parent.element.querySelector('#span-6').textContent).toBe('c6m');
+
+        // Todo test conditional non-virtual-dom child.
+
+        //return;
 
         const span2 = parent.element.querySelector('#span-2');
         const span3 = parent.element.querySelector('#span-3');
@@ -1179,13 +1185,21 @@ describe('View', function () {
         await parent.child3.reRender();
         await parent.child4.reRender();
 
+        await parent.child5.reRender();
+        await parent.child6.reRender();
+
         expect(parent.element.querySelector('#span-3 > span')).toBe(span3Span);
         expect(parent.element.querySelector('#span-4')).toBe(span4);
 
         expect(span3.childNodes[0].textContent).toBe(parent.child3.value);
         expect(span4.textContent).toBe(parent.child4.value);
 
-        console.log(container);
+        expect(parent.element.querySelector('#span-5 > span').textContent).toBe('c5m');
+        expect(parent.element.querySelector('#span-6').textContent).toBe('c6m');
+
+        parent.a = false;
+
+        //console.log(container);
 
         return;
 

@@ -702,125 +702,13 @@ class View {
     }
 
     /**
-     * @type {import('snabbdom').VNode|undefined}
-     * @private
-     */
-    _memoryVnode
-
-    /**
-     * @type {number}
-     * @private
-     * @todo Remove?
-     */
-    _reRenderNumber = 0
-
-    /**
      * To be called in the content method of a parent view to get the child content.
      *
      * @return {import('snabbdom').VNode|undefined}
      */
     node() {
         if (!this.useVirtualDom) {
-            //this._reRenderNumber++;
-
-            if (this._memoryVnode) {
-                //this._memoryVnode.key = `${this.cid}_${this._reRenderNumber}`;
-
-                this._memoryVnode.data.hook.prepatch = (oldVNode) => {
-                    const nodes = this._preparedElement.content.childNodes;
-
-                    const first = nodes[0];
-
-                    if (this.isComponent) {
-                        const element = oldVNode.elm;
-
-                        if (!(first instanceof HTMLElement)) {
-                            return;
-                        }
-
-                        first.dataset.viewCid = this.cid;
-
-                        if (element instanceof HTMLElement) {
-                            element.replaceWith(first);
-                        }
-                    } else {
-                        const element = oldVNode.elm;
-
-                        const parent = ('parent' in element) ? element.parent : null;
-
-                        if (element instanceof DocumentFragment && parent instanceof HTMLElement) {
-                            parent.childNodes.forEach(it => it.remove());
-                        }
-
-                        const fragment = this._preparedElement.content;
-
-                        if (parent instanceof HTMLElement) {
-                            parent.append(fragment)
-                        }
-
-                        fragment.parent = parent;
-                    }
-                };
-
-                // The same VNode instance to prevent patching.
-                return this._memoryVnode;
-            }
-
-            // Using the template instead of a fragment for non-component views to make use of hooks.
-
-            return h('template', {
-                dataset: {viewCid: this.cid},
-                //key: `${this.cid}_${this._reRenderNumber}`,
-                hook: {
-                    insert: (vNode) => {
-                        const template = vNode.elm;
-
-                        if (!(template instanceof HTMLTemplateElement)) {
-                            throw new Error("Bad template element.");
-                        }
-
-                        const nodes = this._preparedElement.content.childNodes;
-
-                        const first = nodes[0];
-
-                        if (this.isComponent) {
-                            if (!first) {
-                                return;
-                            }
-
-                            vNode.elm = first;
-
-                            template.replaceWith(first);
-                        } else {
-                            const fragment = this._preparedElement.content;
-
-                            template.replaceWith(fragment);
-
-                            // Snabbdom relies on the custom property 'parent'.
-                            // Not sure whether it's actually needed.
-                            fragment.parent = first.parentElement;
-
-                            vNode.elm = fragment;
-                            vNode.sel = undefined;
-                            vNode.children = [];
-                        }
-
-                        this._memoryVnode = vNode;
-
-                        if (this.isComponent) {
-                            vNode.elm = first;
-
-                            if (first instanceof HTMLElement) {
-                                first.dataset.viewCid = this.cid;
-                            }
-                        } else {
-                            if (first.parentElement) {
-                                first.parentElement.dataset.viewCid = this.cid;
-                            }
-                        }
-                    },
-                }
-            });
+            return this._nodeNonVirtualDom();
         }
 
         this._vNode = this.content();
@@ -836,6 +724,125 @@ class View {
         }
 
         return this._vNode;
+    }
+
+
+    /**
+     * @type {import('snabbdom').VNode|undefined}
+     * @private
+     */
+    _memoryVnode
+
+    /**
+     * @return {import('snabbdom').VNode}
+     * @private
+     */
+    _nodeNonVirtualDom() {
+        if (this._memoryVnode) {
+            this._memoryVnode.data.hook.prepatch = (oldVNode) => {
+                const nodes = this._preparedElement.content.childNodes;
+
+                const first = nodes[0];
+
+                if (this.isComponent) {
+                    const element = oldVNode.elm;
+
+                    if (!(first instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    first.dataset.viewCid = this.cid;
+
+                    if (element instanceof HTMLElement) {
+                        element.replaceWith(first);
+
+                        this._setElementInternal(first);
+                    }
+                } else {
+                    const element = oldVNode.elm;
+
+                    const parent = ('parent' in element) ? element.parent : null;
+
+                    if (element instanceof DocumentFragment && parent instanceof HTMLElement) {
+                        parent.childNodes.forEach(it => it.remove());
+                    }
+
+                    const fragment = this._preparedElement.content;
+
+                    if (parent instanceof HTMLElement) {
+                        parent.append(fragment)
+
+                        this._setElementInternal(parent);
+                    }
+
+                    fragment.parent = parent;
+                }
+            };
+
+            // The same VNode instance to prevent patching.
+            return this._memoryVnode;
+        }
+
+        // Using the template instead of a fragment for non-component views to make use of hooks.
+
+        return h('template', {
+            dataset: {viewCid: this.cid},
+            hook: {
+                insert: (vNode) => {
+                    const template = vNode.elm;
+
+                    if (!(template instanceof HTMLTemplateElement)) {
+                        throw new Error("Bad template element.");
+                    }
+
+                    const nodes = this._preparedElement.content.childNodes;
+
+                    const first = nodes[0];
+
+                    if (this.isComponent) {
+                        if (!first) {
+                            return;
+                        }
+
+                        vNode.elm = first;
+
+                        template.replaceWith(first);
+
+                        this._setElementInternal(first);
+                    } else {
+                        const fragment = this._preparedElement.content;
+
+                        template.replaceWith(fragment);
+
+                        // Snabbdom relies on the custom property 'parent'.
+                        // Not sure whether it's actually needed.
+                        fragment.parent = first.parentElement;
+
+                        vNode.elm = fragment;
+                        vNode.sel = undefined;
+                        vNode.children = [];
+
+                        if (first.parentElement) {
+                            this._setElementInternal(first.parentElement);
+                        }
+                    }
+
+                    this._memoryVnode = vNode;
+
+                    if (this.isComponent) {
+                        vNode.elm = first;
+
+                        if (first instanceof HTMLElement) {
+                            first.dataset.viewCid = this.cid;
+                        }
+                    } else {
+                        if (first.parentElement) {
+                            first.parentElement.dataset.viewCid = this.cid;
+                        }
+                    }
+                },
+            }
+        });
     }
 
     /**
