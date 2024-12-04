@@ -16,7 +16,7 @@
   },
   "repository": "https://github.com/yurikuzn/bull",
   "author": "Yurii Kuznietsov & EspoCRM team",
-  "license": "MIT",
+  "license": "AGPL",
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.3.0",
     "handlebars": "^4.7.7",
