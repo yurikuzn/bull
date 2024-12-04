@@ -1,3 +1,7 @@
+# Moved
+
+The development is moved to https://github.com/espocrm/bullbone.
+
 # Bullbone
 
 A front-end library developed for EspoCRM. See [docs](https://docs.espocrm.com/development/view/).
@@ -13,4 +17,3 @@ A front-end library developed for EspoCRM. See [docs](https://docs.espocrm.com/d
 Bundles: `npm run prepare`
 
 Test specs: `npm run build-test`
-
