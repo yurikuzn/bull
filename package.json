@@ -16,7 +16,7 @@
   },
   "repository": "https://github.com/yurikuzn/bull",
   "author": "Yurii Kuznietsov & EspoCRM team",
-  "license": "MIT",
+  "license": "AGPL",
   "devDependencies": {
     "handlebars": "^4.7.7",
     "jquery": "^3.6.0",
