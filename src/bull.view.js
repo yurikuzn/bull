@@ -80,9 +80,9 @@ import _ from 'underscore';
 /**
  * A get-HTML callback.
  *
- * @callback Bull.View~getHtmlCallback
+ * @callback Bull.View~getPreparedElementCallback
  *
- * @param {string} html An HTML.
+ * @param {HTMLTemplateElement} element An element.
  */
 
 /**
@@ -199,6 +199,13 @@ import _ from 'underscore';
  */
 
 /**
+ * Stores indications to elements with already delegated events.
+ *
+ * @type {WeakMap<HTMLElement, true>}
+ */
+const elementDelegatedMap = new WeakMap();
+
+/**
  * A view.
  *
  * @alias Bull.View
@@ -222,7 +229,7 @@ class View {
         this.$el = $();
         this.options = options;
 
-        let fullSelector = options.fullSelector || options.el;
+        const fullSelector = options.fullSelector || options.el;
 
         if (fullSelector) {
             this.setSelector(fullSelector);
@@ -435,12 +442,16 @@ class View {
             return;
         }
 
-        this.$el.off('.delegateEvents' + this.cid);
+        this.$el.off(`.delegateEvents${this.cid}`);
     }
 
     /** @private */
     _delegateEvents() {
-        let events = _.result(this, 'events');
+        if (this.element) {
+            elementDelegatedMap.set(this.element, true);
+        }
+
+        const events = _.result(this, 'events');
 
         if (!events) {
             return;
@@ -448,7 +459,7 @@ class View {
 
         this.undelegateEvents();
 
-        for (let key in events) {
+        for (const key in events) {
             let method = events[key];
 
             if (typeof method !== 'function') {
@@ -459,7 +470,7 @@ class View {
                 continue;
             }
 
-            let match = key.match(delegateEventSplitter);
+            const match = key.match(delegateEventSplitter);
 
             this._delegate(match[1], match[2], method.bind(this));
         }
@@ -467,7 +478,7 @@ class View {
 
     /** @private */
     _delegate(eventName, selector, listener) {
-        this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+        this.$el.on(`${eventName}.delegateEvents${this.cid}`, selector, listener);
     }
 
     /**
@@ -478,9 +489,10 @@ class View {
      * @param {Bull.View~domEventHandlerCallback|string} handler A handler.
      */
     addHandler(type, selector, handler) {
-        let key = type + ' ' + selector;
+        const key = type + ' ' + selector;
 
         if (typeof handler === 'function') {
+            // noinspection JSUnresolvedReference
             this.events[key] = (e) => handler(e.originalEvent, e.currentTarget);
 
             return;
@@ -492,6 +504,7 @@ class View {
             return;
         }
 
+        // noinspection JSUnresolvedReference
         this.events[key] = (e) => this[handler](e.originalEvent, e.currentTarget);
     }
 
@@ -576,8 +589,8 @@ class View {
 
         this.optionsToPass = this.options.optionsToPass || this.optionsToPass || [];
 
-        let merge = function (target, source) {
-            for (let prop in source) {
+        const merge = function (target, source) {
+            for (const prop in source) {
                 if (typeof target === 'object') {
                     if (prop in target) {
                         merge(target[prop], source[prop]);
@@ -695,9 +708,13 @@ class View {
         this._setElementInAdvancedInProcess = true;
 
         this.on('after:render-internal', () => {
-            this.setElement(fullSelector);
-
             this._setElementInAdvancedInProcess = false;
+
+            if (this.element && elementDelegatedMap.get(this.element)) {
+                return;
+            }
+
+            this.setElement(fullSelector);
         });
     }
 
@@ -793,7 +810,7 @@ class View {
         this._isFullyRendered = false;
 
         return new Promise(resolve => {
-            this._getHtml(html => {
+            this._getPreparedElement(templateElement => {
                 if (this._isRenderCanceled) {
                     this._isRenderCanceled = false;
                     this._isBeingRendered = false;
@@ -802,15 +819,15 @@ class View {
                 }
 
                 this.isComponent ?
-                    this._renderComponentInDom(html) :
-                    this._renderInDom(html);
+                    this._renderComponentInDom(templateElement) :
+                    this._renderInDom(templateElement);
 
                 if (!this.element) {
-                    let msg = this._elementSelector ?
+                    const message = this._elementSelector ?
                         `Could not set element '${this._elementSelector}'.` :
                         `Could not set element. No selector.`;
 
-                    console.warn(msg);
+                    console.warn(message);
                 }
 
                 this._afterRender();
@@ -825,10 +842,10 @@ class View {
     }
 
     /**
-     * @param {string} html
+     * @param {HTMLTemplateElement} element
      * @private
      */
-    _renderComponentInDom(html) {
+    _renderComponentInDom(element) {
         if (!this.element) {
             if (!this._elementSelector) {
                 console.warn(`Can't render component. No DOM selector.`);
@@ -845,27 +862,40 @@ class View {
             return;
         }
 
-        let div = document.createElement('div');
-        div.innerHTML = html;
-        let element = div.children[0];
+        const newElement = element.content.children[0];
 
-        let parent = this.element.parentElement;
+        const parent = this.element.parentElement;
+        parent.replaceChild(newElement, this.element);
 
-        parent.replaceChild(element, this.element);
+        this._setElementInternal(newElement);
 
-        this.setElement(this._elementSelector);
+        this.element.setAttribute('data-view-cid', this.cid);
+
+        this.undelegateEvents();
+        this._delegateEvents();
     }
 
     /**
-     * @param {string} html
+     * @param {HTMLTemplateElement} element
      * @private
      */
-    _renderInDom(html) {
-        if (!this.$el.length && this._elementSelector) {
+    _renderInDom(element) {
+        if (!this.element && this._elementSelector) {
             this.setElement(this._elementSelector);
+        } else if (this._elementSelector) {
+            this.undelegateEvents();
+            this._delegateEvents();
         }
 
-        this.$el.html(html);
+        if (!this.element) {
+            return;
+        }
+
+        this.element.setAttribute('data-view-cid', this.cid);
+
+        const childNodes = element.content.childNodes;
+
+        this.element.replaceChildren(...childNodes);
     }
 
     /**
@@ -874,6 +904,11 @@ class View {
      * @property {string[]} [keep] Views not to be re-rendered. View keys.
      * @since 1.2.15
      */
+
+    /**
+     * @private
+     */
+    _keepElementOnRender = false
 
     /**
      * Re-render the view.
@@ -886,40 +921,21 @@ class View {
             options = {force: options};
         }
 
-        const keptViews = {};
         const hasKeep = options.keep && options.keep.length;
 
-        if ((this.isRendered() || this.isBeingRendered()) && hasKeep) {
+        if (hasKeep && (this.isRendered() || this.isBeingRendered())) {
             for (const key of options.keep) {
-                keptViews[key] = this.getView(key);
+                const subView = this.getView(key);
 
-                if (!keptViews[key]) {
+                if (!subView) {
                     continue;
                 }
 
-                this.unchainView(key);
+                subView._keepElementOnRender = true;
             }
         }
 
-        const restoreViews = () => {
-            for (const key of options.keep) {
-                if (!keptViews[key]) {
-                    continue;
-                }
-
-                this.setView(key, keptViews[key]);
-            }
-        };
-
         if (this.isRendered()) {
-            if (hasKeep) {
-                return this.render().then(() => {
-                    restoreViews();
-
-                    return this;
-                });
-            }
-
             return this.render();
         }
 
@@ -927,13 +943,7 @@ class View {
             return new Promise((resolve, reject) => {
                 this.once('after:render', () => {
                     this.render()
-                        .then(() => {
-                            if (hasKeep) {
-                                restoreViews();
-                            }
-
-                            resolve(this);
-                        })
+                        .then(() => resolve(this))
                         .catch(reject);
                 });
             });
@@ -954,8 +964,8 @@ class View {
 
         this.trigger('after:render-internal', this);
 
-        for (let key in this.nestedViews) {
-            let nestedView = this.nestedViews[key];
+        for (const key in this.nestedViews) {
+            const nestedView = this.nestedViews[key];
 
             if (!nestedView.notToRender) {
                 nestedView._afterRender();
@@ -1046,8 +1056,8 @@ class View {
      * @param {Bull.View~nestedViewItemDefs[]} [list]
      */
     _addDefinedNestedViewDefs(list) {
-        for (let name in this.views) {
-            let o = _.clone(this.views[name]);
+        for (const name in this.views) {
+            const o = _.clone(this.views[name]);
 
             o.name = name;
 
@@ -1064,16 +1074,16 @@ class View {
      * @return {Bull.View~nestedViewItemDefs[]}
      */
     _getNestedViewDefsFromLayout() {
-        let itemList = this._layouter.findNestedViews(this._layoutDefs);
+        const itemList = this._layouter.findNestedViews(this._layoutDefs);
 
         if (Object.prototype.toString.call(itemList) !== '[object Array]') {
             throw new Error(`Bad layout. It should be an array.`);
         }
 
-        let nestedViewDefsFiltered = [];
+        const nestedViewDefsFiltered = [];
 
-        for (let item of itemList) {
-            let key = item.name;
+        for (const item of itemList) {
+            const key = item.name;
 
             this._nestedViewDefs[key] = item;
 
@@ -1094,7 +1104,7 @@ class View {
      * @param {function()} callback
      */
     _loadNestedViews(callback) {
-        let nestedViewDefs = this._layoutDefs != null ?
+        const nestedViewDefs = this._layoutDefs != null ?
             this._getNestedViewDefsFromLayout() : [];
 
         this._addDefinedNestedViewDefs(nestedViewDefs);
@@ -1111,15 +1121,14 @@ class View {
         tryReady();
 
         nestedViewDefs.forEach(/** Bull.View~nestedViewItemDefs */def => {
-            let key = def.name;
+            const key = def.name;
             let viewName = this._factory.defaultViewName;
             let view;
 
             if ('view' in def) {
                 if (def.view != null && typeof def.view === 'object') {
                     view = def.view;
-                }
-                else {
+                } else {
                     viewName = def.view;
                 }
             }
@@ -1148,12 +1157,11 @@ class View {
             }
 
             // noinspection JSUnresolvedReference
-            let fullSelector = def.fullSelector || /** @type {string} */def.el;
+            const fullSelector = def.fullSelector || /** @type {string} */def.el;
 
             if (fullSelector) {
                 options.fullSelector = fullSelector;
-            }
-            else if ('selector' in def) {
+            } else if ('selector' in def) {
                 options.selector = def.selector;
             }
 
@@ -1169,8 +1177,8 @@ class View {
                 options.collection = this.collection;
             }
 
-            for (let k in this.optionsToPass) {
-                let name = this.optionsToPass[k];
+            for (const k in this.optionsToPass) {
+                const name = this.optionsToPass[k];
 
                 options[name] = this.options[name];
             }
@@ -1216,11 +1224,11 @@ class View {
      * }[]}
      */
     _getNestedViewsAsArray() {
-        let nestedViewsArray = [];
+        const nestedViewsArray = [];
 
         let i = 0;
 
-        for (let key in this.nestedViews) {
+        for (const key in this.nestedViews) {
             nestedViewsArray.push({
                 key: key,
                 view: this.nestedViews[key],
@@ -1234,16 +1242,16 @@ class View {
 
     /**
      * @private
-     * @param {function(Object.<string, *>)} callback
+     * @param {function(Object.<string, {element: HTMLTemplateElement, view: Bull.View}>)} callback
      */
-    _getNestedViewsHtmlMap(callback) {
-        let data = {};
-        let items = this._getNestedViewsAsArray();
+    _getNestedViewsMap(callback) {
+        const data = {};
+        const items = this._getNestedViewsAsArray();
 
         let loaded = 0;
         let count = items.length;
 
-        let tryReady = () => {
+        const tryReady = () => {
             if (loaded === count) {
                 callback(data);
             }
@@ -1252,12 +1260,24 @@ class View {
         tryReady();
 
         items.forEach(item => {
-            let key = item.key;
-            let view = item.view;
+            const key = item.key;
+            const view = item.view;
 
-            if (view.notToRender) {
-                if (view.isComponent) {
-                    data[key] = this._createPlaceholderElement(view.cid).outerHTML;
+            if (view.notToRender || view._keepElementOnRender) {
+                const templateElement = this._createPlaceholderElement(view.cid);
+                data[key] = {
+                    element: templateElement,
+                    view: view,
+                };
+
+                if (view._keepElementOnRender && view.element) {
+                    if (view.isComponent) {
+                        templateElement.content.appendChild(view.element);
+                    } else {
+                        templateElement.content.append(...view.element.childNodes);
+                    }
+
+                    view._keepElementOnRender = false; // ?
                 }
 
                 loaded++;
@@ -1266,8 +1286,11 @@ class View {
                 return;
             }
 
-            view._getHtml(html => {
-                data[key] = html;
+            view._getPreparedElement(element => {
+                data[key] = {
+                    element: element,
+                    view: view,
+                };
 
                 loaded++;
                 tryReady();
@@ -1291,13 +1314,11 @@ class View {
     prepareRender() {}
 
     /**
-     * Get HTML of view but don't render it.
-     *
-     * @protected
-     * @param {Bull.View~getHtmlCallback} callback A callback with an HTML.
+     * @public
+     * @param {Bull.View~getPreparedElementCallback} callback.
      * @internal
      */
-    _getHtml(callback) {
+    _getPreparedElement(callback) {
         this._isBeingRendered = true;
         this.trigger('render', this);
 
@@ -1309,8 +1330,14 @@ class View {
         const preparePromise = this.prepareRender();
 
         const proceed = () => {
-            this._getNestedViewsHtmlMap(htmlMap => {
-                let data = {...this._getData(), ...htmlMap};
+            this._getNestedViewsMap(nestedMap => {
+                const data = {...this._getData()};
+
+                for (const [key, item] of Object.entries(nestedMap)) {
+                    const cid = item.view.cid;
+
+                    data[key] = `<template data-view-cid="${cid}"></template>`;
+                }
 
                 if (this.collection || null) {
                     data.collection = this.collection;
@@ -1325,26 +1352,59 @@ class View {
                 this.handleDataBeforeRender(data);
 
                 this._getTemplate(template => {
-                    let html = this._renderer.render(template, data);
+                    const html = this._renderer.render(template, data);
+
+                    const templateElement = document.createElement('template');
+                    templateElement.innerHTML = html;
+
+                    const templateContent = templateElement.content;
+
+                    for (const item of Object.values(nestedMap)) {
+                        const element = item.element;
+                        const cid = item.view.cid;
+
+                        const placeholder = templateContent.querySelector(`template[data-view-cid="${cid}"]`);
+
+                        if (!placeholder) {
+                            continue;
+                        }
+
+                        if (item.view.isComponent) {
+                            let newElement = placeholder;
+
+                            if (element.content.children.length) {
+                                newElement = element.content.children[0];
+
+                                placeholder.replaceWith(newElement);
+                            }
+
+                            item.view._setElementInternal(newElement);
+
+                            newElement.setAttribute('data-view-cid', item.view.cid);
+                        } else {
+                            const parent = placeholder.parentElement;
+
+                            placeholder.replaceWith(...element.content.childNodes);
+
+                            item.view._setElementInternal(parent || undefined);
+
+                            if (parent) {
+                                parent.setAttribute('data-view-cid', item.view.cid);
+                            }
+                        }
+                    }
 
                     if (!this.isComponent) {
-                        callback(html);
+                        callback(templateElement);
 
                         return;
                     }
 
-                    let root = (new DOMParser())
-                        .parseFromString(html, 'text/html')
-                        .body
-                        .children[0];
+                    const root = document.createElement('template');
 
-                    if (!root) {
-                        throw new Error(`Bad DOM. No root.`);
-                    }
+                    root.content.appendChild(templateContent.childNodes[0]);
 
-                    root.setAttribute('data-view-cid', this.cid);
-
-                    callback(root.outerHTML);
+                    callback(root);
                 });
             });
         };
@@ -1356,6 +1416,21 @@ class View {
         }
 
         proceed();
+    }
+
+    /**
+     * @param {HTMLElement|undefined} element
+     * @private
+     */
+    _setElementInternal(element) {
+        this.element = element;
+        this.$el = $(element);
+
+        /**
+         * @todo Remove.
+         * @deprecated
+         */
+        this.el = element;
     }
 
     /**
@@ -1386,7 +1461,7 @@ class View {
             return;
         }
 
-        let _template = this._template || null;
+        const _template = this._template || null;
 
         if (_template !== null) {
             callback(_template);
@@ -1394,7 +1469,7 @@ class View {
             return;
         }
 
-        let templateName = this._getTemplateName();
+        const templateName = this._getTemplateName();
 
         if (
             templateName &&
@@ -1421,7 +1496,7 @@ class View {
     _updatePath(parentPath, viewKey) {
         this._path = parentPath + '/' + viewKey;
 
-        for (let key in this.nestedViews) {
+        for (const key in this.nestedViews) {
             this.nestedViews[key]._updatePath(this._path, key);
         }
     }
@@ -1440,14 +1515,14 @@ class View {
             return '#' + this._nestedViewDefs[key].id;
         }
 
-        let fullSelector = this._nestedViewDefs[key].fullSelector ||
+        const fullSelector = this._nestedViewDefs[key].fullSelector ||
             this._nestedViewDefs[key].el;
 
         if (fullSelector) {
             return fullSelector;
         }
 
-        let currentEl = this.getSelector();
+        const currentEl = this.getSelector();
 
         if (!currentEl) {
             return null;
@@ -1457,7 +1532,7 @@ class View {
             return currentEl + ' ' + this._nestedViewDefs[key].selector;
         }
 
-        return currentEl + ' [data-view="' + key + '"]';
+        return `${currentEl} [data-view="${key}"]`;
     }
 
     /**
@@ -1491,7 +1566,7 @@ class View {
      * @return {string|null}
      */
     getViewKey(view) {
-        for (let key in this.nestedViews) {
+        for (const key in this.nestedViews) {
             if (view === this.nestedViews[key]) {
                 return key;
             }
@@ -1519,13 +1594,11 @@ class View {
                 this.waitForView(key);
             }
 
-            if (!selector && view.isComponent) {
+            if (!selector && !view.getSelector()) {
                 selector = `[data-view-cid="${view.cid}"]`;
             }
 
-            if (selector/* || !view.getSelector()*/) {
-                //selector = selector || `[data-view="${key}"]`;
-
+            if (selector) {
                 view.setSelector(this.getSelector() + ' ' + selector);
             }
 
@@ -1568,14 +1641,15 @@ class View {
 
             options = options || {};
 
-            let fullSelector = options.fullSelector || options.el;
+            // noinspection JSUnresolvedReference
+            const fullSelector = options.fullSelector || options.el;
 
             if (!fullSelector && options.selector) {
                 options.fullSelector = this.getSelector() + ' ' + options.selector;
             }
 
             this._factory.create(viewName, options, view => {
-                if (view.isComponent && !options.fullSelector) {
+                if (!options.fullSelector && !fullSelector) {
                     const fullSelector = `${this.getSelector()} [data-view-cid="${view.cid}"]`;
 
                     view.setSelector(fullSelector);
@@ -1612,7 +1686,7 @@ class View {
         callback,
         setViewBeforeCallback
     ) {
-        let previousView = this.getView(key);
+        const previousView = this.getView(key);
 
         if (previousView) {
             previousView.cancelRender();
@@ -1690,7 +1764,7 @@ class View {
 
         this._viewPromiseHash = this._viewPromiseHash || {};
 
-        let previousPromise = this._viewPromiseHash[key];
+        const previousPromise = this._viewPromiseHash[key];
 
         if (previousPromise) {
             previousPromise._isToCancel = true;
@@ -1770,7 +1844,7 @@ class View {
         if (typeof wait === 'function') {
             this._waitPromiseCount++;
 
-            let promise = new Promise(resolve => {
+            const promise = new Promise(resolve => {
                 // noinspection JSUnresolvedReference
                 resolve(wait.call(this));
             });
@@ -1796,14 +1870,13 @@ class View {
     /**
      * @private
      * @param {string} [cid]
-     * @return {HTMLElement}
+     * @return {HTMLTemplateElement}
      */
     _createPlaceholderElement(cid) {
-        let span = document.createElement('span');
+        const placeholder = document.createElement('template');
+        placeholder.setAttribute('data-view-cid', cid || this.cid);
 
-        span.setAttribute('data-view-cid', cid || this.cid);
-
-        return span;
+        return placeholder;
     }
 
     /** @private */
@@ -1812,7 +1885,7 @@ class View {
             return;
         }
 
-        let parent = this.element.parentElement;
+        const parent = this.element.parentElement;
 
         parent.replaceChild(this._createPlaceholderElement(), this.element);
     }
@@ -1826,7 +1899,7 @@ class View {
     remove(dontEmpty) {
         this.cancelRender();
 
-        for (let key in this.nestedViews) {
+        for (const key in this.nestedViews) {
             this.clearView(key);
         }
 
@@ -1868,40 +1941,35 @@ class View {
 
     /** @private */
     _setElement(fullSelector) {
-        const setElement = () => {
-            this.element = this.$el[0];
+        if (this.element) {
+            this._setElementInternal(this.element);
 
-            /**
-             * @todo Remove.
-             * @deprecated
-             */
-            this.el = this.element;
+            return;
         }
 
         if (typeof fullSelector === 'string') {
-            let parentView = this.getParentView();
+            const parentView = this.getParentView();
 
             if (
                 parentView &&
                 parentView.isRendered() &&
-                parentView.$el &&
-                parentView.$el.length &&
+                parentView.element &&
                 parentView.getSelector() &&
                 fullSelector.indexOf(parentView.getSelector()) === 0
             ) {
-                let subSelector = fullSelector.slice(parentView.getSelector().length);
+                const subSelector = fullSelector.slice(parentView.getSelector().length);
 
-                this.$el = $(subSelector, parentView.$el).eq(0);
+                this.element = parentView.element.querySelector(`:scope ${subSelector}`);
 
-                setElement();
+                this._setElementInternal(this.element);
 
                 return;
             }
         }
 
-        this.$el = $(fullSelector).eq(0);
+        this.element = document.querySelector(fullSelector);
 
-        setElement();
+        this._setElementInternal(this.element);
     }
 
     /**
@@ -1913,8 +1981,8 @@ class View {
     propagateEvent(...parameters) {
         this.trigger.apply(this, arguments);
 
-        for (let key in this.nestedViews) {
-            let view = this.nestedViews[key];
+        for (const key in this.nestedViews) {
+            const view = this.nestedViews[key];
 
             view.propagateEvent.apply(view, arguments);
         }
@@ -2027,19 +2095,19 @@ const isEsClass = fn => {
 };
 
 View.extend = function (protoProps, staticProps) {
-    let parent = this;
+    const parent = this;
 
     let child;
 
     if (isEsClass(parent)) {
-        let TemporaryHelperConstructor = function () {};
+        const TemporaryHelperConstructor = function () {};
 
         child = function () {
             if (new.target) {
                 // noinspection JSCheckFunctionSignatures
-                let obj = Reflect.construct(parent, arguments, new.target);
+                const obj = Reflect.construct(parent, arguments, new.target);
 
-                for (let prop of Object.getOwnPropertyNames(obj)) {
+                for (const prop of Object.getOwnPropertyNames(obj)) {
                     if (typeof this[prop] !== 'undefined') {
                         obj[prop] = this[prop];
                     }
@@ -2088,7 +2156,7 @@ View.extend = function (protoProps, staticProps) {
     return child;
 };
 
-let delegateEventSplitter = /^(\S+)\s*(.*)$/;
+const delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
 /**
  * Extend the class.
