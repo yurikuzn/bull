@@ -14,7 +14,7 @@ const patch = init(
 /**
  * View options passed to a view on creation.
  *
- * @typedef {Object.<string, *>} Bull.View~Options
+ * @typedef {Object.<string, *>} ViewOptions
  *
  * @property {string} [selector] A DOM element selector relative to a parent view.
  * @property {string} [fullSelector] A full DOM element selector.
@@ -27,11 +27,11 @@ const patch = init(
  * @property {Object} [layoutDefs] Internal layout defs.
  * @property {Object} [layoutData] Internal layout data.
  * @property {boolean} [notToRender] Not to render on ready.
- * @property {Object.<string, Bull.View~NestedViewItem>} [views] Child view definitions.
+ * @property {Object.<string, ViewNestedViewItem>} [views] Child view definitions.
  * @property {string} [name] A view name.
- * @property {Bull.Model} [model] A model.
- * @property {Bull.Collection} [collection] A collection.
- * @property {Bull.View.DomEvents} [events] DOM events.
+ * @property {BullModel} [model] A model.
+ * @property {BullCollection} [collection] A collection.
+ * @property {ViewDomEvents} [events] DOM events. @internal
  * @property {boolean} [setViewBeforeCallback] A child view will be set to a parent before a promise is resolved.
  */
 
@@ -42,15 +42,15 @@ const patch = init(
 /**
  * A model.
  *
- * @typedef {Object} Bull~Model
+ * @typedef {Object} BullModel
  * @type Object
- * @mixes Bull.Events
+ * @mixes import('./bull.events').default
  */
 
 /**
  * A collection.
  *
- * @typedef {Object} Bull~Collection
+ * @typedef {Object} BullCollection
  * @type Object
  * @mixes Bull.Events
  */
@@ -58,7 +58,7 @@ const patch = init(
 /**
  * Nested view definitions.
  *
- * @typedef {Object} Bull.View~NestedViewItem
+ * @typedef {Object} ViewNestedViewItem
  *
  * @property {string} view A view name/path.
  * @property {string} [selector] A DOM element selector relative to a parent view.
@@ -66,28 +66,15 @@ const patch = init(
  * @property {string} [el] Deprecated. Use `fullSelector`. A full DOM element selector.
  */
 
-/**
- * After a view is rendered.
- *
- * @event Bull.View#after:render
- */
 
 /**
- * Once a view is ready for rendering (loaded).
- *
- * @event Bull.View#ready
- */
-
-/**
- * Once a view is removed.
- *
- * @event Bull.View#remove
+ * @typedef {'after:render'|'remove'} ViewEvents
  */
 
 /**
  * A get-HTML callback.
  *
- * @callback Bull.View~getPreparedElementCallback
+ * @callback ViewGetPreparedElementCallback
  *
  * @param {HTMLTemplateElement|import('snabbdom').VNode} element An element.
  */
@@ -95,25 +82,25 @@ const patch = init(
 /**
  * A DOM event callback.
  *
- * @callback Bull.View~domEventCallback
+ * @callback ViewDomEventCallback
  *
- * @param {jQuery.Event} e An event.
+ * @param {Record<string, any> & {originalEvent: Event, currentTarget: Element}} e An event.
  */
 
 /**
  * A DOM event handler callback.
  *
- * @callback Bull.View~domEventHandlerCallback
+ * @callback ViewDomEventHandlerCallback
  * @param {Event} event An event.
  * @param {HTMLElement} A target element.
  */
 
 /**
- * @typedef {'click'|'mousedown'|'keydown'|string} Bull.View~domEventType
+ * @typedef {'click'|'mousedown'|'keydown'|string} ViewDomEventType
  */
 
 /**
- * @callback Bull.Events~callback
+ * @callback EventsCallback
  *
  * @param {...*} parameters
  */
@@ -137,7 +124,7 @@ const patch = init(
  * @function on
  * @memberof Bull.Events
  * @param {string} event An event.
- * @param {Bull.Events~callback} callback A callback.
+ * @param {EventsCallback} callback A callback.
  */
 
 /**
@@ -146,7 +133,7 @@ const patch = init(
  * @function once
  * @memberof Bull.Events
  * @param {string} event An event.
- * @param {Bull.Events~callback} callback A callback.
+ * @param {EventsCallback} callback A callback.
  */
 
 /**
@@ -155,7 +142,7 @@ const patch = init(
  * @function off
  * @memberof Bull.Events
  * @param {string} [event] From a specific event.
- * @param {Bull.Events~callback} [callback] From a specific callback.
+ * @param {EventsCallback} [callback] From a specific callback.
  */
 
 /**
@@ -165,7 +152,7 @@ const patch = init(
  * @memberof Bull.Events
  * @param {Object} other What to listen.
  * @param {string} event An event.
- * @param {Bull.Events~callback} callback A callback.
+ * @param {EventsCallback} callback A callback.
  */
 
 /**
@@ -175,7 +162,7 @@ const patch = init(
  * @memberof Bull.Events
  * @param {Object} other What to listen.
  * @param {string} event An event.
- * @param {Bull.Events~callback} callback A callback.
+ * @param {EventsCallback} callback A callback.
  */
 
 /**
@@ -185,19 +172,19 @@ const patch = init(
  * @memberof Bull.Events
  * @param {Object} [other] To remove listeners to a specific object.
  * @param {string} [event] To remove listeners to a specific event.
- * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
+ * @param {EventsCallback} [callback] To remove listeners to a specific callback.
  */
 
 /**
  * DOM event listeners.
  *
- * @typedef {Object.<string, Bull.View~domEventCallback>} Bull.View.DomEvents
+ * @typedef {Object.<string, ViewDomEventCallback>} ViewDomEvents
  */
 
 /**
- * @typedef {Object} Bull.View~nestedViewItemDefs
+ * @typedef {Object} ViewNestedViewItemDefs
  * @property {string} name A name.
- * @property {string|Bull.View|boolean} [view] A view.
+ * @property {string|View|boolean} [view] A view.
  * @property {string} [template] A template.
  * @property {boolean} [notToRender] Not to render.
  * @property {string} [selector] A relative selector.
@@ -212,10 +199,14 @@ const patch = init(
  */
 const elementDelegatedMap = new WeakMap();
 
+
 /**
  * A view.
  *
  * @alias Bull.View
+ *
+ * @template {BullModel|undefined} TModel A model
+ * @template {Object|undefined} TCollection A collection.
  */
 class View {
 
@@ -226,10 +217,16 @@ class View {
         this.cid = _.uniqueId('view');
 
         if ('model' in options) {
+            /**
+             * @type {TModel}
+             */
             this.model = options.model;
         }
 
         if ('collection' in options) {
+            /**
+             * @type {TCollection}
+             */
             this.collection = options.collection;
         }
 
@@ -247,6 +244,7 @@ class View {
      * An ID, unique among all views.
      * @type {string}
      * @public
+     * @readonly
      */
     cid
 
@@ -264,6 +262,7 @@ class View {
      *
      * @readonly
      * @type {boolean}
+     * @experimental
      */
     isComponent = false
 
@@ -272,6 +271,7 @@ class View {
      *
      * @readonly
      * @type {boolean}
+     * @experimental
      */
     useVirtualDom = false
 
@@ -283,7 +283,7 @@ class View {
     element
 
     /**
-     * A template name/path.
+     * A template name/path. Prefer `templateContent` instead.
      *
      * @type {string|null}
      * @protected
@@ -299,10 +299,11 @@ class View {
     templateContent = null
 
     /**
-     * DOM event listeners. Recommended to use `addHandler` method instead.
+     * DOM event listeners. Recommended to use the `addHandler` method instead.
      *
-     * @type {Bull.View.DomEvents}
+     * @type {ViewDomEvents}
      * @protected
+     * @internal
      */
     events = null
 
@@ -335,14 +336,16 @@ class View {
      *
      * @type {Object|null}
      * @protected
+     * @internal
      */
     layoutData = null
 
     /**
      * Whether the view is ready for rendering (all necessary data is loaded).
+     * Do not write.
      *
      * @type {boolean}
-     * @public
+     * @protected
      */
     isReady = false
 
@@ -359,7 +362,7 @@ class View {
      * }
      * ```
      *
-     * @type {Object.<string, Bull.View~NestedViewItem>|null}
+     * @type {Object.<string, ViewNestedViewItem>|null}
      * @protected
      */
     views = null
@@ -400,7 +403,7 @@ class View {
      */
     _template = null
     /**
-     * @type {Object.<string, Bull.View~nestedViewItemDefs>|null}
+     * @type {Object.<string, ViewNestedViewItemDefs>|null}
      * @private
      */
     _nestedViewDefs = null
@@ -412,7 +415,7 @@ class View {
     /** @private */
     _renderer = null
     /**
-     * @type {Bull.Layouter}
+     * @type {import('./bull.layouter.js').default}
      * @private
      */
     _layouter = null
@@ -505,9 +508,9 @@ class View {
     /**
      * Add a DOM event handler. To be called in `setup` method.
      *
-     * @param {Bull.View~domEventType} type An event type.
+     * @param {ViewDomEventType} type An event type.
      * @param {string} selector A CSS selector.
-     * @param {Bull.View~domEventHandlerCallback|string} handler A handler.
+     * @param {ViewDomEventHandlerCallback|string} handler A handler.
      */
     addHandler(type, selector, handler) {
         const key = type + ' ' + selector;
@@ -535,12 +538,12 @@ class View {
      * as overridden properties not available in a constructor.
      *
      * @param {{
-     *   factory: Bull.Factory,
-     *   renderer: Bull.Renderer,
-     *   templator: Bull.Templator,
-     *   layouter: Bull.Layouter,
+     *   factory: import('./bull.factory.js').default,
+     *   renderer: import('./bull.renderer').default,
+     *   templator: import('./bull.templator.js').default,
+     *   layouter: import('./bull.layouter.js').default,
      *   helper?: Object,
-     *   onReady?: function(Bull.View): void,
+     *   onReady?: function(View): void,
      *   preCompiledTemplates?: Object,
      * }} data
      * @internal
@@ -565,7 +568,7 @@ class View {
         this._templator = data.templator;
 
         /**
-         * @type {Bull.Layouter}
+         * @type {import('./bull.layouter.js').default}
          * @private
          */
         this._layouter = data.layouter;
@@ -696,6 +699,7 @@ class View {
      * A view content.
      *
      * @return {import('snabbdom').VNode|undefined}
+     * @experimental
      */
     content() {
         return undefined;
@@ -705,6 +709,7 @@ class View {
      * To be called in the content method of a parent view to get the child content.
      *
      * @return {import('snabbdom').VNode|undefined}
+     * @experimental
      */
     node() {
         if (!this.useVirtualDom) {
@@ -1023,7 +1028,10 @@ class View {
                     this._memoryVnode.elm = this.element;
                 }
 
-                this._afterRender();
+                if (this.element) {
+                    this._afterRender();
+                }
+
 
                 if (typeof callback === 'function') {
                     callback();
@@ -1163,7 +1171,7 @@ class View {
     }
 
     /**
-     * @typedef {Object} Bull.View~reRenderOptions
+     * @typedef {Object} View~reRenderOptions
      * @property {boolean} [force] To render if was not re-render.
      * @property {string[]} [keep] Views not to be re-rendered. View keys.
      * @since 1.2.15
@@ -1177,7 +1185,7 @@ class View {
     /**
      * Re-render the view.
      *
-     * @param {Bull.View~reRenderOptions|true} [options] Options.
+     * @param {View~reRenderOptions|true} [options] Options.
      * @return {Promise<this>}
      */
     reRender(options = {}) {
@@ -1224,9 +1232,14 @@ class View {
     /** @private */
     _afterRender() {
         this._isBeingRendered = false;
-        this._isRendered = true;
 
         this.trigger('after:render-internal', this);
+
+        if (this.element) {
+            this._isRendered = true;
+        } else {
+            return;
+        }
 
         for (const key in this.nestedViews) {
             const nestedView = this.nestedViews[key];
@@ -1317,7 +1330,7 @@ class View {
 
     /**
      * @private
-     * @param {Bull.View~nestedViewItemDefs[]} [list]
+     * @param {ViewNestedViewItemDefs[]} [list]
      */
     _addDefinedNestedViewDefs(list) {
         for (const name in this.views) {
@@ -1335,7 +1348,7 @@ class View {
 
     /**
      * @private
-     * @return {Bull.View~nestedViewItemDefs[]}
+     * @return {ViewNestedViewItemDefs[]}
      */
     _getNestedViewDefsFromLayout() {
         const itemList = this._layouter.findNestedViews(this._layoutDefs);
@@ -1384,7 +1397,7 @@ class View {
 
         tryReady();
 
-        nestedViewDefs.forEach(/** Bull.View~nestedViewItemDefs */def => {
+        nestedViewDefs.forEach(/** ViewNestedViewItemDefs */def => {
             const key = def.name;
             let viewName = this._factory.defaultViewName;
             let view;
@@ -1513,7 +1526,7 @@ class View {
     /**
      * @typedef {Record} Bull~nestedItem
      * @property {HTMLTemplateElement|import('snabbdom').VNode} element A template or VNode.
-     * @property {Bull.View} view A view.
+     * @property {View} view A view.
      */
 
     /**
@@ -1596,7 +1609,7 @@ class View {
 
     /**
      * @public
-     * @param {Bull.View~getPreparedElementCallback} callback.
+     * @param {ViewGetPreparedElementCallback} callback.
      * @internal
      */
     _getPreparedElement(callback) {
@@ -1913,7 +1926,7 @@ class View {
      * Assign a view instance as nested.
      *
      * @param {string} key A view key.
-     * @param {Bull.View} view A view.
+     * @param {View} view A view.
      * @param {string} [selector] A relative selector.
      * @return {Promise<View>}
      */
@@ -1954,7 +1967,7 @@ class View {
      *
      * @param {string} key A view key.
      * @param {string} viewName A view name/path.
-     * @param {Bull.View~Options} options View options. Custom options can be passed as well.
+     * @param {ViewOptions} options View options. Custom options can be passed as well.
      * @param {Function} [callback] Deprecated. Use a promise. Invoked once a nested view is ready (loaded).
      * @param {boolean} [wait=true] Set false if no need a parent view to wait till nested view loaded.
      * @return {Promise<View>}
@@ -2005,7 +2018,7 @@ class View {
 
     /**
      * @param {string} key
-     * @param {Bull.View} view
+     * @param {View} view
      * @param {function} resolve
      * @param {Promise} promise
      * @param {function} [callback]
@@ -2060,7 +2073,7 @@ class View {
      * Set a nested view.
      *
      * @param {string} key A view key.
-     * @param {Bull.View} view A view name/path.
+     * @param {View} view A view name/path.
      * @param {string} [fullSelector] A full DOM selector for a view container.
      */
     setView(key, view, fullSelector) {
@@ -2106,7 +2119,7 @@ class View {
     }
 
     /**
-     * Removes a nested view for cases when it's supposed that this view can be re-used in future.
+     * Removes a nested view for cases when it's supposed that this view can be re-used in the future.
      *
      * @param {string} key A view key.
      */
@@ -2122,7 +2135,7 @@ class View {
     /**
      * Get a parent view.
      *
-     * @return {Bull.View}
+     * @return {View}
      */
     getParentView() {
         return this._parentView;
@@ -2225,10 +2238,10 @@ class View {
     }
 
     /**
-     * Remove the view and all nested tree. Removes an element from DOM. Triggers the 'remove' event.
+     * Remove the view and all nested tree. Removes the element from DOM. Triggers the 'remove' event.
      *
      * @public
-     * @param {boolean} [dontEmpty] Skips emptying an element container.
+     * @param {boolean} [dontEmpty] Skips emptying the element container.
      */
     remove(dontEmpty) {
         this.cancelRender();
@@ -2263,6 +2276,11 @@ class View {
         this._isBeingRendered = false;
         this._isRemoved = true;
         this._vNode = undefined;
+
+        this.element = undefined;
+        this.$el = $();
+        // noinspection JSDeprecatedSymbols
+        this.el = undefined;
 
         return this;
     }
@@ -2348,67 +2366,76 @@ class View {
     /**
      * Subscribe to an event.
      *
-     * @param {string} name An event.
-     * @param {Bull.Events~callback} callback A callback.
-     * @param {Object} [context] Deprecated.
+     * @param {ViewEvents|string} name An event.
+     * @param {EventsCallback} callback A callback.
      */
-    on(name, callback, context) {
-        return Events.on.call(this, name, callback, context);
+    on(name, callback) {
+        Events.on.call(this, name, callback, arguments[2]);
+
+        return this;
     }
 
     /**
      * Subscribe to an event. Fired once.
      *
-     * @param {string} name An event.
-     * @param {Bull.Events~callback} callback A callback.
-     * @param {Object} [context] Deprecated.
+     * @param {ViewEvents|string} name An event.
+     * @param {EventsCallback} callback A callback.
      */
-    once(name, callback, context) {
-        return Events.once.call(this, name, callback, context);
+    once(name, callback) {
+        Events.once.call(this, name, callback, arguments[2]);
+
+        return this;
     }
 
     /**
      * Unsubscribe from an event or all events.
      *
-     * @param {string} [name] From a specific event.
-     * @param {Bull.Events~callback} [callback] From a specific callback.
-     * @param {Object} [context] Deprecated.
+     * @param {ViewEvents|string} [name] From a specific event.
+     * @param {EventsCallback} [callback] From a specific callback.
      */
-    off(name, callback, context) {
-        return Events.off.call(this, name, callback, context);
+    off(name, callback) {
+        Events.off.call(this, name, callback, arguments[2]);
+
+        return this;
     }
 
     /**
      * Subscribe to an event of other object.
      *
      * @param {Object} other What to listen.
-     * @param {string} name An event.
-     * @param {Bull.Events~callback} callback A callback.
+     * @param {ViewEvents|string} name An event.
+     * @param {EventsCallback} callback A callback.
      */
     listenTo(other, name, callback) {
-        return Events.listenTo.call(this, other, name, callback);
+        Events.listenTo.call(this, other, name, callback);
+
+        return this;
     }
 
     /**
      * Subscribe to an event of other object. Fired once. Will be automatically unsubscribed on view removal.
      *
      * @param {Object} other What to listen.
-     * @param {string} name An event.
-     * @param {Bull.Events~callback} callback A callback.
+     * @param {ViewEvents|string} name An event.
+     * @param {EventsCallback} callback A callback.
      */
     listenToOnce(other, name, callback) {
-        return Events.listenToOnce.call(this, other, name, callback);
+        Events.listenToOnce.call(this, other, name, callback);
+
+        return this;
     }
 
     /**
      * Stop listening to other object. No arguments will remove all listeners.
      *
      * @param {Object} [other] To remove listeners to a specific object.
-     * @param {string} [name] To remove listeners to a specific event.
-     * @param {Bull.Events~callback} [callback] To remove listeners to a specific callback.
+     * @param {ViewEvents|string} [name] To remove listeners to a specific event.
+     * @param {EventsCallback} [callback] To remove listeners to a specific callback.
      */
     stopListening(other, name, callback) {
-        return Events.stopListening.call(this, other, name, callback);
+        Events.stopListening.call(this, other, name, callback);
+
+        return this;
     }
 
     /**
@@ -2418,7 +2445,9 @@ class View {
      * @param {...*} parameters Arguments.
      */
     trigger(name, ...parameters) {
-        return Events.trigger.call(this, name, ...parameters);
+        Events.trigger.call(this, name, ...parameters);
+
+        return this;
     }
 }
 
@@ -2429,7 +2458,11 @@ const isEsClass = fn => {
         Object.getOwnPropertyDescriptor(fn, 'prototype')?.writable === false;
 };
 
-View.extend = function (protoProps, staticProps) {
+/** @type {any} */
+const V = View;
+
+// @ts-ignore
+V.extend = function (protoProps, staticProps) {
     const parent = this;
 
     let child;
@@ -2500,7 +2533,7 @@ const delegateEventSplitter = /^(\S+)\s*(.*)$/;
  * @param {Object.<string, *>} proto Child prototype.
  * @return this
  * @static
- * @memberof Bull.View
+ * @memberof View
  */
 
 
@@ -2510,7 +2543,7 @@ const delegateEventSplitter = /^(\S+)\s*(.*)$/;
  * @name $el
  * @type {jQuery}
  * @public
- * @memberof Bull.View#
+ * @memberof View#
  */
 
 /**
@@ -2519,7 +2552,7 @@ const delegateEventSplitter = /^(\S+)\s*(.*)$/;
  * @name options
  * @type {Object.<string, *>}
  * @public
- * @memberof Bull.View#
+ * @memberof View#
  */
 
 export default View;

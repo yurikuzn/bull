@@ -6,7 +6,7 @@ class Layouter {
 
     /**
      * @param {Object} layoutDefs
-     * @return {Bull.View~nestedViewItemDefs[]}
+     * @return {import('./bull.view.js').default[]}
      */
     findNestedViews(layoutDefs) {
         if (!layoutDefs) {

@@ -14,6 +14,3 @@ Bundles: `npm run prepare`
 
 Test specs: `npm run build-test`
 
-## License
-
-Distributed under MIT license.

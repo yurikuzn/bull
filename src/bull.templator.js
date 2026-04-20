@@ -9,7 +9,7 @@ class Templator {
 
     /**
      * @param {{
-     *   loader?: Loader,
+     *   loader?: import('bull.loader').default,
      * }|null} data
      */
     constructor(data) {
@@ -19,7 +19,7 @@ class Templator {
         this._layoutTemplates = {};
 
         /**
-         * @type {Loader|null}
+         * @type {import('bull.loader').default|null}
          * @private
          */
         this._loader = data.loader || null;
@@ -39,11 +39,11 @@ class Templator {
     }
 
     /**
-     * @param {string} [name]
+     * @param {string|undefined} name
      * @param {{
      *     layout?: Object,
      *     data?: Object.<string, *>
-     * }} [layoutOptions]
+     * }|undefined} layoutOptions
      * @param callback
      */
     getTemplate(name, layoutOptions,  callback) {

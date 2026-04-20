@@ -27,7 +27,7 @@ class Factory {
      *   customLayouter?: Object,
      *   customTemplator?: Object,
      *   helper?: Object,
-     *   viewLoader?: function(string, function(Bull.View)),
+     *   viewLoader?: function(string, function(import('./bull.view.js').default)),
      *   resources?: {
      *       loaders?: {
      *           template?: function(string, function(string)),
@@ -100,8 +100,8 @@ class Factory {
      * Create a view.
      *
      * @param {string} viewName A view name/path.
-     * @param {Bull.View~Options} [options] Options.
-     * @param {function(Bull.View)} [callback] Invoked once the view is ready.
+     * @param {import('./bull.view.js').ViewOptions} [options] Options.
+     * @param {function(import('./bull.view.js').default)} [callback] Invoked once the view is ready.
      */
     create(viewName, options, callback) {
         this._getViewClass(viewName, viewClass => {
@@ -118,8 +118,8 @@ class Factory {
     /**
      * Prepare a view instance.
      *
-     * @param {Bull.View} view A view.
-     * @param {function(Bull.View)} [callback] Invoked once the view is ready.
+     * @param {import('./bull.view.js').default} view A view.
+     * @param {function(import('./bull.view.js').default)} [callback] Invoked once the view is ready.
      */
     prepare(view, callback) {
         view._initialize({
